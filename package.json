@@ -6,7 +6,8 @@
   },
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "devDependencies": {
     "@babel/preset-typescript": "^7.13.0",
     "@types/db-migrate-base": "^0.0.8",

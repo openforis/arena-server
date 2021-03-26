@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as DBMigrate from 'db-migrate'
 import { ProcessEnv } from 'src/processEnv'
 import { DB } from './db'
+// @ts-ignore Missing type definitions
 import { SurveyService } from '@openforis/arena-core'
 
 // TODO: Add logger
