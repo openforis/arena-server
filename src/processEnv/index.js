@@ -7,6 +7,7 @@ const [pgUser, pgPassword, pgHost, pgPort, pgDatabase] = dbUrlMatch
 
 export const ProcessEnv = {
   debug: Boolean(process.env.DEBUG),
+  nodeEnv: process.env.NODE_ENV || 'development',
 
   // DB
   dbUrl,
