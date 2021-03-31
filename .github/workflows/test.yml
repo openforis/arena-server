@@ -15,9 +15,12 @@ jobs:
           node-version: '14.15.0'
           always-auth: true
           registry-url: 'https://npm.pkg.github.com'
-          auth-token: ${{secrets.GITHUB_TOKEN}}
+          auth-token: ${{secrets.ACCESS_TOKEN}}
         env:
-            NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             NPM_REGISTRY_URL: https://npm.pkg.github.com
+      - name: Create NPMRC
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.ACCESS_TOKEN }}" > ~/.npmrc
       - run: yarn
       - run: yarn test
