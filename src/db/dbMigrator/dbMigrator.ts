@@ -58,8 +58,7 @@ const migrateAll = async (): Promise<void> => {
     logger.info('running database migrations')
 
     await migrateSchema(Schemata.PUBLIC)
-    // TODO: enable when implementing SurveyService
-    // await migrateSurveySchemas()
+    await migrateSurveySchemas()
 
     logger.info('database migrations completed')
   } catch (error) {

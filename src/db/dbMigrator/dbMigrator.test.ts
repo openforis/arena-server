@@ -1,10 +1,10 @@
 import 'dotenv/config'
 
-import { DBMigrator } from './dbMigrator'
+import { ArenaServer } from '../../arenaServer'
 import { DB } from '../db'
 
 beforeAll(async () => {
-  await DBMigrator.migrateAll()
+  await ArenaServer.init()
 })
 
 describe('DBMigrator', () => {
