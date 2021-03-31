@@ -8,12 +8,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
 
       - name: Use Node.js 14.15.0
         uses: actions/setup-node@v1
         with:
           node-version: '14.15.0'
+          always-auth: true
+          registry-url: 'https://npm.pkg.github.com'
+          token: ${{secrets.GITHUB_TOKEN}}
       - run: yarn
       - run: yarn test
