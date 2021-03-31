@@ -1,26 +1,15 @@
-import path from 'path'
-
+import * as path from 'path'
 // @ts-ignore
-import DBMigrate from 'db-migrate'
-
+import * as DBMigrate from 'db-migrate'
 import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
 
-import { ProcessEnv } from '../processEnv'
-import { DB } from './db'
-import { Schemata } from './schemata'
+import { ProcessEnv } from '../../processEnv'
+import { DB } from '../db'
+import { Schemata } from '../schemata'
+import { getConfig } from './config'
 
 // TODO: Add logger
 const logger = console
-
-const config = {
-  driver: 'pg',
-  user: ProcessEnv.pgUser,
-  password: ProcessEnv.pgPassword,
-  host: ProcessEnv.pgHost,
-  database: ProcessEnv.pgDatabase,
-  ssl: ProcessEnv.pgSsl,
-  schema: '',
-}
 
 enum migrationFolders {
   public = 'public',
@@ -28,13 +17,12 @@ enum migrationFolders {
 }
 
 const migrateSchema = async (schema: string): Promise<void> => {
-  const migrationsFolder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
+  const folder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
 
-  const migrateOptions = {
-    config: { ...config, schema },
-    cwd: `${path.join(__dirname, migrationsFolder)}`,
+  const options = {
+    config: getConfig(schema),
+    cwd: `${path.join(__dirname, 'migration', folder)}`,
     env: ProcessEnv.nodeEnv,
-
     // Required to work around an EventEmitter leak bug.
     // See: https://github.com/db-migrate/node-db-migrate/issues/421
     throwUncatched: true,
@@ -45,7 +33,7 @@ const migrateSchema = async (schema: string): Promise<void> => {
     await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
   }
 
-  const dbm = DBMigrate.getInstance(true, migrateOptions)
+  const dbm = DBMigrate.getInstance(true, options)
   await dbm.up()
 }
 
@@ -70,7 +58,8 @@ const migrateAll = async (): Promise<void> => {
     logger.info('running database migrations')
 
     await migrateSchema(Schemata.PUBLIC)
-    await migrateSurveySchemas()
+    // TODO: enable when implementing SurveyService
+    // await migrateSurveySchemas()
 
     logger.info('database migrations completed')
   } catch (error) {

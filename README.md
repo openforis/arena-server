@@ -58,3 +58,25 @@ or
 ```shell
 npm install @openforis/arena-server
 ```
+
+## Development
+
+### Database
+
+To install local database:
+
+```shell script
+sudo docker run -d --name arena-db -p 5444:5432 -e POSTGRES_DB=arena -e POSTGRES_PASSWORD=arena -e POSTGRES_USER=arena postgis/postgis:12-3.0
+```
+
+To restart local database:
+
+```shell script
+docker container restart arena-db
+```
+
+### .env file
+
+The .env file is needed for development and locally running the stack.
+
+It must be added to the root directory of the project and must match the template `.env.template`.

@@ -1,5 +1,5 @@
 import * as pgPromise from 'pg-promise'
-import { ProcessEnv } from 'src/processEnv'
+import { ProcessEnv } from '../processEnv'
 
 // TODO: Add logging
 const logger = {
