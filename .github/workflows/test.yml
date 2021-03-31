@@ -14,8 +14,9 @@ jobs:
         with:
           node-version: '14.15.0'
           always-auth: true
-          registry-url: 'https://npm.pkg.github.com'
           auth-token: ${{secrets.ACCESS_TOKEN}}
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@openforis'
         env:
             NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             NPM_REGISTRY_URL: https://npm.pkg.github.com
