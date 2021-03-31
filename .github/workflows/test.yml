@@ -20,8 +20,5 @@ jobs:
         env:
             NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             NPM_REGISTRY_URL: https://npm.pkg.github.com
-      - name: Create NPMRC
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.ACCESS_TOKEN }}" > ~/.npmrc
       - run: yarn
       - run: yarn test
