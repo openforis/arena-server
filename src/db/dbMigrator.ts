@@ -1,10 +1,13 @@
-import * as path from 'path'
-// @ts-ignore Missing type definitions
-import * as DBMigrate from 'db-migrate'
-import { ProcessEnv } from 'src/processEnv'
+import path from 'path'
+
+// @ts-ignore
+import DBMigrate from 'db-migrate'
+
+import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
+
+import { ProcessEnv } from '../processEnv'
 import { DB } from './db'
-// @ts-ignore Missing type definitions
-import { SurveyService } from '@openforis/arena-core'
+import { Schemata } from './schemata'
 
 // TODO: Add logger
 const logger = console
@@ -19,22 +22,18 @@ const config = {
   schema: '',
 }
 
-const env = ProcessEnv.nodeEnv
-
-const publicSchema = 'public'
-
 enum migrationFolders {
   public = 'public',
   survey = 'survey',
 }
 
-const migrateSchema = async (schema = publicSchema) => {
-  const migrationsFolder = schema === publicSchema ? migrationFolders.public : migrationFolders.survey
+const migrateSchema = async (schema: string): Promise<void> => {
+  const migrationsFolder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
 
   const migrateOptions = {
     config: { ...config },
     cwd: `${path.join(__dirname, migrationsFolder)}`,
-    env,
+    env: ProcessEnv.nodeEnv,
 
     // Required to work around an EventEmitter leak bug.
     // See: https://github.com/db-migrate/node-db-migrate/issues/421
@@ -43,42 +42,36 @@ const migrateSchema = async (schema = publicSchema) => {
 
   migrateOptions.config.schema = schema
 
-  if (schema !== publicSchema) {
+  if (schema !== Schemata.PUBLIC) {
     // First create db schema
     await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
   }
 
   const dbm = DBMigrate.getInstance(true, migrateOptions)
-
   await dbm.up()
 }
 
-export const migrateSurveySchema = async (surveyId: string) => {
+const migrateSurveySchema = async (surveyId: number): Promise<void> => {
   logger.info(`starting db migrations for survey ${surveyId}`)
-
-  const schema = SurveyService.getSurveyDBSchema(surveyId)
-
-  await migrateSchema(schema)
+  await migrateSchema(Schemata.getSchemaSurvey(surveyId))
 }
 
-export const migrateSurveySchemas = async () => {
-  const surveyIds = await SurveyService.fetchAllSurveyIds()
+const migrateSurveySchemas = async (): Promise<void> => {
+  const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+  const surveyIds = await service.getAllIds()
 
   logger.info(`starting data schemas migrations for ${surveyIds.length} surveys`)
 
-  for (const element of surveyIds) {
-    await migrateSurveySchema(element)
-  }
+  await Promise.all(surveyIds.map((surveyId) => migrateSurveySchema(surveyId)))
 
   logger.info('data schemas migrations completed')
 }
 
-export const migrateAll = async () => {
+const migrateAll = async (): Promise<void> => {
   try {
     logger.info('running database migrations')
 
-    await migrateSchema()
-
+    await migrateSchema(Schemata.PUBLIC)
     await migrateSurveySchemas()
 
     logger.info('database migrations completed')
@@ -86,4 +79,10 @@ export const migrateAll = async () => {
     logger.error(`error running database migrations: ${error.toString()}`)
     throw error
   }
+}
+
+export const DBMigrator = {
+  migrateSurveySchema,
+  migrateSurveySchemas,
+  migrateAll,
 }
