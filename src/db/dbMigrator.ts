@@ -31,7 +31,7 @@ const migrateSchema = async (schema: string): Promise<void> => {
   const migrationsFolder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
 
   const migrateOptions = {
-    config: { ...config },
+    config: { ...config, schema },
     cwd: `${path.join(__dirname, migrationsFolder)}`,
     env: ProcessEnv.nodeEnv,
 
@@ -39,8 +39,6 @@ const migrateSchema = async (schema: string): Promise<void> => {
     // See: https://github.com/db-migrate/node-db-migrate/issues/421
     throwUncatched: true,
   }
-
-  migrateOptions.config.schema = schema
 
   if (schema !== Schemata.PUBLIC) {
     // First create db schema
