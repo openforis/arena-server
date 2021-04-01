@@ -1,5 +1,6 @@
-import { DBMigrator } from '../db'
 import { ServiceRegistry, ServiceType } from '@openforis/arena-core'
+
+import { DBMigrator } from '../db'
 import { SurveyServiceServer } from '../survey'
 
 const registerServices = (): void => {
