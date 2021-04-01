@@ -1,7 +1,8 @@
+import { Objects } from '@openforis/arena-core'
+
 import { Column } from '../column'
 import { Table } from '../table'
 import { SqlBuilder } from './sqlBuilder'
-import { Objects } from '@openforis/arena-core'
 
 export class SqlSelectBuilder extends SqlBuilder {
   private _select: Array<Column> = []

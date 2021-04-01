@@ -1,5 +1,4 @@
-import { JobSummary, LanguageCode, Survey, SurveyService, User } from '@openforis/arena-core'
-import { SurveyProps } from '@openforis/arena-core/dist/survey/survey'
+import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } from '@openforis/arena-core'
 
 import { getAllIds } from './getAllIds'
 
