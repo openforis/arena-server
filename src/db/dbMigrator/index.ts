@@ -1,0 +1,1 @@
+export { DBMigrator } from './dbMigrator'
