@@ -1,13 +1,11 @@
 import { LogLevel } from './logLevel'
-import { configure } from './configure'
-
-const Log4js = configure()
-const logger = Log4js.getLogger('arena')
+import { getLogger } from './log4js'
 
 /**
  * Logger class with custom prefix.
  */
 export class Logger {
+  private static readonly LOGGER = getLogger('arena')
   private readonly prefix: string
 
   constructor(prefix: string) {
@@ -15,13 +13,13 @@ export class Logger {
   }
 
   private static isLevelEnabled(level: LogLevel): boolean {
-    return logger.isLevelEnabled(level)
+    return Logger.LOGGER.isLevelEnabled(level)
   }
 
   private log(level: LogLevel, ...msgs: Array<any>): void {
     if (Logger.isLevelEnabled(level)) {
       const msgString = msgs.map((msg) => (typeof msg === 'object' ? JSON.stringify(msg) : msg)).join(' ')
-      logger.log(level, `${this.prefix} - ${msgString}`)
+      Logger.LOGGER.log(level, `${this.prefix} - ${msgString}`)
     }
   }
 

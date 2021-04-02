@@ -1,10 +1,10 @@
-import { configure as configureLog4js, Log4js } from 'log4js'
+import { configure, Logger } from 'log4js'
 
 // Only display color for terminals:
 const layout = process.stdout.isTTY ? { type: 'colored' } : { type: 'basic' }
 
-export const configure = (): Log4js =>
-  configureLog4js({
+export const getLogger = (category?: string): Logger => {
+  const log4js = configure({
     appenders: {
       console: { type: 'console', layout },
       // { file: { type: 'file', filename: 'arena.log' }
@@ -17,3 +17,6 @@ export const configure = (): Log4js =>
       },
     },
   })
+
+  return log4js.getLogger(category)
+}
