@@ -16,12 +16,13 @@ enum migrationFolders {
   survey = 'survey',
 }
 
-const migrateSchema = async (schema: string): Promise<void> => {
+const migrateSchema = async (params: { schema?: string; migrationsFolder?: string } = {}): Promise<void> => {
+  const { schema = Schemata.PUBLIC, migrationsFolder = __dirname } = params
   const folder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
 
   const options = {
     config: getConfig(schema),
-    cwd: `${path.join(__dirname, 'migration', folder)}`,
+    cwd: `${path.join(migrationsFolder, 'migration', folder)}`,
     env: ProcessEnv.nodeEnv,
     // Required to work around an EventEmitter leak bug.
     // See: https://github.com/db-migrate/node-db-migrate/issues/421
@@ -39,7 +40,7 @@ const migrateSchema = async (schema: string): Promise<void> => {
 
 const migrateSurveySchema = async (surveyId: number): Promise<void> => {
   logger.info(`starting db migrations for survey ${surveyId}`)
-  await migrateSchema(Schemata.getSchemaSurvey(surveyId))
+  await migrateSchema({ schema: Schemata.getSchemaSurvey(surveyId) })
 }
 
 const migrateSurveySchemas = async (): Promise<void> => {
@@ -57,7 +58,7 @@ const migrateAll = async (): Promise<void> => {
   try {
     logger.info('running database migrations')
 
-    await migrateSchema(Schemata.PUBLIC)
+    await migrateSchema()
 
     await migrateSurveySchemas()
 
@@ -69,6 +70,7 @@ const migrateAll = async (): Promise<void> => {
 }
 
 export const DBMigrator = {
+  migrateSchema,
   migrateSurveySchema,
   migrateSurveySchemas,
   migrateAll,
