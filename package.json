@@ -16,6 +16,7 @@
     "@types/pg-promise": "^5.4.3",
     "@typescript-eslint/eslint-plugin": "^4.20.0",
     "@typescript-eslint/parser": "^4.20.0",
+    "copyfiles": "^2.4.1",
     "dotenv": "^8.2.0",
     "eslint": "^7.23.0",
     "husky": "=4",
@@ -35,7 +36,8 @@
   },
   "scripts": {
     "build:watch": "tsc --watch",
-    "build": "tsc",
+    "build": "tsc && yarn copy-assets",
+    "copy-assets": "copyfiles -u 1 src/**/*.sql dist/",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "postversion": "git push && git push --tags",
