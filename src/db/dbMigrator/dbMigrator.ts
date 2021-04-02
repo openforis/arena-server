@@ -3,13 +3,13 @@ import * as path from 'path'
 import * as DBMigrate from 'db-migrate'
 import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
 
+import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { DB } from '../db'
 import { Schemata } from '../schemata'
 import { getConfig } from './config'
 
-// TODO: Add logger
-const logger = console
+const logger = new Logger('DBMigrator')
 
 enum migrationFolders {
   public = 'public',
