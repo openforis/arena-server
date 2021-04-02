@@ -38,6 +38,7 @@
     "build:watch": "tsc --watch",
     "build": "tsc && yarn copy-assets",
     "copy-assets": "copyfiles -u 1 src/**/*.sql dist/",
+    "create-migration": "./src/db/dbMigrator/migration/create-migration.sh",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "postversion": "git push && git push --tags",
