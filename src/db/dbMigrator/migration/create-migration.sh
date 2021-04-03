@@ -12,6 +12,5 @@ type=${2:-public}
 . .env
 
 db-migrate \
-  --config server/db/migration/migrationConfig.js \
-  --migrations-dir server/db/migration/"$type"/migrations \
+  --migrations-dir src/db/dbMigrator/migration/"$type"/migrations \
   create "$1" --sql-file
