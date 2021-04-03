@@ -34,6 +34,7 @@ const migrateSchema = async (schema: string): Promise<void> => {
   }
 
   const dbm = DBMigrate.getInstance(true, options)
+  dbm.silence(true)
   await dbm.up()
 }
 

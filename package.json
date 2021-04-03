@@ -9,6 +9,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "devDependencies": {
+    "@babel/preset-env": "^7.13.12",
     "@babel/preset-typescript": "^7.13.0",
     "@machinomy/types-node-db-migrate": "^0.0.2",
     "@types/db-migrate-base": "^0.0.8",
@@ -23,6 +24,7 @@
     "lint-staged": "^10.5.4",
     "npm-run-all": "^4.1.5",
     "prettier": "2.2.1",
+    "rimraf": "^3.0.2",
     "ts-jest": "^26.5.3",
     "typescript": "^4.1.5"
   },
@@ -34,14 +36,17 @@
     "pg-promise": "^10.9.5"
   },
   "scripts": {
-    "build:watch": "tsc --watch",
     "build": "tsc",
+    "build:test": "tsc --project tsconfig.test.json",
+    "build:watch": "tsc --watch",
+    "clean": "rimraf dist ./node_modules/.cache/",
+    "jest": "jest --detectOpenHandles",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "postversion": "git push && git push --tags",
-    "prepare": "yarn build",
+    "prepare": "run-s clean build",
     "preversion": "run-s format lint:fix build",
-    "test": "jest --detectOpenHandles",
+    "test": "run-s clean build:test jest",
     "version": "git add -A src"
   },
   "files": [
