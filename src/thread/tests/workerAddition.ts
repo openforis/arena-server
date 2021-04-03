@@ -1,9 +1,25 @@
-import { parentPort } from 'worker_threads'
+import { Thread } from '../thread'
+import { WorkerMessage, WorkerMessageType } from '../workerMessage'
 
-const add = (x: number, y: number): number => x + y
+export enum AdditionMessageType {
+  add = 'add',
+  result = 'result',
+}
 
-// @ts-ignore
-parentPort.on('message', ({ x, y }) => {
-  // @ts-ignore
-  parentPort.postMessage(add(x, y))
-})
+export interface AdditionMessageIn extends WorkerMessage<WorkerMessageType | AdditionMessageType.add> {
+  x: number
+  y: number
+}
+
+export interface AdditionMessageOut extends WorkerMessage<WorkerMessageType | AdditionMessageType.result> {
+  result: number
+}
+
+class ThreadAddition extends Thread<AdditionMessageIn, AdditionMessageOut> {
+  protected onMessage(msg: AdditionMessageIn): Promise<any> {
+    this.postMessage({ type: AdditionMessageType.result, result: msg.x + msg.y })
+    return Promise.resolve(undefined)
+  }
+}
+
+new ThreadAddition()

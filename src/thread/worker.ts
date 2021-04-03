@@ -1,19 +1,19 @@
 // import * as path from 'path'
-import { Worker as WorkerWorkerThreads } from 'worker_threads'
+import { Worker as _Worker } from 'worker_threads'
 
 import { Logger } from '../log'
 
-export class Worker extends WorkerWorkerThreads {
+export class Worker<D = null> extends _Worker {
   private readonly logger: Logger
 
-  constructor(filename: string, workerData: any = {}) {
+  constructor(filename: string, workerData?: D) {
     // super(path.resolve(__dirname, '_worker.js'), { workerData: { filename, ...workerData } })
     super(filename, { workerData })
     this.logger = new Logger(`ThreadManager - thread ID: ${this.threadId}`)
   }
 
   on(event: string | symbol, listener: (...args: Array<any>) => void): this {
-    if (event === 'ext') this.logger.debug('thread exit')
+    if (event === 'exit') this.logger.debug('thread exit')
 
     //TODO:
     // if (event === 'message') {

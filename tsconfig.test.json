@@ -1,9 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules"],
-  "include": ["src"]
-
-  //  "compilerOptions": {
-  //    "module": "ES6",
-  //  }
+  "exclude": ["node_modules"]
 }

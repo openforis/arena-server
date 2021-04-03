@@ -11,15 +11,14 @@ import { getConfig } from './config'
 
 const logger = new Logger('DBMigrator')
 
-enum migrationFolders {
+enum MigrationFolder {
   public = 'public',
   survey = 'survey',
 }
 
 const migrateSchema = async (params: { schema?: string; migrationsFolder?: string } = {}): Promise<void> => {
   const { schema = Schemata.PUBLIC, migrationsFolder = __dirname } = params
-  const folder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
-
+  const folder = schema === Schemata.PUBLIC ? MigrationFolder.public : MigrationFolder.survey
   const options = {
     config: getConfig(schema),
     cwd: `${path.join(migrationsFolder, 'migration', folder)}`,
@@ -30,7 +29,6 @@ const migrateSchema = async (params: { schema?: string; migrationsFolder?: strin
   }
 
   if (schema !== Schemata.PUBLIC) {
-    // First create db schema
     await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
   }
 
