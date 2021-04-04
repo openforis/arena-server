@@ -1,13 +1,14 @@
 {
   "allowSyntheticDefaults": true,
   "exclude": ["node_modules", "src/**/*.test.ts", "src/**/tests/**"],
-  "include": ["src", "./node_modules/@machinomy/types-node-db-migrate/index.d.ts"],
+  "include": ["src", "src/**/*.json", "./node_modules/@machinomy/types-node-db-migrate/index.d.ts"],
 
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
     "declaration": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
     "module": "CommonJS",
     "moduleResolution": "Node",
@@ -25,6 +26,6 @@
     "strict": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
-    "target": "esnext"
+    "target": "ESNext"
   }
 }

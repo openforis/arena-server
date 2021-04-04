@@ -1,40 +1,21 @@
-import * as path from 'path'
-// @ts-ignore
-import * as DBMigrate from 'db-migrate'
 import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
-import { ProcessEnv } from '../../processEnv'
 import { DB } from '../db'
 import { Schemata } from '../schemata'
-import { getConfig } from './config'
+import { DBMigrate } from './dbMigrate'
 
 const logger = new Logger('DBMigrator')
 
-enum migrationFolders {
-  public = 'public',
-  survey = 'survey',
-}
-
 const migrateSchema = async (params: { schema?: string; migrationsFolder?: string } = {}): Promise<void> => {
   const { schema = Schemata.PUBLIC, migrationsFolder = __dirname } = params
-  const folder = schema === Schemata.PUBLIC ? migrationFolders.public : migrationFolders.survey
-
-  const options = {
-    config: getConfig(schema),
-    cwd: `${path.join(migrationsFolder, 'migration', folder)}`,
-    env: ProcessEnv.nodeEnv,
-    // Required to work around an EventEmitter leak bug.
-    // See: https://github.com/db-migrate/node-db-migrate/issues/421
-    throwUncatched: true,
-  }
 
   if (schema !== Schemata.PUBLIC) {
-    // First create db schema
     await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
   }
 
-  const dbm = DBMigrate.getInstance(true, options)
+  const dbm = DBMigrate.getInstance(schema, migrationsFolder)
+  dbm.silence(true)
   await dbm.up()
 }
 

@@ -7,6 +7,10 @@ beforeAll(async () => {
   await ArenaServer.init()
 })
 
+afterAll(async () => {
+  await DB.$pool.end()
+})
+
 describe('DBMigrator', () => {
   test('Public schema create', async () => {
     const result = await DB.one(
