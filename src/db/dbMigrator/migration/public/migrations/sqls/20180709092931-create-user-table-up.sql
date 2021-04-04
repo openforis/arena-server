@@ -12,6 +12,7 @@ CREATE TABLE
   password        VARCHAR             NULL,
   prefs           jsonb           NOT NULL DEFAULT '{}'::jsonb,
   profile_picture bytea               NULL,
+  props           jsonb           NOT NULL DEFAULT '{}'::jsonb,
   status          user_status     NOT NULL,
 
   PRIMARY KEY ("uuid"),
