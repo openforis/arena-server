@@ -10,7 +10,6 @@
     "declaration": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    //    "lib": ["ES2020"],
     "module": "CommonJS",
     "moduleResolution": "Node",
     "noFallthroughCasesInSwitch": true,

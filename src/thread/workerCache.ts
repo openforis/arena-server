@@ -1,16 +1,18 @@
-export class WorkerCache {
-  private readonly threads: Map<string, any> = new Map<string, any>()
+import { Worker } from './worker'
 
-  get(key: string): any {
+export class WorkerCache {
+  private readonly threads: Map<string, Worker<any>> = new Map<string, Worker<any>>()
+
+  get(key: string): Worker<any> | undefined {
     return this.threads.get(key)
   }
 
-  set(key: string, worker: any) {
+  set(key: string, worker: Worker<any>): Worker<any> {
     this.threads.set(key, worker)
     return worker
   }
 
-  delete(key: string) {
-    this.threads.delete(key)
+  delete(key: string): boolean {
+    return this.threads.delete(key)
   }
 }
