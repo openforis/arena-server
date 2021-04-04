@@ -1,4 +1,3 @@
-// import * as path from 'path'
 import { Worker as _Worker } from 'worker_threads'
 
 import { Logger } from '../log'
@@ -7,7 +6,6 @@ export class Worker<D = null> extends _Worker {
   private readonly logger: Logger
 
   constructor(filename: string, workerData?: D) {
-    // super(path.resolve(__dirname, '_worker.js'), { workerData: { filename, ...workerData } })
     super(filename, { workerData })
     this.logger = new Logger(`ThreadManager - thread ID: ${this.threadId}`)
   }

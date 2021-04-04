@@ -3,7 +3,7 @@ import { parentPort, workerData, isMainThread } from 'worker_threads'
 import { Logger } from '../log'
 import { WorkerErrorMessage, WorkerMessage, WorkerMessageType } from './workerMessage'
 
-export abstract class Thread<MSG_IN extends WorkerMessage<any>, MSG_OUT extends WorkerMessage<any>, D = null> {
+export abstract class Thread<MessageIn extends WorkerMessage<any>, MessageOut extends WorkerMessage<any>, D = null> {
   private readonly logger: Logger
   readonly data: D
 
@@ -20,7 +20,7 @@ export abstract class Thread<MSG_IN extends WorkerMessage<any>, MSG_OUT extends 
    * Send message to main event loop
    * @param msg
    */
-  protected postMessage(msg: MSG_OUT | WorkerErrorMessage): void {
+  protected postMessage(msg: MessageOut | WorkerErrorMessage): void {
     if (parentPort) {
       parentPort.postMessage(msg)
       //TODO: in Arena we passed user and surveyId. can't we get in worker directly instead?
@@ -28,7 +28,7 @@ export abstract class Thread<MSG_IN extends WorkerMessage<any>, MSG_OUT extends 
     }
   }
 
-  protected async messageHandler(msg: MSG_IN): Promise<void> {
+  protected async messageHandler(msg: MessageIn): Promise<void> {
     try {
       await this.onMessage(msg)
     } catch (error) {
@@ -43,5 +43,5 @@ export abstract class Thread<MSG_IN extends WorkerMessage<any>, MSG_OUT extends 
    * Receive message from main event loop
    * @param msg
    */
-  protected abstract onMessage(msg: MSG_IN): Promise<any>
+  protected abstract onMessage(msg: MessageIn): Promise<any>
 }
