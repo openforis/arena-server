@@ -85,22 +85,22 @@ It must be added to the root directory of the project and must match the templat
 
 Migrations are run automatically on server startup.
 
-### Adding a new database migration
+#### Adding a new database migration
 
 When you need execute DDL or other update update logic (e.g. to add a new table to the database, `dbtable`), create a migration template with:
 
 ```shell
-yarn run create-migration add-table-dbtable
+yarn dbmigrate:create --name=add-table-dbtable
 ```
 
-Now you'll see new sql files in `db/migration/migrations/sql/<timestamp>- add-table-dbtable-<up/down>.sql`
+Now you'll see new sql files in `src/db/dbMigrator/migration/<schema>/migrations/sql/<timestamp>-add-table-dbtable-<up/down>.sql`
 
 You should edit the `<timestamp>-add-table-dbtable-up.sql` to contain your DDL statements.
 
 You could also add the corresponding `drop table` to `<timestamp>-add-table-dbtable-down.sql` if you ever want to undo migrations.
 
-By default, migrations are applied to the `public` schema; if you need to update the `survey` schema, simply pass `survey` as last paramater. E.g.
+By default, migrations are applied to the `public` schema; if you need to update the `survey` schema, pass `--schema=survey` as parameter. E.g.
 
 ```shell
-yarn run create-migration add-table-to-survey-schema-db-table survey
+yarn dbmigrate:create --name=add-table-to-survey-schema-db-table --schema=survey
 ```

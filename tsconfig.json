@@ -8,7 +8,9 @@
     "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
     "declaration": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
+    //    "lib": ["ES2020"],
     "module": "CommonJS",
     "moduleResolution": "Node",
     "noFallthroughCasesInSwitch": true,
@@ -25,6 +27,6 @@
     "strict": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
-    "target": "esnext"
+    "target": "ESNext"
   }
 }
