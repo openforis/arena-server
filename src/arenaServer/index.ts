@@ -1,4 +1,4 @@
-import { ServiceRegistry, ServiceType } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, SRSs } from '@openforis/arena-core'
 
 import { DBMigrator } from '../db'
 import { SurveyServiceServer } from '../survey'
@@ -9,6 +9,7 @@ const registerServices = (): void => {
 
 const init = async (): Promise<void> => {
   registerServices()
+  await SRSs.init()
   await DBMigrator.migrateAll()
 }
 
