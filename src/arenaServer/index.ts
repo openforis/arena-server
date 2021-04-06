@@ -1,7 +1,7 @@
 import { ServiceRegistry, ServiceType, SRSs } from '@openforis/arena-core'
 
 import { DBMigrator } from '../db'
-import { SurveyServiceServer } from '../survey'
+import { SurveyServiceServer } from '../service'
 
 const registerServices = (): void => {
   ServiceRegistry.getInstance().registerService(ServiceType.survey, SurveyServiceServer)
