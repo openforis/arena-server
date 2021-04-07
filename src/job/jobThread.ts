@@ -6,17 +6,19 @@ import { JobMessageIn, JobMessageInType, JobMessageOut, JobMessageOutType } from
 import { JobRegistry } from './jobRegistry'
 
 export class JobThread<D extends JobData> extends Thread<JobMessageIn, JobMessageOut, D> {
-  private readonly job: JobServer<any, any, any>
+  private job: JobServer<any, any, any> | undefined
 
   constructor() {
     super()
 
-    const Constructor = JobRegistry.getInstance().get(this.data.type)
-    if (!Constructor) throw new ServerError('jobNotRegistered', this.data)
+    JobRegistry.getInstance().then((jobRegistry: JobRegistry) => {
+      const Job = jobRegistry.get(this.data.type)
+      if (!Job) throw new ServerError('jobNotRegistered', this.data)
 
-    this.job = new Constructor(this.data)
-    this.job.on(JobMessageOutType.summaryUpdate, this.postSummary.bind(this))
-    this.job.start().then(() => this.logger.debug(`job started`))
+      this.job = new Job(this.data)
+      this.job.on(JobMessageOutType.summaryUpdate, this.postSummary.bind(this))
+      this.job.start()
+    })
   }
 
   async onMessage(msg: JobMessageIn): Promise<void> {
@@ -25,7 +27,7 @@ export class JobThread<D extends JobData> extends Thread<JobMessageIn, JobMessag
         this.postSummary()
         break
       case JobMessageInType.cancel:
-        await this.job.cancel()
+        this.job && (await this.job.cancel())
         break
       default:
         this.logger.debug(`Skipping unknown message type: ${msg.type}`)
@@ -33,7 +35,7 @@ export class JobThread<D extends JobData> extends Thread<JobMessageIn, JobMessag
   }
 
   private postSummary(): void {
-    this.postMessage({ type: JobMessageOutType.summaryUpdate, summary: this.job.summary })
+    this.job && this.postMessage({ type: JobMessageOutType.summaryUpdate, summary: this.job.summary })
   }
 }
 

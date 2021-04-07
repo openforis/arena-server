@@ -1,4 +1,4 @@
-import { EventEmitter } from 'node:events'
+import { EventEmitter } from 'events'
 import { DebouncedFunc, throttle } from 'lodash'
 import { Job, JobStatus, JobSummary, UUIDs } from '@openforis/arena-core'
 
@@ -16,15 +16,17 @@ export interface JobConstructor {
 }
 
 export abstract class JobServer<P extends JobData, R, C extends JobContext> extends EventEmitter implements Job<R> {
+  static readonly TYPE: string
+
   summary: JobSummary<R>
   protected readonly logger = new Logger(`Job ${this.constructor.name}`)
   protected context: C
   protected workerData: P
   protected jobs: Array<JobServer<any, any, C>>
-  private notifyThrottle: DebouncedFunc<() => void> | undefined = undefined
+  private readonly emitSummaryUpdateEvent: DebouncedFunc<() => void>
   private jobCurrent: JobServer<any, any, C> | undefined = undefined
 
-  protected constructor(data: P, jobs: Array<JobServer<any, any, C>> = []) {
+  public constructor(data: P, jobs: Array<JobServer<any, any, C>> = []) {
     super()
     this.workerData = data
     this.jobs = jobs
@@ -45,7 +47,12 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
       endTime: undefined,
     }
 
-    this.jobs.forEach((job) => job.on(JobMessageOutType.summaryUpdate, this.onJobUpdate.bind(this)))
+    this.emitSummaryUpdateEvent = throttle(() => this.emit(JobMessageOutType.summaryUpdate, this.summary), 500)
+    this.jobs.forEach((job) =>
+      job.on(JobMessageOutType.summaryUpdate, async (summary: JobSummary<any>) => {
+        await this.setStatus(summary.status)
+      })
+    )
   }
 
   async start(client: BaseProtocol<any> = DB): Promise<void> {
@@ -157,12 +164,9 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
     return true
   }
 
-  protected emitJobUpdateEvent(): void {
-    this.emit(JobMessageOutType.summaryUpdate, this.summary)
-  }
-
   protected incrementProcessedItems(incrementBy = 1): void {
     this.summary.processed += incrementBy
+    this.emitSummaryUpdateEvent()
   }
 
   protected async setStatus(status: JobStatus): Promise<void> {
@@ -175,30 +179,13 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
       this.logger.debug('onEnd run')
     }
 
-    await this.emitJobUpdateEvent()
-  }
-
-  private async onJobUpdate(summary: JobSummary<any>): Promise<void> {
-    switch (summary.status) {
-      case JobStatus.failed:
-      case JobStatus.canceled:
-        // Cancel or fail even parent job
-        await this.setStatus(summary.status)
-        break
-      case JobStatus.running:
-        // Propagate progress event to parent job
-        await this.emitJobUpdateEvent()
-        break
-      default:
-        this.logger.debug(`Unknown event status: ${summary.status}`)
-    }
+    this.emitSummaryUpdateEvent()
   }
 
   /**
    * Called when the job just has been started.
    */
   protected async onStart(): Promise<void> {
-    this.notifyThrottle = throttle(() => this.emit(JobMessageOutType.summaryUpdate, this.summary), 1000)
     this.summary.startTime = new Date()
     await this.setStatus(JobStatus.running)
   }
@@ -226,8 +213,9 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
    * (it runs OUTSIDE of the current db transaction)
    */
   protected async onEnd(): Promise<void> {
-    this.notifyThrottle?.cancel()
     this.summary.endTime = new Date()
+    this.emitSummaryUpdateEvent.flush()
+    this.emitSummaryUpdateEvent.cancel()
   }
 
   protected addError(error: any, errorKey?: string): void {

@@ -7,7 +7,7 @@ export class Worker<D = null> extends _Worker {
 
   constructor(filename: string, workerData?: D) {
     super(filename, { workerData })
-    this.logger = new Logger(`ThreadManager - thread ID: ${this.threadId}`)
+    this.logger = new Logger(`Worker - thread ID: ${this.threadId}`)
   }
 
   on(event: string | symbol, listener: (...args: Array<any>) => void): this {
