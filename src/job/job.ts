@@ -5,13 +5,13 @@ import { Job, JobStatus, JobSummary, UUIDs } from '@openforis/arena-core'
 import { BaseProtocol, DB } from '../db'
 import { Logger } from '../log'
 import { ServerError } from '../server'
-import { JobData } from './jobData'
 import { JobContext } from './jobContext'
-import { JobEventType } from './jobEventType'
+import { JobData } from './jobData'
+import { JobMessageOutType } from './jobMessage'
 
 export interface JobConstructor {
-  new (): JobServer<any, any, any>
-  new <P extends JobData, R, C extends JobContext>(): JobServer<P, R, C>
+  new (data: any, jobs?: Array<JobServer<any, any, any>>): JobServer<any, any, any>
+  new <P extends JobData, R, C extends JobContext>(data: P, jobs?: Array<JobServer<P, R, C>>): JobServer<P, R, C>
   readonly prototype: JobServer<any, any, any>
 }
 
@@ -45,7 +45,7 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
       endTime: undefined,
     }
 
-    this.jobs.forEach((job) => job.on(JobEventType.jobUpdate, this.onJobUpdate.bind(this)))
+    this.jobs.forEach((job) => job.on(JobMessageOutType.summaryUpdate, this.onJobUpdate.bind(this)))
   }
 
   async start(client: BaseProtocol<any> = DB): Promise<void> {
@@ -158,7 +158,7 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
   }
 
   protected emitJobUpdateEvent(): void {
-    this.emit(JobEventType.jobUpdate, this.summary)
+    this.emit(JobMessageOutType.summaryUpdate, this.summary)
   }
 
   protected incrementProcessedItems(incrementBy = 1): void {
@@ -198,7 +198,7 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
    * Called when the job just has been started.
    */
   protected async onStart(): Promise<void> {
-    this.notifyThrottle = throttle(() => this.emit(JobEventType.jobUpdate, this.summary), 1000)
+    this.notifyThrottle = throttle(() => this.emit(JobMessageOutType.summaryUpdate, this.summary), 1000)
     this.summary.startTime = new Date()
     await this.setStatus(JobStatus.running)
   }

@@ -4,4 +4,9 @@ export type { JobContext } from './jobContext'
 
 export type { JobData } from './jobData'
 
+export { JobMessageInType, JobMessageOutType } from './jobMessage'
+export type { JobMessageIn, JobMessageOut } from './jobMessage'
+
+export { JobRegistry } from './jobRegistry'
+
 export { JobThread } from './jobThread'
