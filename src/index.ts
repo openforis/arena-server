@@ -1,4 +1,4 @@
-export { ArenaServer } from './arenaServer'
+export { ArenaServer } from './server'
 
 export { DB, DBMigrator, SqlSelectBuilder, SQLs, Schemata, TableNodeDef, TableSurvey } from './db'
 export type { BaseProtocol } from './db'

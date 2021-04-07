@@ -1,6 +1,6 @@
 import 'dotenv/config'
 
-import { ArenaServer } from '../../arenaServer'
+import { ArenaServer } from '../../server'
 import { DB } from '../db'
 
 beforeAll(async () => {

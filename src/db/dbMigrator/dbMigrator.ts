@@ -1,3 +1,4 @@
+import fs from 'fs'
 import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
@@ -10,13 +11,15 @@ const logger = new Logger('DBMigrator')
 const migrateSchema = async (params: { schema?: string; migrationsFolder?: string } = {}): Promise<void> => {
   const { schema = Schemata.PUBLIC, migrationsFolder = __dirname } = params
 
-  if (schema !== Schemata.PUBLIC) {
-    await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
-  }
+  if (fs.existsSync(migrationsFolder)) {
+    if (schema !== Schemata.PUBLIC) {
+      await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
+    }
 
-  const dbm = DBMigrate.getInstance(schema, migrationsFolder)
-  dbm.silence(true)
-  await dbm.up()
+    const dbm = DBMigrate.getInstance(schema, migrationsFolder)
+    dbm.silence(true)
+    await dbm.up()
+  }
 }
 
 const migrateSurveySchema = async (surveyId: number): Promise<void> => {
