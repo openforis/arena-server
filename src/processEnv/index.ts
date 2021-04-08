@@ -15,7 +15,7 @@ export enum NodeEnv {
 }
 
 export const ProcessEnv = {
-  debug: Boolean(process.env.DEBUG),
+  debug: process.env.DEBUG === 'true',
   nodeEnv: process.env.NODE_ENV || NodeEnv.development,
 
   // DB
@@ -25,5 +25,11 @@ export const ProcessEnv = {
   pgHost,
   pgPort: Number(pgPort),
   pgDatabase,
-  pgSsl: Boolean(process.env.PGSSL),
+  pgSsl: process.env.PGSSL === 'true',
+
+  // Express
+  arenaPort: process.env.ARENA_PORT || '9090',
+  sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET,
+  tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
+  useHttps: process.env.USE_HTTPS === 'true',
 }
