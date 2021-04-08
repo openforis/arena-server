@@ -16,8 +16,6 @@ export interface JobConstructor {
 }
 
 export abstract class JobServer<P extends JobData, R, C extends JobContext> extends EventEmitter implements Job<R> {
-  static readonly TYPE: string
-
   summary: JobSummary<R>
   protected readonly logger = new Logger(`Job ${this.constructor.name}`)
   protected context: C
@@ -48,11 +46,7 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
     }
 
     this.emitSummaryUpdateEvent = throttle(() => this.emit(JobMessageOutType.summaryUpdate, this.summary), 500)
-    this.jobs.forEach((job) =>
-      job.on(JobMessageOutType.summaryUpdate, async (summary: JobSummary<any>) => {
-        await this.setStatus(summary.status)
-      })
-    )
+    this.jobs.forEach((job) => job.on(JobMessageOutType.summaryUpdate, this.onInnerJobSummaryUpdate.bind(this)))
   }
 
   async start(client: BaseProtocol<any> = DB): Promise<void> {
@@ -85,7 +79,6 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
     if (this.jobCurrent) {
       if (this.jobCurrent.summary.status === JobStatus.running) {
         await this.jobCurrent.cancel()
-        // Parent job will be canceled by the inner job event listener
       }
     } else {
       await this.beforeEnd()
@@ -180,6 +173,22 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
     }
 
     this.emitSummaryUpdateEvent()
+  }
+
+  /**
+   * Inner job summary update handler.
+   */
+  protected async onInnerJobSummaryUpdate(summary: JobSummary<any>): Promise<void> {
+    const { status } = summary
+    if ([JobStatus.canceled, JobStatus.failed].includes(status)) {
+      await this.setStatus(status)
+      return
+    }
+    if (status === JobStatus.running) {
+      this.emitSummaryUpdateEvent()
+      return
+    }
+    this.logger.debug(`Unknown inner job status: ${status}`)
   }
 
   /**
