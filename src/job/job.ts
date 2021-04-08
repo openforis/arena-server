@@ -30,18 +30,14 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
     this.context = context
 
     this.summary = {
-      errors: undefined,
       jobs: this.jobs.map((job) => job.summary),
       processed: 0,
-      result: undefined,
       status: JobStatus.pending,
       surveyId: this.context.surveyId,
       total: 1,
       type: this.context.type,
       userUuid: this.context.user.uuid,
       uuid: UUIDs.v4(),
-      startTime: undefined,
-      endTime: undefined,
     }
 
     this.emitSummaryUpdateEvent = throttle(() => this.emit(JobMessageOutType.summaryUpdate, this.summary), 500)
