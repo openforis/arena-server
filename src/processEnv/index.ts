@@ -8,9 +8,15 @@ const [pgUser, pgPassword, pgHost, pgPort, pgDatabase] = dbUrlMatch
   ? [dbUrlMatch[1], dbUrlMatch[2], dbUrlMatch[3], dbUrlMatch[4], dbUrlMatch[5]]
   : [process.env.PGUSER, process.env.PGPASSWORD, process.env.PGHOST, process.env.PGPORT, process.env.PGDATABASE]
 
+export enum NodeEnv {
+  development = 'development',
+  production = 'production',
+  test = 'test',
+}
+
 export const ProcessEnv = {
   debug: Boolean(process.env.DEBUG),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv: process.env.NODE_ENV || NodeEnv.development,
 
   // DB
   dbUrl,

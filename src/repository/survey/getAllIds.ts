@@ -5,7 +5,7 @@ import { BaseProtocol, DB, SqlSelectBuilder, TableSurvey } from '../../db'
  *
  * @param client - Database client.
  */
-export const getAllIds = async (client: BaseProtocol<any> = DB): Promise<Array<number>> => {
+export const getAllIds = async (client: BaseProtocol = DB): Promise<Array<number>> => {
   const table = new TableSurvey()
   const sql = new SqlSelectBuilder().select(table.id).from(table).build()
 

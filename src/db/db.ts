@@ -1,3 +1,5 @@
+import 'dotenv/config'
+
 import pgPromise from 'pg-promise'
 import { ProcessEnv } from '../processEnv'
 
@@ -48,6 +50,6 @@ const config = ProcessEnv.dbUrl
       ...configCommon,
     }
 
-export type BaseProtocol<T> = pgPromise.IBaseProtocol<T>
+export type BaseProtocol<T = any> = pgPromise.IBaseProtocol<T>
 
 export const DB = pgp(config)

@@ -4,11 +4,11 @@ import { Logger } from '../log'
 import { WorkerErrorMessage, WorkerMessage, WorkerMessageType } from './workerMessage'
 
 export abstract class Thread<MessageIn extends WorkerMessage<any>, MessageOut extends WorkerMessage<any>, D = null> {
-  private readonly logger: Logger
+  protected readonly logger: Logger
   readonly data: D
 
   constructor() {
-    this.logger = new Logger('Thread')
+    this.logger = new Logger(this.constructor.name)
     this.data = workerData
 
     if (!isMainThread && parentPort) {
