@@ -11,15 +11,15 @@ const logger = new Logger('DBMigrator')
 const migrateSchema = async (params: { schema?: string; migrationsFolder?: string } = {}): Promise<void> => {
   const { schema = Schemata.PUBLIC, migrationsFolder = __dirname } = params
 
-  if (fs.existsSync(migrationsFolder)) {
-    if (schema !== Schemata.PUBLIC) {
-      await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
-    }
+  if (!fs.existsSync(migrationsFolder)) return
 
-    const dbm = DBMigrate.getInstance(schema, migrationsFolder)
-    dbm.silence(true)
-    await dbm.up()
+  if (schema !== Schemata.PUBLIC) {
+    await DB.none(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
   }
+
+  const dbm = DBMigrate.getInstance(schema, migrationsFolder)
+  dbm.silence(true)
+  await dbm.up()
 }
 
 const migrateSurveySchema = async (surveyId: number): Promise<void> => {
