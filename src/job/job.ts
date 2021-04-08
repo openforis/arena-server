@@ -9,7 +9,7 @@ import { JobContext } from './jobContext'
 import { JobMessageOutType } from './jobMessage'
 
 export interface JobConstructor {
-  new (data: any, jobs?: Array<JobServer<any, any>>): JobServer<any, any>
+  new (context: any, jobs?: Array<JobServer<any, any>>): JobServer<any, any>
   new <C extends JobContext, R>(context: C, jobs?: Array<JobServer<C, any>>): JobServer<C, R>
   readonly prototype: JobServer<any, any>
 }
