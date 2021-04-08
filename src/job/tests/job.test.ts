@@ -5,11 +5,14 @@ import { JobData } from '../jobData'
 import { Worker } from '../../thread'
 import { SimpleJob, SimpleJobsWithJobs } from './testJobs'
 
-const waitForJobSuccess = <R>(worker: Worker<JobData>): Promise<JobSummary<R>> =>
+const waitForJobStatus = <R>(
+  worker: Worker<JobData>,
+  status: JobStatus = JobStatus.succeeded
+): Promise<JobSummary<R>> =>
   new Promise<JobSummary<R>>((resolve) => {
     worker.on('message', (msg: JobMessageOut) => {
       const { summary } = msg
-      if (summary.status === JobStatus.succeeded) {
+      if (summary.status === status) {
         return resolve(summary)
       }
     })
@@ -30,7 +33,9 @@ describe('Job', () => {
 
   test('SimpleJob', async () => {
     const worker = JobManager.executeJob({ user, type: SimpleJob.type, surveyId: 1 })
-    const summary = await waitForJobSuccess<JobSummary<number>>(worker)
+    const summary = await waitForJobStatus<number>(worker)
+
+    await expect(summary.status).toBe(JobStatus.succeeded)
     await expect(summary.result).toBe(3)
   })
 
@@ -40,7 +45,24 @@ describe('Job', () => {
       type: SimpleJobsWithJobs.type,
       surveyId: 1,
     })
-    const summary = await waitForJobSuccess<JobSummary<number>>(worker)
+    const summary = await waitForJobStatus<number>(worker)
+
+    await expect(summary.status).toBe(JobStatus.succeeded)
     await expect(summary.result).toBe(6)
+  })
+
+  test('SimpleJobsWithJobs - cancel', async () => {
+    const userUuid = UUIDs.v4()
+    const worker = JobManager.executeJob({
+      user: { ...user, uuid: userUuid },
+      type: SimpleJobsWithJobs.type,
+      surveyId: 1,
+    })
+
+    JobManager.cancelUserJob(userUuid)
+    const summary = await waitForJobStatus<number>(worker, JobStatus.canceled)
+
+    await expect(summary.status).toBe(JobStatus.canceled)
+    await expect(summary.result).not.toBeDefined()
   })
 })
