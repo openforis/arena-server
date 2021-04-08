@@ -50,7 +50,6 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
         await this.jobCurrent.cancel()
       }
     } else {
-      await this.cleanup()
       await this.setStatus(JobStatus.canceled)
     }
   }
