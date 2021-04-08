@@ -1,12 +1,11 @@
 import { JobServer } from '../job'
-import { JobData } from '../jobData'
 import { JobContext } from '../jobContext'
 
-interface SimpleJobData extends JobData {
+interface SimpleJobContext extends JobContext {
   result?: number
 }
 
-export class SimpleJob extends JobServer<SimpleJobData, number, JobContext> {
+export class SimpleJob extends JobServer<SimpleJobContext, number> {
   static readonly type: string = 'simple'
 
   protected async execute(): Promise<void> {
@@ -19,21 +18,21 @@ export class SimpleJob extends JobServer<SimpleJobData, number, JobContext> {
     return Promise.resolve()
   }
 
-  protected async beforeSuccess(): Promise<void> {
-    await super.beforeSuccess()
-    this.summary.result = this.workerData.result || 3
+  protected async prepareResult(): Promise<number> {
+    await super.prepareResult()
+    return this.context.result || 3
   }
 }
 
-export class SimpleJobsWithJobs extends SimpleJob {
+export class SimpleJobWithJobs extends SimpleJob {
   static readonly type: string = 'simpleWithJobs'
 
-  constructor(data: SimpleJobData) {
+  constructor(data: SimpleJobContext) {
     super(data, [new SimpleJob({ ...data, result: 4 }), new SimpleJob({ ...data, result: 2 })])
   }
 
-  protected async beforeSuccess(): Promise<void> {
-    await super.beforeSuccess()
-    this.summary.result = this.jobs.reduce<number>((total, job) => total + job.summary.result, 0)
+  protected async prepareResult(): Promise<number> {
+    await super.prepareResult()
+    return this.jobs.reduce<number>((total, job) => total + job.summary.result, 0)
   }
 }

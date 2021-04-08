@@ -6,29 +6,28 @@ import { BaseProtocol, DB } from '../db'
 import { Logger } from '../log'
 import { ServerError } from '../server'
 import { JobContext } from './jobContext'
-import { JobData } from './jobData'
 import { JobMessageOutType } from './jobMessage'
 
 export interface JobConstructor {
-  new (data: any, jobs?: Array<JobServer<any, any, any>>): JobServer<any, any, any>
-  new <P extends JobData, R, C extends JobContext>(data: P, jobs?: Array<JobServer<P, R, C>>): JobServer<P, R, C>
-  readonly prototype: JobServer<any, any, any>
+  new (data: any, jobs?: Array<JobServer<any, any>>): JobServer<any, any>
+  new <C extends JobContext, R>(context: C, jobs?: Array<JobServer<C, any>>): JobServer<C, R>
+  readonly prototype: JobServer<any, any>
 }
 
-export abstract class JobServer<P extends JobData, R, C extends JobContext> extends EventEmitter implements Job<R> {
+export abstract class JobServer<C extends JobContext = JobContext, R = undefined>
+  extends EventEmitter
+  implements Job<R> {
   summary: JobSummary<R>
   protected readonly logger = new Logger(`Job ${this.constructor.name}`)
   protected context: C
-  protected workerData: P
-  protected jobs: Array<JobServer<any, any, C>>
+  protected jobs: Array<JobServer<C, any>>
   private readonly emitSummaryUpdateEvent: DebouncedFunc<() => void>
-  private jobCurrent: JobServer<any, any, C> | undefined = undefined
+  private jobCurrent: JobServer<C, any> | undefined = undefined
 
-  public constructor(data: P, jobs: Array<JobServer<any, any, C>> = []) {
+  public constructor(context: C, jobs: Array<JobServer<C, any>> = []) {
     super()
-    this.workerData = data
     this.jobs = jobs
-    this.context = { surveyId: data.surveyId, user: data.user } as C
+    this.context = context
 
     this.summary = {
       errors: undefined,
@@ -38,7 +37,7 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
       status: JobStatus.pending,
       surveyId: this.context.surveyId,
       total: 1,
-      type: this.workerData.type,
+      type: this.context.type,
       userUuid: this.context.user.uuid,
       uuid: UUIDs.v4(),
       startTime: undefined,
@@ -49,16 +48,41 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
     this.jobs.forEach((job) => job.on(JobMessageOutType.summaryUpdate, this.onInnerJobSummaryUpdate.bind(this)))
   }
 
-  async start(client: BaseProtocol<any> = DB): Promise<void> {
+  async cancel(): Promise<void> {
+    if (this.jobCurrent) {
+      if (this.jobCurrent.summary.status === JobStatus.running) {
+        await this.jobCurrent.cancel()
+      }
+    } else {
+      await this.cleanup()
+      await this.setStatus(JobStatus.canceled)
+    }
+  }
+
+  async start(client: BaseProtocol = DB): Promise<void> {
     this.logger.debug('start')
 
-    // 1. crates a db transaction and run '_executeInTransaction' into it
     try {
-      await client.tx((tx) => this.executeInTransaction(tx))
+      // 1. crate db transaction
+      await client.tx(async (tx) => {
+        this.context.tx = tx
+        // 2. notify start
+        await this.onStart()
+        // 3. execute
+        if (this.jobs.length > 0) {
+          await this.executeJobs()
+        } else {
+          await this.execute()
+        }
+      })
 
-      // 2. notify job status change to 'succeed' (when transaction has been committed)
       if (this.summary.status === JobStatus.running) {
+        // 4. if successful, prepare result and set status succeeded
+        this.summary.result = await this.prepareResult()
         await this.setStatus(JobStatus.succeeded)
+      } else {
+        // 5. if errors found or job has been canceled, throw an error to rollback transaction
+        throw new ServerError('jobCanceledOrErrorsFound')
       }
     } catch (error) {
       if (this.summary.status === JobStatus.running) {
@@ -72,60 +96,11 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
         })
         await this.setStatus(JobStatus.failed)
       }
-    }
-  }
-
-  async cancel(): Promise<void> {
-    if (this.jobCurrent) {
-      if (this.jobCurrent.summary.status === JobStatus.running) {
-        await this.jobCurrent.cancel()
-      }
-    } else {
-      await this.beforeEnd()
-      await this.setStatus(JobStatus.canceled)
-    }
-  }
-
-  private async executeInTransaction(tx: BaseProtocol<any>): Promise<void> {
-    try {
-      this.context.tx = tx
-
-      // 1. notify start
-      await this.onStart()
-
-      const shouldExecute = await this.shouldExecute()
-      this.logger.debug('Should execute?', shouldExecute)
-
-      if (shouldExecute) {
-        // 2. execute
-        if (this.jobs.length > 0) {
-          await this.executeJobs()
-        } else {
-          await this.execute()
-        }
-
-        // 3. execution completed, prepare result
-        if (this.summary.status === JobStatus.running) {
-          this.logger.debug('beforeSuccess...')
-          await this.beforeSuccess()
-          this.logger.debug('beforeSuccess run')
-        }
-      }
-      // DO NOT CATCH EXCEPTIONS! Transaction will be aborted in that case
     } finally {
-      if (this.summary.status !== JobStatus.canceled) {
-        // 4. flush/clean resources
-        this.logger.debug('beforeEnd...')
-        await this.beforeEnd()
-        this.logger.debug('beforeEnd run')
-      }
-
       this.context.tx = undefined
-    }
-
-    // 5. if errors found or job has been canceled, throw an error to rollback transaction
-    if (this.summary.status !== JobStatus.running) {
-      throw new ServerError('jobCanceledOrErrorsFound')
+      if (this.summary.status !== JobStatus.canceled) {
+        await this.cleanup()
+      }
     }
   }
 
@@ -153,10 +128,6 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
 
   protected abstract execute(): Promise<void>
 
-  protected async shouldExecute(): Promise<boolean> {
-    return true
-  }
-
   protected incrementProcessedItems(incrementBy = 1): void {
     this.summary.processed += incrementBy
     this.emitSummaryUpdateEvent()
@@ -181,12 +152,10 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
   protected async onInnerJobSummaryUpdate(summary: JobSummary<any>): Promise<void> {
     const { status } = summary
     if ([JobStatus.canceled, JobStatus.failed].includes(status)) {
-      await this.setStatus(status)
-      return
+      return this.setStatus(status)
     }
     if (status === JobStatus.running) {
-      this.emitSummaryUpdateEvent()
-      return
+      return this.emitSummaryUpdateEvent()
     }
     this.logger.debug(`Unknown inner job status: ${status}`)
   }
@@ -200,20 +169,20 @@ export abstract class JobServer<P extends JobData, R, C extends JobContext> exte
   }
 
   /**
-   * Called before onEnd only if the status will change to 'success'.
+   * Called before cleanup only if the status will change to 'success'.
    * It runs INSIDE the current db transaction.
    */
-  protected beforeSuccess(): Promise<void> {
-    this.logger.debug('Before success')
-    return Promise.resolve()
+  protected prepareResult(): Promise<R | undefined> {
+    this.logger.debug('Prepare result')
+    return Promise.resolve(undefined)
   }
 
   /**
    * Called before onEnd. Useful for flushing resources used by the job before it terminates completely.
    * It runs INSIDE the current db transaction.
    */
-  protected beforeEnd(): Promise<void> {
-    this.logger.debug('Before end')
+  protected cleanup(): Promise<void> {
+    this.logger.debug('Cleanup')
     return Promise.resolve()
   }
 

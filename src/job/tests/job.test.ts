@@ -1,12 +1,12 @@
 import { JobManager } from '../jobManager'
 import { JobStatus, JobSummary, UserFactory, UserStatus, UserTitle, UUIDs } from '@openforis/arena-core'
 import { JobMessageOut } from '../jobMessage'
-import { JobData } from '../jobData'
 import { Worker } from '../../thread'
-import { SimpleJob, SimpleJobsWithJobs } from './testJobs'
+import { JobContext } from '../jobContext'
+import { SimpleJob, SimpleJobWithJobs } from './testJobs'
 
 const waitForJobStatus = <R>(
-  worker: Worker<JobData>,
+  worker: Worker<JobContext>,
   status: JobStatus = JobStatus.succeeded
 ): Promise<JobSummary<R>> =>
   new Promise<JobSummary<R>>((resolve) => {
@@ -39,10 +39,10 @@ describe('Job', () => {
     await expect(summary.result).toBe(3)
   })
 
-  test('SimpleJobsWithJobs', async () => {
+  test('SimpleJobWithJobs', async () => {
     const worker = JobManager.executeJob({
       user: { ...user, uuid: UUIDs.v4() },
-      type: SimpleJobsWithJobs.type,
+      type: SimpleJobWithJobs.type,
       surveyId: 1,
     })
     const summary = await waitForJobStatus<number>(worker)
@@ -55,10 +55,12 @@ describe('Job', () => {
     const userUuid = UUIDs.v4()
     const worker = JobManager.executeJob({
       user: { ...user, uuid: userUuid },
-      type: SimpleJobsWithJobs.type,
+      type: SimpleJobWithJobs.type,
       surveyId: 1,
     })
 
+    // simulate cancel 1st inner job
+    await new Promise((resolve) => setTimeout(resolve, 600))
     JobManager.cancelUserJob(userUuid)
     const summary = await waitForJobStatus<number>(worker, JobStatus.canceled)
 

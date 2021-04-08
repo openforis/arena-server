@@ -1,12 +1,12 @@
 import { ServerError } from '../server'
 import { Thread } from '../thread'
 import { JobServer } from './job'
-import { JobData } from './jobData'
+import { JobContext } from './jobContext'
 import { JobMessageIn, JobMessageInType, JobMessageOut, JobMessageOutType } from './jobMessage'
 import { JobRegistry } from './jobRegistry'
 
-export class JobThread<D extends JobData> extends Thread<JobMessageIn, JobMessageOut, D> {
-  private job: JobServer<any, any, any> | undefined
+export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMessageOut, C> {
+  private job: JobServer<any, any> | undefined
 
   constructor() {
     super()

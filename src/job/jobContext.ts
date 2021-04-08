@@ -4,6 +4,7 @@ import { BaseProtocol } from '../db'
 export interface JobContext {
   surveyId: number
   survey?: Survey
-  tx?: BaseProtocol<any>
+  type: string
+  tx?: BaseProtocol
   user: User
 }

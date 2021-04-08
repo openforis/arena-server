@@ -3,7 +3,7 @@ import { JobStatus } from '@openforis/arena-core'
 
 import { Worker } from '../thread'
 import { JobMessageInType, JobMessageOut, JobMessageOutType } from './jobMessage'
-import { JobData } from './jobData'
+import { JobContext } from './jobContext'
 
 export class JobManager {
   private static workers = new Map<string, Worker<any>>()
@@ -33,8 +33,8 @@ export class JobManager {
     }
   }
 
-  static executeJob<D extends JobData = JobData>(data: D): Worker<D> {
-    const worker = new Worker<D>(path.resolve(__dirname, 'jobThread.js'), data)
+  static executeJob<C extends JobContext = JobContext>(data: C): Worker<C> {
+    const worker = new Worker<C>(path.resolve(__dirname, 'jobThread.js'), data)
     worker.on('message', JobManager.onMessage)
     JobManager.workers.set(data.user.uuid, worker)
     return worker
