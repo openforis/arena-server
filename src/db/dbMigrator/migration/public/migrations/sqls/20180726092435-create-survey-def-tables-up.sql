@@ -6,6 +6,7 @@ CREATE TABLE
   id            bigint    NOT NULL GENERATED ALWAYS AS IDENTITY,
   uuid          uuid      NOT NULL UNIQUE DEFAULT uuid_generate_v4(),
 
+  template      boolean   NOT NULL DEFAULT false,
   published     boolean   NOT NULL DEFAULT false,
   draft         boolean   NOT NULL DEFAULT true,
 
