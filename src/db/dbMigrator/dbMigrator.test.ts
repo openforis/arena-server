@@ -1,14 +1,18 @@
 import 'dotenv/config'
+import { Server } from 'http'
 
 import { ArenaServer } from '../../server'
 import { DB } from '../db'
 
+let server: Server
+
 beforeAll(async () => {
-  await ArenaServer.init()
+  const arenaApp = await ArenaServer.init()
+  server = await ArenaServer.start(arenaApp)
 })
 
 afterAll(async () => {
-  await DB.$pool.end()
+  await ArenaServer.stop(server)
 })
 
 describe('DBMigrator', () => {
