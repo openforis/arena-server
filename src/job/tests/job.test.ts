@@ -20,7 +20,7 @@ const waitForJobStatus = <R>(
 
 afterAll(async () => {
   // await jobs to be terminated
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 1250))
 })
 
 describe('Job', () => {
