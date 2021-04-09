@@ -1,4 +1,4 @@
-import { Express } from 'express'
+import { Express, RequestHandler } from 'express'
 import expressSession from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
 
@@ -6,8 +6,8 @@ import { DB } from '../../db'
 import { ProcessEnv } from '../../processEnv'
 import { Middleware } from './middleware'
 
-export const SessionMiddleware: Middleware = {
-  init(app: Express): void {
+export const SessionMiddleware: Middleware<RequestHandler> = {
+  init(app: Express): RequestHandler {
     const PgSession = connectPgSimple(expressSession)
 
     const options = {
@@ -20,12 +20,14 @@ export const SessionMiddleware: Middleware = {
         httpOnly: false,
       },
       store: new PgSession({
-        // @ts-ignore
-        pool: DB.$pool,
+        pgPromise: DB,
         tableName: 'user_sessions',
       }),
     }
 
-    app.use(expressSession(options))
+    const session = expressSession(options)
+    app.use(session)
+
+    return session
   },
 }
