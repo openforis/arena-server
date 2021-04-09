@@ -37,3 +37,10 @@ export class ServerError extends Error {
     }
   }
 }
+
+export class UnauthorizedError extends ServerError {
+  constructor(userName: string) {
+    super('appErrors.userNotAuthorized', { userName })
+    this.name = 'UnauthorizedError'
+  }
+}
