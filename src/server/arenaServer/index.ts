@@ -5,6 +5,7 @@ import { ArenaApp } from '../arenaApp'
 import { initApp } from './initApp'
 import { registerServices } from './registerServices'
 import { start } from './start'
+import { stop } from './stop'
 
 const init = async (): Promise<ArenaApp> => {
   registerServices()
@@ -16,4 +17,5 @@ const init = async (): Promise<ArenaApp> => {
 export const ArenaServer = {
   init,
   start,
+  stop,
 }
