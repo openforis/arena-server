@@ -24,10 +24,12 @@
 <!--- Include details of your testing environment, and the tests you ran to -->
 <!--- see how your change affects other areas of the code, etc. -->
 
-##### Do you consider this PR needs further testing?
+#### Do you consider this PR needs further testing?
 
 - [ ] No
 - [ ] Yes
+
+<!--- If Yes, describe why or what to do next -->
 
 ## Disclaimer
 

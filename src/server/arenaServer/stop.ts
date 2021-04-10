@@ -20,7 +20,7 @@ export const stop = (server: Server): Promise<void> =>
     server.close((error: Error | undefined) => {
       if (error) {
         logger.error(error)
-        error && reject(error)
+        reject(error)
       }
     })
   })
