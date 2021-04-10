@@ -1,6 +1,7 @@
 import path from 'path'
 import { JobStatus } from '@openforis/arena-core'
 
+import { WebSocketEvent, WebSocketServer } from '../webSocket'
 import { Worker } from '../thread'
 import { JobMessageInType, JobMessageOut, JobMessageOutType } from './jobMessage'
 import { JobContext } from './jobContext'
@@ -20,8 +21,7 @@ export class JobManager {
       const { status, userUuid } = summary
       const worker = JobManager.workers.get(userUuid)
 
-      // TODO: add WebSocket
-      // WebSocket.notifyUser(userUuid, WebSocketEvents.jobUpdate, summary)
+      WebSocketServer.notifyUser(userUuid, WebSocketEvent.jobUpdate, summary)
 
       // Job has not ended
       if ([JobStatus.pending, JobStatus.running].includes(status) || !worker) return

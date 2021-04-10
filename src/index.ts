@@ -14,4 +14,4 @@ export { ProcessEnv, NodeEnv } from './processEnv'
 export { Worker, Thread, WorkerMessageType, WorkerCache } from './thread'
 export type { WorkerErrorMessage, WorkerMessage } from './thread'
 
-export { WebSocketEvent } from './webSocket'
+export { WebSocketEvent, WebSocketServer } from './webSocket'

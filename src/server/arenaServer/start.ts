@@ -4,18 +4,19 @@ import { createTerminus } from '@godaddy/terminus'
 import { DB } from '../../db'
 import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
+import { WebSocketServer } from '../../webSocket/server'
 import { ArenaApp } from '../arenaApp'
 import { onShutdown } from './stop'
 
 const logger: Logger = new Logger('Arena server')
 
-export const start = (arenaApp: ArenaApp): Promise<Server> =>
+export const start = (app: ArenaApp): Promise<Server> =>
   new Promise<Server>((resolve) => {
     logger.info(`server starting`)
-
-    const { app } = arenaApp
     const port = ProcessEnv.arenaPort
-    const server: Server = app.listen(port)
+
+    const server: Server = app.express.listen(port)
+    WebSocketServer.init(app, server)
 
     createTerminus(server, {
       healthChecks: {

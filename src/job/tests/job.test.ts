@@ -1,7 +1,7 @@
-import { JobManager } from '../jobManager'
 import { JobStatus, JobSummary, UserFactory, UserStatus, UserTitle, UUIDs } from '@openforis/arena-core'
-import { JobMessageOut } from '../jobMessage'
 import { Worker } from '../../thread'
+import { JobManager } from '../jobManager'
+import { JobMessageOut } from '../jobMessage'
 import { JobContext } from '../jobContext'
 import { SimpleJob, SimpleJobWithJobs } from './testJobs'
 

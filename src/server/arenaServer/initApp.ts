@@ -36,5 +36,5 @@ export const initApp = (): ArenaApp => {
 
   ErrorMiddleware.init(app)
 
-  return { app, session }
+  return { express: app, session }
 }
