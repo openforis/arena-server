@@ -1,7 +1,24 @@
 export { ArenaServer, ServerError, ServerErrorCode, UnauthorizedError } from './server'
-export type { ArenaApp, Middleware } from './server'
+export type { ArenaApp, ExpressInitializer } from './server'
 
-export { DB, DBMigrator, SqlSelectBuilder, SQLs, Schemata, TableNodeDef, TableSurvey } from './db'
+export { ApiEndpoint } from './api'
+
+export {
+  DB,
+  DBMigrator,
+  SqlSelectBuilder,
+  SQLs,
+  Schemata,
+  TableSchemaPublic,
+  TableSchemaSurvey,
+  TableSchemaSurveyRdb,
+  TableResultSchemaSurveyRdb,
+  TableChain,
+  TableChainNodeDef,
+  TableChainNodeDefAggregate,
+  TableNodeDef,
+  TableSurvey,
+} from './db'
 export type { BaseProtocol } from './db'
 
 export { JobManager, JobServer, JobMessageInType, JobMessageOutType, JobThread, JobRegistry } from './job'

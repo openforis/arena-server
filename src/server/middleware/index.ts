@@ -1,5 +1,3 @@
-export type { Middleware } from './middleware'
-
 export { HeaderMiddleware } from './header'
 
 export { HttpsMiddleware } from './https'

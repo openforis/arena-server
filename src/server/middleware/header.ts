@@ -1,15 +1,15 @@
 import { Express } from 'express'
 
-import { Middleware } from './middleware'
+import { ExpressInitializer } from '../expressInitializer'
 
 const bundleRegexp = /^\/bundle-.*\.js(\.map)?$|^\/styles-.*\.css(\.map)?$/
 const bustRegexp = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const apiRegexp = /^\/api\/.*/i
 const maxAgeSeconds = 60 * 60 * 24 * 365
 
-export const HeaderMiddleware: Middleware = {
-  init(app: Express): void {
-    app.use((req, res, next) => {
+export const HeaderMiddleware: ExpressInitializer = {
+  init(express: Express): void {
+    express.use((req, res, next) => {
       if (req.path.match(apiRegexp)) {
         res.set('Cache-Control', 'no-store')
       } else if (req.path.match(bundleRegexp)) {

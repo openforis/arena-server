@@ -543,10 +543,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@openforis/arena-core@^0.0.50":
-  version "0.0.50"
-  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/0.0.50/0f0900d98f92ec559682fce1511bebec562eeb2f47741bd4cf27b8037dc5e34f#1717737906e6b3bb4d7a83f57cb551321138bed8"
-  integrity sha512-AIlgwurf8F3ttM9IiHEUKLAolBM1ILUBjMXUJXyVmuX1X4DzhZa+H8+em0yTOS03Fo7uTUMz9sqw0w1GxcMFUw==
+"@openforis/arena-core@^0.0.51":
+  version "0.0.51"
+  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/0.0.51/5c9bb21a908f7d4a51f285a2c3ef4c42e2d3cfb4052158b77ecad3858cb30548#b7eaeaa61814d3f8293f827cb83044f12041702f"
+  integrity sha512-19ehlDGT3ELLx6fKzd0cA91zypjQslo8YWdEU0YxSvBLi7XdKSWrTbLb/ANGJqeXcQLav+FystkYArXJBgQlbw==
   dependencies:
     "@esri/proj-codes" "^2.7.0"
     proj4 "^2.7.2"
@@ -2073,10 +2073,10 @@ eslint-visitor-keys@^2.0.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-2.0.0.tgz#21fdc8fbcd9c795cc0321f0563702095751511a8"
   integrity sha512-QudtT6av5WXels9WjIM7qz1XD1cWGvX4gGXvp/zBn9nXG02D0utdU3Em2m/QjTnrsk6bBjmCygl3rmj118msQQ==
 
-eslint@^7.23.0:
-  version "7.23.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-7.23.0.tgz#8d029d252f6e8cf45894b4bee08f5493f8e94325"
-  integrity sha512-kqvNVbdkjzpFy0XOszNwjkKzZ+6TcwCQ/h+ozlcIWwaimBBuhlQ4nN6kbiM2L+OjDcznkTJxzYfRFH92sx4a0Q==
+eslint@^7.24.0:
+  version "7.24.0"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-7.24.0.tgz#2e44fa62d93892bfdb100521f17345ba54b8513a"
+  integrity sha512-k9gaHeHiFmGCDQ2rEfvULlSLruz6tgfA8DEn+rY9/oYPFFTlz55mM/Q/Rij1b2Y42jwZiK3lXvNTw6w6TXzcKQ==
   dependencies:
     "@babel/code-frame" "7.12.11"
     "@eslint/eslintrc" "^0.4.0"

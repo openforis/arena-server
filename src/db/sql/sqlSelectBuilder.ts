@@ -5,7 +5,7 @@ import { Table } from '../table'
 import { SqlBuilder } from './sqlBuilder'
 
 export class SqlSelectBuilder extends SqlBuilder {
-  private _select: Array<Column> = []
+  private _select: Array<Column | string> = []
   private _from: Array<Table> = []
   private _where: Array<string> = []
   private _groupBy: Array<Column> = []
@@ -13,37 +13,37 @@ export class SqlSelectBuilder extends SqlBuilder {
   private _limit: number | null = null
   private _orderBy: Array<Column> = []
 
-  select(...fields: Array<Column>): SqlSelectBuilder {
+  select(...fields: Array<Column | string>): this {
     this._select.push(...fields)
     return this
   }
 
-  from(...tables: Array<Table>): SqlSelectBuilder {
+  from(...tables: Array<Table>): this {
     this._from.push(...tables)
     return this
   }
 
-  where(...conditions: Array<string>): SqlSelectBuilder {
+  where(...conditions: Array<string>): this {
     this._where.push(...conditions)
     return this
   }
 
-  groupBy(...fields: Array<Column>): SqlSelectBuilder {
+  groupBy(...fields: Array<Column>): this {
     this._groupBy.push(...fields)
     return this
   }
 
-  offset(offset: number): SqlSelectBuilder {
+  offset(offset: number): this {
     this._offset = offset
     return this
   }
 
-  limit(limit: number): SqlSelectBuilder {
+  limit(limit: number): this {
     this._limit = limit
     return this
   }
 
-  orderBy(...fields: Array<Column>): SqlSelectBuilder {
+  orderBy(...fields: Array<Column>): this {
     this._orderBy.push(...fields)
     return this
   }

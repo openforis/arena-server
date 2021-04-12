@@ -4,10 +4,10 @@ import connectPgSimple from 'connect-pg-simple'
 
 import { DB } from '../../db'
 import { ProcessEnv } from '../../processEnv'
-import { Middleware } from './middleware'
+import { ExpressInitializer } from '../expressInitializer'
 
-export const SessionMiddleware: Middleware<RequestHandler> = {
-  init(app: Express): RequestHandler {
+export const SessionMiddleware: ExpressInitializer<RequestHandler> = {
+  init(express: Express): RequestHandler {
     const PgSession = connectPgSimple(expressSession)
 
     const options = {
@@ -26,7 +26,7 @@ export const SessionMiddleware: Middleware<RequestHandler> = {
     }
 
     const session = expressSession(options)
-    app.use(session)
+    express.use(session)
 
     return session
   },
