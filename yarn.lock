@@ -543,10 +543,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@openforis/arena-core@^0.0.50":
-  version "0.0.50"
-  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/0.0.50/0f0900d98f92ec559682fce1511bebec562eeb2f47741bd4cf27b8037dc5e34f#1717737906e6b3bb4d7a83f57cb551321138bed8"
-  integrity sha512-AIlgwurf8F3ttM9IiHEUKLAolBM1ILUBjMXUJXyVmuX1X4DzhZa+H8+em0yTOS03Fo7uTUMz9sqw0w1GxcMFUw==
+"@openforis/arena-core@^0.0.52":
+  version "0.0.52"
+  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/0.0.52/94e92b8821cf1b8a6e7e15052b36bb7164b20c159ad27b4e489892d466011114#a86c3f73557a1f3c6e829c49da8b32992d9d0d56"
+  integrity sha512-T4xTk4id6eCW1moVuQyIhXt0vX91BlSFc/V9BFbCQ7+29nltHuWGy8hGnlppYDu/a20L2nQM0DUkTJoUTtRZtQ==
   dependencies:
     "@esri/proj-codes" "^2.7.0"
     proj4 "^2.7.2"
