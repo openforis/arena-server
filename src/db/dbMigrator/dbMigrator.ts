@@ -31,11 +31,13 @@ const migrateSurveySchemas = async (): Promise<void> => {
   const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
   const surveyIds = await service.getAllIds()
 
-  logger.info(`starting data schemas migrations for ${surveyIds.length} surveys`)
+  logger.info(`starting survey migrations for ${surveyIds.length} surveys`)
 
-  await Promise.all(surveyIds.map((surveyId) => migrateSurveySchema(surveyId)))
+  for (const surveyId of surveyIds) {
+    await migrateSurveySchema(surveyId)
+  }
 
-  logger.info('data schemas migrations completed')
+  logger.info('survey migrations completed')
 }
 
 const migrateAll = async (): Promise<void> => {

@@ -1,5 +1,5 @@
 import { Express } from 'express'
 
-export interface Middleware {
-  init: (app: Express) => void
+export interface Middleware<T = void> {
+  init: (app: Express) => T
 }

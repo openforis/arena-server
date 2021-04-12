@@ -16,7 +16,7 @@ export class Logger {
     return Logger.LOGGER.isLevelEnabled(level)
   }
 
-  private log(level: LogLevel, ...msgs: Array<any>): void {
+  private log(level: LogLevel, msgs: Array<any>): void {
     if (Logger.isLevelEnabled(level)) {
       const msgString = msgs.map((msg) => (typeof msg === 'object' ? JSON.stringify(msg) : msg)).join(' ')
       Logger.LOGGER.log(level, `${this.prefix} - ${msgString}`)
