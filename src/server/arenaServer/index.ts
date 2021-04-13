@@ -1,5 +1,3 @@
-import { SRSs } from '@openforis/arena-core'
-
 import { DBMigrator } from '../../db'
 import { ArenaApp } from '../arenaApp'
 import { initApp } from './initApp'
@@ -9,7 +7,6 @@ import { stop } from './stop'
 
 const init = async (): Promise<ArenaApp> => {
   registerServices()
-  await SRSs.init()
   await DBMigrator.migrateAll()
   return initApp()
 }
