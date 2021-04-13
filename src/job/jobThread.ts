@@ -1,3 +1,5 @@
+import { isMainThread } from 'worker_threads'
+
 import { ServerError } from '../server'
 import { Thread } from '../thread'
 import { JobServer } from './job'
@@ -39,4 +41,4 @@ export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMes
   }
 }
 
-new JobThread()
+if (!isMainThread) new JobThread()
