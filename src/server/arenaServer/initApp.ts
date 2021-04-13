@@ -7,6 +7,7 @@ import compression from 'compression'
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
 import { ErrorMiddleware, HeaderMiddleware, HttpsMiddleware, SessionMiddleware } from '../middleware'
+import { Api } from '../../api'
 
 export const initApp = (): ArenaApp => {
   const app: Express = express()
@@ -30,9 +31,8 @@ export const initApp = (): ArenaApp => {
   // TODO: AccessControlMiddleware must be initialized after authConfig
   // AccessControlMiddleware.init(app)
 
-  // TODO: ====== apis
   // authApi.init(app)
-  // app.use('/api', apiRouter.router)
+  Api.init(app)
 
   ErrorMiddleware.init(app)
 

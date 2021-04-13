@@ -2,12 +2,12 @@ import { ErrorRequestHandler, Express, NextFunction, Request, Response } from 'e
 
 import { Logger } from '../../log'
 import { Responses } from '../../utils'
-import { Middleware } from './middleware'
+import { ExpressInitializer } from '../expressInitializer'
 
 const logger: Logger = new Logger('Error Middleware')
 
-export const ErrorMiddleware: Middleware = {
-  init(app: Express): void {
+export const ErrorMiddleware: ExpressInitializer = {
+  init(express: Express): void {
     const errorRequestHandler: ErrorRequestHandler = (
       error: Error,
       _request: Request,
@@ -17,6 +17,6 @@ export const ErrorMiddleware: Middleware = {
       logger.error(error.stack)
       Responses.sendError(response, error)
     }
-    app.use(errorRequestHandler)
+    express.use(errorRequestHandler)
   },
 }

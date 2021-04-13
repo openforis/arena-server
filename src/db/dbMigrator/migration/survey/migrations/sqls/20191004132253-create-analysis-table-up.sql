@@ -1,5 +1,5 @@
 CREATE TABLE
-  processing_chain
+  chain
   (
     uuid           uuid        NOT NULL DEFAULT uuid_generate_v4(),
     date_created   TIMESTAMP   NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
@@ -13,34 +13,29 @@ CREATE TABLE
   );
 
 CREATE TABLE
-  processing_step
-  (
-    uuid                   uuid    NOT NULL DEFAULT uuid_generate_v4(),
-    processing_chain_uuid  uuid    NOT NULL,
-    index                  integer NOT NULL DEFAULT 0,
-    props                  jsonb   NOT NULL DEFAULT '{}'::jsonb,
-    PRIMARY KEY (uuid),
-    CONSTRAINT processingstep_chain_fk FOREIGN KEY (processing_chain_uuid) REFERENCES "processing_chain" ("uuid") ON DELETE CASCADE,
-    CONSTRAINT processingstep_index_idx UNIQUE (processing_chain_uuid, index)
-  );
-
-CREATE TABLE
-  processing_step_calculation
+  chain_node_def
   (
     uuid                  uuid    NOT NULL DEFAULT uuid_generate_v4(),
-    processing_step_uuid  uuid    NOT NULL,
+    chain_uuid            uuid    NOT NULL,
     node_def_uuid         uuid        NULL,
     index                 integer NOT NULL DEFAULT 0,
     props                 jsonb   NOT NULL DEFAULT '{}'::jsonb,
     script                text        NULL,
     PRIMARY KEY (uuid),
-    CONSTRAINT processingstepcalculation_processingstep_fk FOREIGN KEY (processing_step_uuid) REFERENCES "processing_step" ("uuid") ON DELETE CASCADE,
-    CONSTRAINT processingstepcalculation_nodedef_fk FOREIGN KEY (node_def_uuid) REFERENCES "node_def" ("uuid") ON DELETE CASCADE,
-    CONSTRAINT processingstepcalculation_index_idx UNIQUE (processing_step_uuid, index)
+    CONSTRAINT chainnodedef_chain_fk FOREIGN KEY (chain_uuid) REFERENCES "chain" ("uuid") ON DELETE CASCADE,
+    CONSTRAINT chainnodedef_nodedef_fk FOREIGN KEY (node_def_uuid) REFERENCES "node_def" ("uuid") ON DELETE CASCADE,
+    CONSTRAINT chainnodedef_index_idx UNIQUE (chain_uuid, index)
   );
 
 CREATE TABLE
-  user_analysis
-(
-  password VARCHAR(36) NOT NULL DEFAULT uuid_generate_v4()
-);
+  chain_node_def_aggregate
+  (
+    uuid                  uuid    NOT NULL DEFAULT uuid_generate_v4(),
+    chain_uuid            uuid    NOT NULL,
+    node_def_uuid         uuid        NULL,
+    props                 jsonb   NOT NULL DEFAULT '{}'::jsonb,
+    formula               text        NULL,
+    PRIMARY KEY (uuid),
+    CONSTRAINT chainnodedefaggregate_chain_fk FOREIGN KEY (chain_uuid) REFERENCES "chain" ("uuid") ON DELETE CASCADE,
+    CONSTRAINT chainnodedefaggregate_nodedef_fk FOREIGN KEY (node_def_uuid) REFERENCES "node_def" ("uuid") ON DELETE CASCADE
+  );
