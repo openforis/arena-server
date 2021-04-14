@@ -1,7 +1,7 @@
 export { ArenaServer, ServerError, ServerErrorCode, UnauthorizedError } from './server'
 export type { ArenaApp, ExpressInitializer } from './server'
 
-export { ApiEndpoint } from './api'
+export { ApiEndpoint, ApiAuthMiddleware } from './api'
 
 export {
   DB,
