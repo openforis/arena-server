@@ -57,7 +57,7 @@ const requireRecordPermission = (permissionFn: PermissionFn) => async (
 ) => {
   try {
     const { surveyId, recordUuid } = Requests.getParams(req)
-    const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as RecordService
+    const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
     const record = await service.get({ surveyId, recordUuid })
 
     checkPermission(req, next, permissionFn, record)
