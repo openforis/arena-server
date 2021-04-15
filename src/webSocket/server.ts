@@ -17,7 +17,7 @@ export class WebSocketServer {
         app.session(socket.request as Request, {} as Response, next as NextFunction)
       })
       .on(WebSocketEvent.connection, (socket) => {
-        const userUuid = socket.request.session.passport.user
+        const userUuid = socket.request.session.passport?.user
         const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
         WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
 
