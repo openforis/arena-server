@@ -17,4 +17,5 @@ export {
   TableChainNodeDefAggregate,
   TableNodeDef,
   TableSurvey,
+  TableUser,
 } from './table'

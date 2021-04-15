@@ -2,17 +2,17 @@ import { Table } from '../table'
 import { ColumnType } from './type'
 
 export class Column {
-  readonly name: string
+  readonly columnName: string
   readonly table: Table
   readonly type: ColumnType
 
-  constructor(table: Table, name: string, type: ColumnType) {
+  constructor(table: Table, columnName: string, type: ColumnType) {
     this.table = table
-    this.name = name
+    this.columnName = columnName
     this.type = type
   }
 
   toString(): string {
-    return `${this.table.alias}.${this.name}`
+    return `${this.table.alias}.${this.columnName}`
   }
 }
