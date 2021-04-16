@@ -18,7 +18,7 @@ export const get = async (options: { userUuid: string }, client: BaseProtocol = 
   // // Do not include password by default
   // if (!userUuid) selectFields.push(password)
 
-  const where = `user.uuid = '${userUuid}'`
+  const where = `table.uuid = '${userUuid}'`
   const sql = new SqlSelectBuilder()
     .select(...selectFields)
     .from(table)

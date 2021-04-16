@@ -8,7 +8,6 @@ export class TableUser extends TableSchemaPublic {
   readonly password: Column = new Column(this, 'password', ColumnType.varchar)
   readonly prefs: Column = new Column(this, 'prefs', ColumnType.jsonb)
   readonly profile_picture: Column = new Column(this, 'profile_picture', ColumnType.bytea)
-  // TODO: This should be enum: user_status
   readonly status: Column = new Column(this, 'status', ColumnType.varchar)
   readonly props: Column = new Column(this, 'props', ColumnType.jsonb)
 
