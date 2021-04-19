@@ -17,7 +17,7 @@ const ValidationMessages = {
   passwordChangeRequired: 'validationErrors.user.passwordChangeRequired',
 }
 
-const _initializeUser = async (_user: User): User => {
+const _initializeUser = async (_user: User): Promise<User> => {
   const user = { ..._user }
   if (user.password) delete user.password
 
@@ -36,6 +36,7 @@ const _initializeUser = async (_user: User): User => {
     }
   }
 
+  // @ts-ignore fixed by implementing repository method
   return userUpdated
 }
 

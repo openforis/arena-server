@@ -13,6 +13,7 @@ declare global {
   namespace Express {
     // Express.User is defined as {}
     // We extend it globally to be arena-core/User
+    // @ts-ignore
     type User = _User
   }
 }
