@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { User } from '@openforis/arena-core'
 
-type ArenaRequest = { user: User } & Request
+export type ArenaRequest = { user: User } & Request
 
 const getHost = (request: Request): string | undefined => request.header('host')
 const getParams = (req: Request): Record<string, any> => {

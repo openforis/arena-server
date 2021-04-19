@@ -12,6 +12,6 @@ export class TableUser extends TableSchemaPublic {
   readonly props: Column = new Column(this, 'props', ColumnType.jsonb)
 
   constructor() {
-    super('user')
+    super('"user"')
   }
 }
