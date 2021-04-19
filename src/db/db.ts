@@ -31,7 +31,7 @@ const configCommon = {
   // How long a client is allowed to remain idle before being closed
   idleTimeoutMillis: 30000,
   // Max number of clients in the pool
-  max: 10,
+  max: 30,
   // Whether to use ssl connections
   ssl: ProcessEnv.pgSsl,
 }

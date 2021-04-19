@@ -13,7 +13,7 @@ const logger: Logger = new Logger('Arena server')
 export const start = (app: ArenaApp): Promise<Server> =>
   new Promise<Server>((resolve) => {
     logger.info(`server starting`)
-    const port = ProcessEnv.arenaPort
+    const port = ProcessEnv.port
 
     const server: Server = app.express.listen(port)
     WebSocketServer.init(app, server)
