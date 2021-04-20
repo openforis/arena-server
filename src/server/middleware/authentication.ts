@@ -1,5 +1,5 @@
 import passport from 'passport'
-import passportLocal, { VerifyFunctionWithRequest } from 'passport-local'
+import { VerifyFunctionWithRequest, Strategy as LocalStrategy } from 'passport-local'
 import bcrypt from 'bcryptjs'
 import { Express } from 'express'
 import { FieldValidators, User, UserStatus, Validator } from '@openforis/arena-core'
@@ -80,7 +80,6 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
   sendError(ValidationMessages.passwordChangeRequired)
 }
 
-const LocalStrategy = passportLocal.Strategy
 const localStrategy = new LocalStrategy(
   {
     usernameField: 'email',
