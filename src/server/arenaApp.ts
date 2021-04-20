@@ -1,4 +1,4 @@
-import { Express, RequestHandler, Request as _Request } from 'express'
+import { Express, RequestHandler } from 'express'
 import { User as _User } from '@openforis/arena-core'
 /**
  * Express app wrapper.
