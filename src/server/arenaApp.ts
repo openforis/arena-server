@@ -1,5 +1,5 @@
 import { Express, RequestHandler } from 'express'
-import { User as _User } from '@openforis/arena-core'
+import { User as ArenaUser } from '@openforis/arena-core'
 /**
  * Express app wrapper.
  */
@@ -14,9 +14,10 @@ declare global {
     // Express.User is defined as {}
     // We extend it globally to be arena-core/User
     // @ts-ignore
-    type User = _User
+    type User = ArenaUser
     export interface Request {
-      user?: _User
+      // @ts-ignore
+      user: ArenaUser
     }
   }
 }
