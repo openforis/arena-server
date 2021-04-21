@@ -6,7 +6,13 @@ import compression from 'compression'
 
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
-import { ErrorMiddleware, HeaderMiddleware, HttpsMiddleware, SessionMiddleware } from '../middleware'
+import {
+  AuthenticationMiddleware,
+  ErrorMiddleware,
+  HeaderMiddleware,
+  HttpsMiddleware,
+  SessionMiddleware,
+} from '../middleware'
 import { Api } from '../../api'
 
 export const initApp = (): ArenaApp => {
@@ -27,9 +33,7 @@ export const initApp = (): ArenaApp => {
   app.use(compression({ threshold: 512 }))
   HeaderMiddleware.init(app)
   const session = SessionMiddleware.init(app)
-  //TODO: authConfig.init(app) ==> rename authConfig to AuthMiddleware
-  // TODO: AccessControlMiddleware must be initialized after authConfig
-  // AccessControlMiddleware.init(app)
+  AuthenticationMiddleware.init(app)
 
   // authApi.init(app)
   Api.init(app)

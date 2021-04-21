@@ -1,8 +1,9 @@
 export enum ColumnType {
   bigint = 'BIGINT',
   boolean = 'BOOLEAN',
-  decimal = `DECIMAL(22, 6)`,
+  bytea = 'BYTEA',
   date = 'DATE',
+  decimal = `DECIMAL(22, 6)`,
   geometryPoint = 'geometry(Point)',
   integer = 'INTEGER',
   jsonb = 'jsonb',

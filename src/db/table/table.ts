@@ -2,17 +2,17 @@ import { SQLs } from '../sql'
 
 export abstract class Table {
   readonly schema: string
-  readonly name: string
+  readonly tableName: string
   alias: string
 
-  protected constructor(schema: string, name: string) {
+  protected constructor(schema: string, tableName: string) {
     this.schema = schema
-    this.name = name
-    this.alias = SQLs.createAlias(name)
+    this.tableName = tableName
+    this.alias = SQLs.createAlias(tableName)
   }
 
   get nameQualified() {
-    return `${this.schema}."${this.name}"`
+    return `${this.schema}."${this.tableName}"`
   }
 
   get nameAliased() {
