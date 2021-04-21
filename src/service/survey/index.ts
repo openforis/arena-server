@@ -1,6 +1,7 @@
 import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } from '@openforis/arena-core'
 
 import { getAllIds } from './getAllIds'
+import { get } from './get'
 
 export const SurveyServiceServer: SurveyService = {
   // @ts-ignore
@@ -33,17 +34,7 @@ export const SurveyServiceServer: SurveyService = {
     throw new Error('TODO')
   },
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  get(options: {
-    draft?: boolean
-    nodeDefOptions?: { advanced?: boolean; cycle?: string; deleted?: boolean; draft?: boolean; include: boolean }
-    surveyId: number
-    user: User
-    validate?: boolean
-  }): Promise<Survey> {
-    throw new Error('TODO')
-  },
+  get,
 
   getAllIds,
 
