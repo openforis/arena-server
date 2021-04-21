@@ -18,6 +18,8 @@ export {
   TableChainNodeDefAggregate,
   TableNodeDef,
   TableSurvey,
+  TableUser,
+  TableUserResetPassword,
 } from './db'
 export type { BaseProtocol } from './db'
 

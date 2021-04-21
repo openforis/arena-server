@@ -19,4 +19,5 @@ export {
   TableNodeDef,
   TableSurvey,
   TableUser,
+  TableUserResetPassword,
 } from './table'
