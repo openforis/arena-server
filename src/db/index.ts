@@ -1,4 +1,5 @@
 export { DB } from './db'
+export { DBs } from './dbs'
 export type { BaseProtocol } from './db'
 
 export { DBMigrator } from './dbMigrator'
