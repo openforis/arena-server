@@ -21,8 +21,8 @@ export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB
     )
     .from(tableAuthGroupUser)
     .join(tableAuthGroup)
-    .on(`${tableAuthGroup.uuid} = ${tableAuthGroupUser.user_uuid}`)
-    .where(`${tableAuthGroupUser.user_uuid} = $1`)
+    .on(`${tableAuthGroup.uuid} = ${tableAuthGroupUser.userUuid}`)
+    .where(`${tableAuthGroupUser.userUuid} = $1`)
     .build()
 
   return client.many(sql, [userUuid] /*, dbTransformCallback */)
