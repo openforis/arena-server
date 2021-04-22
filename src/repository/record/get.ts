@@ -34,8 +34,8 @@ export const get = async (
       tableRecord.validation,
       `(${surveySql})`
     )
-    .from(tableSurvey)
-    .where(`${tableSurvey.id} = $2`)
+    .from(tableRecord)
+    .where(`${tableRecord.uuid} = $1`)
     .build()
 
   return client.one(recordSql, [recordUuid, surveyId] /*, dbTransformCallback(surveyId) */)
