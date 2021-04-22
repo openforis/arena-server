@@ -4,15 +4,6 @@ import { TableRecord } from '../../db/table/schemaSurvey/record'
 import { TableSurvey } from '../../db/table/schemaPublic/survey'
 import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
 
-// export const fetchRecordByUuid = async (surveyId, recordUuid, client = db) =>
-//   client.oneOrNone(
-//     `SELECT
-//      ${recordSelectFields}, (SELECT s.uuid AS survey_uuid FROM survey s WHERE s.id = $2)
-//      FROM ${getSurveyDBSchema(surveyId)}.record WHERE uuid = $1`,
-//     [recordUuid, surveyId],
-//     dbTransformCallback(surveyId)
-//   )
-
 export const get = async (
   options: {
     recordUuid: string
