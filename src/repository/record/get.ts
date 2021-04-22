@@ -19,7 +19,7 @@ export const get = async (
     surveyId: number
   },
   client: BaseProtocol = DB
-): Promise<Record | null> => {
+): Promise<Record> => {
   if (!('recordUuid' in options) || !('surveyId' in options)) throw new Error(`missingParams, ${options}`)
   const { recordUuid, surveyId } = options
   const tableRecord = new TableRecord(surveyId)
@@ -47,5 +47,5 @@ export const get = async (
     .where(`${tableSurvey.id} = $2`)
     .build()
 
-  return client.oneOrNone(recordSql, [recordUuid, surveyId] /*, dbTransformCallback(surveyId) */)
+  return client.one(recordSql, [recordUuid, surveyId] /*, dbTransformCallback(surveyId) */)
 }
