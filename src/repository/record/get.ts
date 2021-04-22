@@ -3,6 +3,7 @@ import { BaseProtocol, DB } from '../../db'
 import { TableRecord } from '../../db/table/schemaSurvey/record'
 import { TableSurvey } from '../../db/table/schemaPublic/survey'
 import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
+import { dbTransformCallback } from './transformCallback'
 
 export const get = async (
   options: {
@@ -38,5 +39,5 @@ export const get = async (
     .where(`${tableRecord.uuid} = $1`)
     .build()
 
-  return client.one(recordSql, [recordUuid, surveyId] /*, dbTransformCallback(surveyId) */)
+  return client.one(recordSql, [recordUuid, surveyId], (row) => dbTransformCallback({ surveyId, row }))
 }
