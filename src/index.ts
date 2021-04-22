@@ -17,6 +17,7 @@ export {
   TableChainNodeDef,
   TableChainNodeDefAggregate,
   TableNodeDef,
+  TableRecord,
   TableSurvey,
   TableUser,
   TableUserResetPassword,
