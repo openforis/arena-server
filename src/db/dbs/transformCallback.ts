@@ -35,6 +35,8 @@ export const transformCallback = (options: {
     return mergeProps({ row: rowUpdated, draft })
   }
 
+  // backup: camelize props_draft column into propsDraft
+  rowUpdated.propsDraft = row.props_draft
   delete rowUpdated.props_draft
   return rowUpdated
 }
