@@ -7,6 +7,8 @@ import { SqlBuilder } from './sqlBuilder'
 export class SqlSelectBuilder extends SqlBuilder {
   private _select: Array<Column | string> = []
   private _from: Array<Table> = []
+  private _join: Array<Table> = []
+  private _on: Array<string> = []
   private _where: Array<string> = []
   private _groupBy: Array<Column> = []
   private _offset: number | null = null
@@ -20,6 +22,16 @@ export class SqlSelectBuilder extends SqlBuilder {
 
   from(...tables: Array<Table>): this {
     this._from.push(...tables)
+    return this
+  }
+
+  join(...tables: Array<Table>): this {
+    this._join.push(...tables)
+    return this
+  }
+
+  on(...conditions: Array<string>): this {
+    this._on.push(...conditions)
     return this
   }
 
@@ -51,6 +63,9 @@ export class SqlSelectBuilder extends SqlBuilder {
   build(): string {
     const parts: Array<string> = [`SELECT ${this._select.join(', ')}`, `FROM ${this._from.join(' ')}`]
 
+    if (!Objects.isEmpty(this._join) && !Objects.isEmpty(this._on)) {
+      parts.push(`JOIN ${this._join.join(' ')} ON ${this._on.join(' ')}`)
+    }
     if (!Objects.isEmpty(this._where)) {
       parts.push(`WHERE ${this._where.join(' ')}`)
     }
