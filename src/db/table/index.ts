@@ -1,6 +1,13 @@
 export { Table } from './table'
 
-export { TableSchemaPublic, TableSurvey, TableUser, TableUserResetPassword } from './schemaPublic'
+export {
+  TableSchemaPublic,
+  TableSurvey,
+  TableUser,
+  TableUserResetPassword,
+  TableAuthGroup,
+  TableAuthGroupUser,
+} from './schemaPublic'
 
 export {
   TableSchemaSurvey,

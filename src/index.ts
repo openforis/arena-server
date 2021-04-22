@@ -20,6 +20,8 @@ export {
   TableSurvey,
   TableUser,
   TableUserResetPassword,
+  TableAuthGroup,
+  TableAuthGroupUser,
 } from './db'
 export type { BaseProtocol } from './db'
 

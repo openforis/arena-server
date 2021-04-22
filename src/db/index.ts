@@ -1,4 +1,5 @@
 export { DB } from './db'
+
 export { DBs } from './dbs'
 export type { BaseProtocol } from './db'
 
@@ -20,4 +21,6 @@ export {
   TableSurvey,
   TableUser,
   TableUserResetPassword,
+  TableAuthGroup,
+  TableAuthGroupUser,
 } from './table'
