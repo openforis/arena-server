@@ -17,7 +17,7 @@ export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB
       tableAuthGroup.surveyUuid,
       tableAuthGroup.name,
       tableAuthGroup.permissions,
-      tableAuthGroup.record_steps
+      tableAuthGroup.recordSteps
     )
     .from(tableAuthGroupUser)
     .join(tableAuthGroup)
