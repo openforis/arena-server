@@ -1,4 +1,4 @@
-import { AuthGroup } from '@openforis/arena-core'
+import { AuthGroup, Objects } from '@openforis/arena-core'
 import { BaseProtocol, DB } from '../../db'
 import { TableAuthGroup } from '../../db/table/schemaPublic/authGroup'
 import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
@@ -25,5 +25,5 @@ export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB
     .where(`${tableAuthGroupUser.userUuid} = $1`)
     .build()
 
-  return client.many(sql, [userUuid] /*, dbTransformCallback */)
+  return client.map(sql, [userUuid], (row) => Objects.camelize(row))
 }
