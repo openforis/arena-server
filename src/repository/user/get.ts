@@ -10,7 +10,7 @@ const _initializeUser = async (user: User): Promise<User> => {
   // Assoc auth groups
   let userUpdated = {
     ...user,
-    authGroups: await AuthGroupRepository.fetchUserGroups({ userUuid: user.uuid }),
+    authGroups: await AuthGroupRepository.getMany({ userUuid: user.uuid }),
   }
   if (user.status === UserStatus.INVITED) {
     const expired = !(await UserResetPasswordRepository.hasValidResetPassword({ userUuid: user.uuid }))
