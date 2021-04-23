@@ -1,5 +1,6 @@
 import { Survey } from '@openforis/arena-core'
 import { BaseProtocol, DB, SqlSelectBuilder, TableSurvey } from '../../db'
+import { DBs } from '../../db/dbs/index'
 
 /**
  * Returns a list of all survey ids.
@@ -29,5 +30,5 @@ export const get = async (
     .where(`${table.id} = $1`)
     .build()
 
-  return client.one<Survey>(sql, [options.surveyId])
+  return client.one<Survey>(sql, [options.surveyId], (row) => DBs.transformCallback({ row }))
 }
