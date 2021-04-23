@@ -3,6 +3,7 @@ import { BaseProtocol, DB } from '../../db'
 import { TableAuthGroup } from '../../db/table/schemaPublic/authGroup'
 import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
 import { TableAuthGroupUser } from '../../db/table/schemaPublic/authGroupUser'
+import { SqlJoinBuilder } from '../../db/sql/sqlJoinBuilder'
 
 export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB): Promise<AuthGroup[]> => {
   if (!('userUuid' in options)) throw new Error(`missingParams, ${options}`)
@@ -10,6 +11,11 @@ export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB
 
   const tableAuthGroup = new TableAuthGroup()
   const tableAuthGroupUser = new TableAuthGroupUser()
+
+  const joinClause = new SqlJoinBuilder()
+    .join(tableAuthGroup)
+    .on(`${tableAuthGroup.uuid} = ${tableAuthGroupUser.userUuid}`)
+    .build()
 
   const sql = new SqlSelectBuilder()
     .select(
@@ -20,8 +26,7 @@ export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB
       tableAuthGroup.recordSteps
     )
     .from(tableAuthGroupUser)
-    .join(tableAuthGroup)
-    .on(`${tableAuthGroup.uuid} = ${tableAuthGroupUser.userUuid}`)
+    .join(joinClause)
     .where(`${tableAuthGroupUser.userUuid} = $1`)
     .build()
 
