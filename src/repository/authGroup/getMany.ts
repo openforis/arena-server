@@ -15,7 +15,6 @@ export const getMany = (options: { userUuid: string }, client: BaseProtocol = DB
   const joinClause = new SqlJoinBuilder()
     .join(tableAuthGroup)
     .on(`${tableAuthGroup.uuid} = ${tableAuthGroupUser.userUuid}`)
-    .build()
 
   const sql = new SqlSelectBuilder()
     .select(
