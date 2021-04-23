@@ -24,7 +24,7 @@ CREATE TABLE
     PRIMARY KEY (uuid),
     CONSTRAINT chainnodedef_chain_fk FOREIGN KEY (chain_uuid) REFERENCES "chain" ("uuid") ON DELETE CASCADE,
     CONSTRAINT chainnodedef_nodedef_fk FOREIGN KEY (node_def_uuid) REFERENCES "node_def" ("uuid") ON DELETE CASCADE,
-    CONSTRAINT chainnodedef_index_idx UNIQUE (chain_uuid, index)
+    CONSTRAINT chainnodedef_nodedef_idx UNIQUE (node_def_uuid)
   );
 
 CREATE TABLE
