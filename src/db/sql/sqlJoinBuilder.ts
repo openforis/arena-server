@@ -3,11 +3,11 @@ import { SqlBuilder } from './sqlBuilder'
 import { Objects } from '@openforis/arena-core'
 
 export class SqlJoinBuilder extends SqlBuilder {
-  private _join: Array<Table> = []
+  private _tables: Array<Table> = []
   private _on: Array<string> = []
 
   join(...tables: Array<Table>): this {
-    this._join.push(...tables)
+    this._tables.push(...tables)
     return this
   }
 
@@ -17,8 +17,8 @@ export class SqlJoinBuilder extends SqlBuilder {
   }
 
   build(): string {
-    if (Objects.isEmpty(this._join) || Objects.isEmpty(this._on))
-      throw new Error(`missingParams: ${{ _join: this._join }}, ${{ _on: this._on }}`)
-    return `JOIN ${this._join.join(' ')} ON ${this._on.join(' ')}`
+    if (Objects.isEmpty(this._tables) || Objects.isEmpty(this._on))
+      throw new Error(`missingParams: ${{ tables: this._tables }}, ${{ _on: this._on }}`)
+    return `JOIN ${this._tables.join(' ')} ON ${this._on.join(' ')}`
   }
 }
