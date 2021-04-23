@@ -4,6 +4,7 @@ import { TableRecord } from '../../db/table/schemaSurvey/record'
 import { TableSurvey } from '../../db/table/schemaPublic/survey'
 import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
 import { dbTransformCallback } from './transformCallback'
+import { DBs } from '../../db/dbs/index'
 
 export const get = async (
   options: {
@@ -29,7 +30,7 @@ export const get = async (
       tableRecord.ownerUuid,
       tableRecord.step,
       tableRecord.cycle,
-      `to_char(${tableRecord.dateCreated},'YYYY-MM-DD"T"HH24:MI:ssZ') as ${tableRecord.dateCreated}`,
+      DBs.toChar(tableRecord.dateCreated),
       tableRecord.dateCreated,
       tableRecord.preview,
       tableRecord.validation,
