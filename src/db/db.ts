@@ -51,5 +51,6 @@ const config = ProcessEnv.dbUrl
     }
 
 export type BaseProtocol<T = any> = pgPromise.IBaseProtocol<T>
+export type IDatabase<T = any> = pgPromise.IDatabase<T>
 
 export const DB = pgp(config)
