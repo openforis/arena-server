@@ -23,8 +23,7 @@ afterAll(async () => {
 
 describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
   test('a username and password correct user is returned and logged in', async () => {
-    try {
-      const response = await testApi
+     const response = await testApi
         .request(app.express)
         .post(ApiEndpoint.auth.login())
         .set('Accept', 'application/json')
@@ -36,9 +35,6 @@ describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
       expect(data.user).toBeDefined()
       expect(data.user.uuid).toBeDefined()
       expect(data.user.email).toBe(__MOCK_USER__.email)
-    } catch (e) {
-      console.error(e)
-    }
   })
 
   test('missing param, should respond with a status code of 401', async (done) => {
