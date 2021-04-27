@@ -31,6 +31,7 @@ const sendResponse = (res: Response, user: User, survey: any = null) => {
 const sendUserSurvey = async (res: any, user: any, _surveyId: any) => {
   sendResponse(res, user)
   // try {
+
   //   let survey = await SurveyService.fetchSurveyById(surveyId, false, false)
   //   if (Authorizer.canEditSurvey(user, Survey.getSurveyInfo(survey))) {
   //     survey = await SurveyService.fetchSurveyById(surveyId, true, true)

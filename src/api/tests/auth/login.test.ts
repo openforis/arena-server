@@ -1,8 +1,8 @@
-import request from 'supertest'
+import testApi from '../utils'
+
 import { ArenaApp } from '../../../server/arenaApp'
-import { ArenaServer } from '../../../server/arenaServer/index'
+
 import { ApiEndpoint } from '../../endpoint/index'
-import { Server } from 'http'
 
 const __MOCK_USER__ = {
   email: 'test@arena.com',
@@ -12,23 +12,20 @@ const __MOCK_USER__ = {
 const __INVALID_MOCK_USER__ = { email: 'username' }
 
 let app: ArenaApp
-let server: Server
 
 beforeAll(async () => {
-  app = await ArenaServer.init()
-  // Start server
-  // if process.env.test == start server but dont start
-  server = await ArenaServer.start(app)
+  app = await testApi.init()
 })
 
 afterAll(async () => {
-  await ArenaServer.stop(server)
+  await testApi.stop()
 })
 
 describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
   test('a username and password correct user is returned and logged in', async () => {
     try {
-      const response = await request(app.express)
+      const response = await testApi
+        .request(app.express)
         .post(ApiEndpoint.auth.login())
         .set('Accept', 'application/json')
         .send(__MOCK_USER__)
@@ -45,7 +42,8 @@ describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
   })
 
   test('missing param, should respond with a status code of 401', async (done) => {
-    const response = await request(app.express)
+    const response = await testApi
+      .request(app.express)
       .post(ApiEndpoint.auth.login())
       .set('Accept', 'application/json')
       .send(__INVALID_MOCK_USER__)
