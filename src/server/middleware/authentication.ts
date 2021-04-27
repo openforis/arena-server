@@ -36,11 +36,11 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
     return
   }
 
-  if (user.status === UserStatus.ACCEPTED) {
-    sendUser(user)
+  if (user.status === UserStatus.FORCE_CHANGE_PASSWORD) {
+    sendError(ValidatorErrorKeys.user.passwordChangeRequired)
   }
 
-  sendError(ValidatorErrorKeys.user.passwordChangeRequired)
+  sendUser(user)
 }
 
 const localStrategy = new LocalStrategy(

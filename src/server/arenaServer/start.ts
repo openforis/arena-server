@@ -15,6 +15,7 @@ export const start = (app: ArenaApp): Promise<Server> =>
     logger.info(`server starting`)
     const port = ProcessEnv.port
 
+    // process.env.test == dont start this
     const server: Server = app.express.listen(port)
     WebSocketServer.init(app, server)
 
