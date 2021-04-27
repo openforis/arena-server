@@ -9,5 +9,5 @@ export const getAllIds = async (client: BaseProtocol = DB): Promise<Array<number
   const table = new TableSurvey()
   const sql = new SqlSelectBuilder().select(table.id).from(table).build()
 
-  return client.map<number>(sql, [], (result) => result.id)
+  return client.map<number>(sql, [], ({ id }) => id)
 }

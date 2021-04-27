@@ -3,6 +3,7 @@ import { User, UserStatus } from '@openforis/arena-core'
 import { UserResetPasswordRepository } from '../../repository'
 
 import { BaseProtocol, DB, SqlSelectBuilder, TableUser } from '../../db'
+import { AuthGroupRepository } from '../authGroup/index'
 
 const comparePassword = bcrypt.compareSync
 
@@ -10,7 +11,7 @@ const _initializeUser = async (user: User): Promise<User> => {
   // Assoc auth groups
   let userUpdated = {
     ...user,
-    authGroups: [], // await AuthGroupRepository.fetchUserGroups({ userUuid: user.uuid }),
+    authGroups: await AuthGroupRepository.getMany({ userUuid: user.uuid }),
   }
   if (user.status === UserStatus.INVITED) {
     const expired = !(await UserResetPasswordRepository.hasValidResetPassword({ userUuid: user.uuid }))

@@ -1,6 +1,13 @@
 export { Table } from './table'
 
-export { TableSchemaPublic, TableSurvey, TableUser } from './schemaPublic'
+export {
+  TableSchemaPublic,
+  TableSurvey,
+  TableUser,
+  TableUserResetPassword,
+  TableAuthGroup,
+  TableAuthGroupUser,
+} from './schemaPublic'
 
 export {
   TableSchemaSurvey,
@@ -8,6 +15,7 @@ export {
   TableChainNodeDef,
   TableChainNodeDefAggregate,
   TableNodeDef,
+  TableRecord,
 } from './schemaSurvey'
 
 export { TableResultSchemaSurveyRdb, TableSchemaSurveyRdb } from './schemaSurveyRdb'

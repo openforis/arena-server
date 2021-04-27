@@ -3,10 +3,12 @@ import { Objects } from '@openforis/arena-core'
 import { Column } from '../column'
 import { Table } from '../table'
 import { SqlBuilder } from './sqlBuilder'
+import { SqlJoinBuilder } from './sqlJoinBuilder'
 
 export class SqlSelectBuilder extends SqlBuilder {
   private _select: Array<Column | string> = []
   private _from: Array<Table> = []
+  private _join: Array<SqlJoinBuilder> = []
   private _where: Array<string> = []
   private _groupBy: Array<Column> = []
   private _offset: number | null = null
@@ -20,6 +22,11 @@ export class SqlSelectBuilder extends SqlBuilder {
 
   from(...tables: Array<Table>): this {
     this._from.push(...tables)
+    return this
+  }
+
+  join(...joins: Array<SqlJoinBuilder>): this {
+    this._join.push(...joins)
     return this
   }
 
@@ -51,6 +58,9 @@ export class SqlSelectBuilder extends SqlBuilder {
   build(): string {
     const parts: Array<string> = [`SELECT ${this._select.join(', ')}`, `FROM ${this._from.join(' ')}`]
 
+    if (!Objects.isEmpty(this._join)) {
+      parts.push(`${this._join.map((join) => join.build()).join(' ')}`)
+    }
     if (!Objects.isEmpty(this._where)) {
       parts.push(`WHERE ${this._where.join(' ')}`)
     }
