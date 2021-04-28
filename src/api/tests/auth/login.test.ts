@@ -14,7 +14,7 @@ afterAll(async () => {
 })
 
 describe(`Login ${ApiEndpoint.auth.login()}`, () => {
-  test('Login successfully', async () => {
+  test('Login successfully', async (done) => {
     const response = await apiTest
       .post(ApiEndpoint.auth.login())
       .send(mockUser)
@@ -25,13 +25,15 @@ describe(`Login ${ApiEndpoint.auth.login()}`, () => {
     expect(user).toBeDefined()
     expect(user.uuid).toBeDefined()
     expect(user.email).toBe(mockUser.email)
+    done()
   })
 
-  test('Login unsuccessfully', async () => {
+  test('Login unsuccessfully', async (done) => {
     const response = await apiTest.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
 
     const message: string = response.body.message
     expect(response.status).toBe(401)
     expect(message).toBe('Missing credentials')
+    done()
   })
 })
