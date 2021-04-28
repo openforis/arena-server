@@ -7,7 +7,7 @@ import { mockUser, mockUserInvalid } from '../mock/user'
 let apiTest: ApiTest
 beforeAll(async () => {
   apiTest = await ApiTest.getInstance()
-})
+}, 10000)
 
 afterAll(async () => {
   await apiTest.stopServer()
