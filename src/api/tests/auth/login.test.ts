@@ -1,55 +1,37 @@
-import testApi from '../utils'
-
-import { ArenaApp } from '../../../server'
+import { User } from '@openforis/arena-core'
 
 import { ApiEndpoint } from '../../endpoint'
+import { ApiTest } from '../apiTest'
+import { mockUser, mockUserInvalid } from '../mock/user'
 
-const __MOCK_USER__ = {
-  email: 'test@arena.com',
-  password: 'test',
-}
-
-const __INVALID_MOCK_USER__ = { email: 'username' }
-
-let app: ArenaApp
-
+let apiTest: ApiTest
 beforeAll(async () => {
-  app = await testApi.init()
+  apiTest = await ApiTest.getInstance()
 })
 
 afterAll(async () => {
-  await testApi.stop()
+  await apiTest.stopServer()
 })
 
-describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
-  test('a username and password correct user is returned and logged in', async () => {
-    const response = await testApi
-      .request(app.express)
+describe(`Login ${ApiEndpoint.auth.login()}`, () => {
+  test('Login successfully', async () => {
+    const response = await apiTest
       .post(ApiEndpoint.auth.login())
-      .set('Accept', 'application/json')
-      .send(__MOCK_USER__)
+      .send(mockUser)
       .expect('Content-Type', /json/)
       .expect(200)
 
-    const data = JSON.parse(response.text)
-    expect(data.user).toBeDefined()
-    expect(data.user.uuid).toBeDefined()
-    expect(data.user.email).toBe(__MOCK_USER__.email)
+    const user: User = response.body.user
+    expect(user).toBeDefined()
+    expect(user.uuid).toBeDefined()
+    expect(user.email).toBe(mockUser.email)
   })
 
-  test('missing param, should respond with a status code of 401', async (done) => {
-    const response = await testApi
-      .request(app.express)
-      .post(ApiEndpoint.auth.login())
-      .set('Accept', 'application/json')
-      .send(__INVALID_MOCK_USER__)
-      .expect(401)
-      .then(() => done())
-      .catch(console.error)
-    console.log('===== response ', response)
+  test('Login unsuccessfully', async () => {
+    const response = await apiTest.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
+
+    const message: string = response.body.message
     expect(response.status).toBe(401)
-    const data = JSON.parse(response.text)
-    console.log(data.message)
-    expect(data.message).toBe('Missing credentials')
+    expect(message).toBe('Missing credentials')
   })
 })
