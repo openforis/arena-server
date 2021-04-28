@@ -42,4 +42,3 @@ jobs:
           PGDATABASE: arena
           PGUSER: arena
           PGPASSWORD: arena
-          SESSION_ID_COOKIE_SECRET: my-cookie-secret
