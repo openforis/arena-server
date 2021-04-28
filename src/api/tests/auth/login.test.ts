@@ -1,8 +1,8 @@
 import testApi from '../utils'
 
-import { ArenaApp } from '../../../server/arenaApp'
+import { ArenaApp } from '../../../server'
 
-import { ApiEndpoint } from '../../endpoint/index'
+import { ApiEndpoint } from '../../endpoint'
 
 const __MOCK_USER__ = {
   email: 'test@arena.com',
@@ -23,18 +23,18 @@ afterAll(async () => {
 
 describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
   test('a username and password correct user is returned and logged in', async () => {
-     const response = await testApi
-        .request(app.express)
-        .post(ApiEndpoint.auth.login())
-        .set('Accept', 'application/json')
-        .send(__MOCK_USER__)
-        .expect('Content-Type', /json/)
-        .expect(200)
+    const response = await testApi
+      .request(app.express)
+      .post(ApiEndpoint.auth.login())
+      .set('Accept', 'application/json')
+      .send(__MOCK_USER__)
+      .expect('Content-Type', /json/)
+      .expect(200)
 
-      const data = JSON.parse(response.text)
-      expect(data.user).toBeDefined()
-      expect(data.user.uuid).toBeDefined()
-      expect(data.user.email).toBe(__MOCK_USER__.email)
+    const data = JSON.parse(response.text)
+    expect(data.user).toBeDefined()
+    expect(data.user.uuid).toBeDefined()
+    expect(data.user.email).toBe(__MOCK_USER__.email)
   })
 
   test('missing param, should respond with a status code of 401', async (done) => {
@@ -46,9 +46,10 @@ describe(`POST ${ApiEndpoint.auth.login()} given`, () => {
       .expect(401)
       .then(() => done())
       .catch(console.error)
-
+    console.log('===== response ', response)
     expect(response.status).toBe(401)
     const data = JSON.parse(response.text)
+    console.log(data.message)
     expect(data.message).toBe('Missing credentials')
   })
 })

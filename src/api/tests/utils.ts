@@ -1,6 +1,6 @@
 import request from 'supertest'
 
-import { ArenaApp } from '../../server/arenaApp'
+import { ArenaApp } from '../../server'
 import { ArenaServer } from '../../server'
 
 let app: ArenaApp
@@ -10,7 +10,9 @@ const init = async () => {
   return app
 }
 
-const stop = async () => {}
+const stop = async () => {
+  // TODO
+}
 
 export default {
   request,
