@@ -29,7 +29,7 @@ export const ProcessEnv = {
 
   // Express
   port: process.env.PORT || '9090',
-  sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET,
+  sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET || 'session-cookie-secret',
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: process.env.USE_HTTPS === 'true',
 }
