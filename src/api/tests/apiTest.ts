@@ -4,7 +4,7 @@ import request, { SuperTest, Test } from 'supertest'
 import { ArenaServer } from '../../server'
 
 export class ApiTest {
-  private readonly server: Server
+  private server: Server
   private superTest: SuperTest<Test>
 
   private constructor(server: Server) {
@@ -28,5 +28,9 @@ export class ApiTest {
 
   public async stopServer(): Promise<void> {
     await ArenaServer.stop(this.server)
+  }
+
+  public getServer(): Server {
+    return this.server
   }
 }
