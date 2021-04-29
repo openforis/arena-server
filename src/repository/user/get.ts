@@ -59,7 +59,8 @@ export const get = async (options: getOptionsType, client: BaseProtocol = DB): P
     .where(`${column} = $1`)
     .build()
 
-  const user = await client.one<User>(sql, [value])
+  const user = await client.oneOrNone<User>(sql, [value])
+  if (!user) return null
   // Incorrect password check
   if ('password' in options && user.password && !(await comparePassword(options.password, user.password))) return null
   if (user.password) delete user.password
