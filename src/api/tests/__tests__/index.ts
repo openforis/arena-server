@@ -12,7 +12,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await apiTest.stopServer()
-})
+}, 10000)
 
 describe('API Tests', () => {
   Login()
