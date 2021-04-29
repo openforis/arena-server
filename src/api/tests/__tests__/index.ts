@@ -11,7 +11,7 @@ beforeAll(async () => {
 }, 10000)
 
 afterAll(async () => {
-  await global.apiTest.stopServer()
+  await apiTest.stopServer()
 })
 
 describe('API Tests', () => {
