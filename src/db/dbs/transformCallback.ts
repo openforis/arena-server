@@ -29,7 +29,7 @@ export const transformCallback = (options: {
 
   // Assoc published and draft properties based on props
   const currentRow = backup || assocPublishedDraft ? _assocPublishedDraft(row) : row
-  const rowUpdated = Objects.camelize({ object: currentRow, skip: ['validation', 'props', 'props_draft'] })
+  const rowUpdated = Objects.camelize(currentRow, { skip: ['validation', 'props', 'props_draft'] })
 
   if (!backup) {
     return mergeProps({ row: rowUpdated, draft })

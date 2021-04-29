@@ -9,6 +9,7 @@ import {
   ValidatorErrorKeys,
   ServiceRegistry,
   ServiceType,
+  UserService,
 } from '@openforis/arena-core'
 
 import { ExpressInitializer } from '../expressInitializer'
@@ -28,7 +29,7 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
     return
   }
 
-  const service = ServiceRegistry.getInstance().getService(ServiceType.user)
+  const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
   const user = await service.get({ email, password })
 
   if (!user) {
@@ -63,9 +64,9 @@ export const AuthenticationMiddleware: ExpressInitializer = {
     passport.serializeUser((user, done) => done(null, user?.uuid))
 
     passport.deserializeUser(async (userUuid: string, done) => {
-      const service = ServiceRegistry.getInstance().getService(ServiceType.user)
+      const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
 
-      const user: User = await service.get({ userUuid })
+      const user: User | null = await service.get({ userUuid })
 
       done(null, user)
     })
