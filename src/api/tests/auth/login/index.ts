@@ -6,7 +6,7 @@ import { mockUser, mockUserInvalid } from '../../mock/user'
 export default (): void =>
   describe(`Login ${ApiEndpoint.auth.login()}`, () => {
     test('Login successfully', async (done) => {
-      const response = await global.apiTest
+      const response = await global.api
         .post(ApiEndpoint.auth.login())
         .send(mockUser)
         .expect('Content-Type', /json/)
@@ -20,7 +20,7 @@ export default (): void =>
     })
 
     test('Login unsuccessfully', async (done) => {
-      const response = await global.apiTest.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
+      const response = await global.api.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
 
       const message: string = response.body.message
       expect(response.status).toBe(401)

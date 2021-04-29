@@ -1,20 +1,33 @@
-import { ApiTest } from '../apiTest'
-import Login from '../auth/login'
-import { insertTestUser } from '../utils/insertTestUser'
-import { ArenaServer } from '../../../server/arenaServer/index'
+import { Server } from 'http'
 
-let apiTest: ApiTest
+import { ArenaServer } from '../../../server'
+import { ApiTest } from '../apiTest'
+import { insertTestUser } from '../utils/insertTestUser'
+import login from '../auth/login'
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      api: ApiTest
+    }
+  }
+}
+
+let server: Server
 
 beforeAll(async () => {
+  const app = await ArenaServer.init()
+  server = await ArenaServer.start(app)
+
   await insertTestUser()
-  apiTest = await ApiTest.getInstance()
-  global.apiTest = apiTest
+  global.api = new ApiTest(server)
 }, 10000)
 
 afterAll(async () => {
-  await ArenaServer.stop(apiTest.getServer())
+  await ArenaServer.stop(server)
 })
 
 describe('API Tests', () => {
-  Login()
+  login()
 })

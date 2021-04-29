@@ -1,6 +1,5 @@
 import { Express, RequestHandler } from 'express'
 import { User as ArenaUser } from '@openforis/arena-core'
-import { ApiTest } from '../api/tests/apiTest'
 
 /**
  * Express app wrapper.
@@ -11,12 +10,6 @@ export interface ArenaApp {
 }
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      apiTest: ApiTest
-    }
-  }
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     // Express.User is defined as {}
