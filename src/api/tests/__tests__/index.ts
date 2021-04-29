@@ -5,7 +5,7 @@ import { insertTestUser } from '../utils/insertTestUser'
 let apiTest: ApiTest
 
 beforeAll(async () => {
-  insertTestUser()
+  await insertTestUser()
   apiTest = await ApiTest.getInstance()
   global.apiTest = apiTest
 }, 10000)
