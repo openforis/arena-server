@@ -1,5 +1,6 @@
 import { Express, RequestHandler } from 'express'
 import { User as ArenaUser } from '@openforis/arena-core'
+
 /**
  * Express app wrapper.
  */

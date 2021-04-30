@@ -14,7 +14,6 @@ import {
 
 import { ExpressInitializer } from '../expressInitializer'
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
-  const sendUser = (user: User) => done(null, user)
   const sendError = (message: string) => done(null, false, { message })
 
   const validator = new Validator()
@@ -29,19 +28,24 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
     return
   }
 
-  const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
-  const user = await service.get({ email, password })
+  try {
+    const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+    const user = await service.get({ email, password })
 
-  if (!user) {
-    sendError(ValidatorErrorKeys.user.userNotFound)
-    return
+    if (!user) {
+      sendError(ValidatorErrorKeys.user.userNotFound)
+      return
+    }
+
+    if (user.status === UserStatus.FORCE_CHANGE_PASSWORD) {
+      sendError(ValidatorErrorKeys.user.passwordChangeRequired)
+      return
+    }
+
+    done(null, user)
+  } catch (error) {
+    sendError(error.toString())
   }
-
-  if (user.status === UserStatus.ACCEPTED) {
-    sendUser(user)
-  }
-
-  sendError(ValidatorErrorKeys.user.passwordChangeRequired)
 }
 
 const localStrategy = new LocalStrategy(

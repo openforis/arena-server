@@ -10,8 +10,8 @@ import { onShutdown } from './stop'
 
 const logger: Logger = new Logger('Arena server')
 
-export const start = (app: ArenaApp): Promise<Server> =>
-  new Promise<Server>((resolve) => {
+export const start = (app: ArenaApp): Promise<Server> => {
+  return new Promise<Server>((resolve) => {
     logger.info(`server starting`)
     const port = ProcessEnv.port
 
@@ -26,7 +26,6 @@ export const start = (app: ArenaApp): Promise<Server> =>
       },
       onShutdown,
     })
-
     server.once('listening', () => {
       //TODO: schedulers
       // await RecordPreviewCleanup.init()
@@ -34,6 +33,8 @@ export const start = (app: ArenaApp): Promise<Server> =>
       // await UserResetPasswordCleanup.init()
 
       logger.info(`server started and listening on port ${port}`)
+
       resolve(server)
     })
   })
+}

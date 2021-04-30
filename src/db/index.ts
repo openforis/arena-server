@@ -7,7 +7,7 @@ export { DBMigrator } from './dbMigrator'
 
 export { Schemata } from './schemata'
 
-export { SqlSelectBuilder, SQLs } from './sql'
+export { SqlSelectBuilder, SQLs, SqlJoinBuilder } from './sql'
 
 export {
   TableSchemaPublic,

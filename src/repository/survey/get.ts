@@ -3,7 +3,7 @@ import { BaseProtocol, DB, SqlSelectBuilder, TableSurvey } from '../../db'
 import { DBs } from '../../db/dbs/index'
 
 /**
- * Returns a list of all survey ids.
+ * Returns a survey by id.
  *
  * @param client - Database client.
  */
