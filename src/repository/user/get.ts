@@ -1,37 +1,15 @@
 import bcrypt from 'bcryptjs'
-import { User, UserStatus } from '@openforis/arena-core'
-import { UserResetPasswordRepository } from '../../repository'
+import { User } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlSelectBuilder, TableUser } from '../../db'
-import { AuthGroupRepository } from '../authGroup/index'
 
-const comparePassword = bcrypt.compareSync
-
-const _initializeUser = async (user: User): Promise<User> => {
-  // Assoc auth groups
-  let userUpdated = {
-    ...user,
-    authGroups: await AuthGroupRepository.getMany({ userUuid: user.uuid }),
-  }
-  if (user.status === UserStatus.INVITED) {
-    const expired = !(await UserResetPasswordRepository.hasValidResetPassword({ userUuid: user.uuid }))
-    userUpdated = {
-      ...userUpdated,
-      invitation: {
-        expired,
-      },
-    }
-  }
-
-  return userUpdated
-}
+type getOptionsType = { userUuid: string } | { email: string } | { email: string; password: string }
 
 /**
  * Returns a user by id.
  *
  * @param client - Database client.
  */
-type getOptionsType = { userUuid: string } | { email: string } | { email: string; password: string }
 export const get = async (options: getOptionsType, client: BaseProtocol = DB): Promise<User | null> => {
   if (!('userUuid' in options) && !('email' in options)) throw new Error(`missingParams, ${options}`)
 
@@ -62,8 +40,9 @@ export const get = async (options: getOptionsType, client: BaseProtocol = DB): P
   const user = await client.oneOrNone<User>(sql, [value])
   if (!user) return null
   // Incorrect password check
-  if ('password' in options && user.password && !(await comparePassword(options.password, user.password))) return null
+  if ('password' in options && user.password && !(await bcrypt.compareSync(options.password, user.password)))
+    return null
   if (user.password) delete user.password
 
-  return _initializeUser(user)
+  return user
 }

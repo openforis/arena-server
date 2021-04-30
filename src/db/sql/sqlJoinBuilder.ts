@@ -1,18 +1,18 @@
+import { Objects } from '@openforis/arena-core'
 import { Table } from '../table'
 import { SqlBuilder } from './sqlBuilder'
-import { Objects } from '@openforis/arena-core'
 
 export class SqlJoinBuilder extends SqlBuilder {
   private _tables: Array<Table> = []
   private _on: Array<string> = []
 
-  join(...tables: Array<Table>): this {
-    this._tables.push(...tables)
+  join(table: Table): this {
+    this._tables.push(table)
     return this
   }
 
-  on(...conditions: Array<string>): this {
-    this._on.push(...conditions)
+  on(condition: string): this {
+    this._on.push(condition)
     return this
   }
 

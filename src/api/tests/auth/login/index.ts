@@ -1,4 +1,5 @@
 import { User } from '@openforis/arena-core'
+import { AuthGroupName } from '@openforis/arena-core/dist/auth/authGroup'
 
 import { ApiEndpoint } from '../../../endpoint'
 import { mockUser, mockUserInvalid } from '../../mock/user'
@@ -12,6 +13,8 @@ export default (): void =>
       expect(user).toBeDefined()
       expect(user.uuid).toBeDefined()
       expect(user.email).toBe(mockUser.email)
+      expect(user.authGroups?.length).toBe(1)
+      expect(user.authGroups?.[0].name).toBe(AuthGroupName.systemAdmin)
     })
 
     test('Login fail', async () => {
