@@ -1,5 +1,6 @@
 import { LogLevel } from './logLevel'
 import { getLogger } from './log4js'
+import { NodeEnv, ProcessEnv } from '../processEnv'
 
 /**
  * Logger class with custom prefix.
@@ -13,7 +14,7 @@ export class Logger {
   }
 
   private static isLevelEnabled(level: LogLevel): boolean {
-    return Logger.LOGGER.isLevelEnabled(level)
+    return Logger.LOGGER.isLevelEnabled(level) && ProcessEnv.nodeEnv !== NodeEnv.test
   }
 
   private log(level: LogLevel, msgs: Array<any>): void {
