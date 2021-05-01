@@ -1,14 +1,6 @@
 import { Express, Response, Request, NextFunction } from 'express'
 import passport from 'passport'
-import {
-  Authorizer,
-  ServiceRegistry,
-  ServiceType,
-  Survey,
-  SurveyService,
-  User,
-  UserService,
-} from '@openforis/arena-core'
+import { Authorizer, ServiceRegistry, ServiceType, SurveyService, User, UserService } from '@openforis/arena-core'
 
 import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
@@ -49,21 +41,22 @@ export const deletePrefSurvey = (user: User): User => {
   return _user
 }
 
-const sendResponse = (res: Response, user: User, survey: Survey | null = null) => res.json({ user, survey })
+const sendResponse = (res: Response, user: User) => res.json({ user })
 
 const sendUserSurvey = async (options: { res: Response; user: User }) => {
   const { res, user } = options
   const surveyId = user.prefs?.surveys?.current
-  if (!surveyId) return
   try {
     const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
-    let survey = await service.get({ surveyId, draft: false, validate: false })
-
-    if (Authorizer.canEditSurvey(user, survey)) {
-      survey = await service.get({ surveyId, draft: true, validate: true })
+    let survey = null
+    if (surveyId) {
+      survey = await service.get({ surveyId, draft: false, validate: false })
     }
 
-    sendResponse(res, user, survey)
+    if (survey && surveyId && Authorizer.canEditSurvey(user, survey)) {
+      survey = await service.get({ surveyId, draft: true, validate: true })
+    }
+    res.json({ user, survey })
   } catch (error) {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
     // Survey not found with user pref
@@ -75,10 +68,14 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
 
 const sendUser = async (options: { res: Response; req: Request; user: User }) => {
   const { res, req, user } = options
-  const { includeSurveyId } = req.query
-
-  if (includeSurveyId) await sendUserSurvey({ res, user })
-  sendResponse(res, user)
+  const {
+    query: { includeSurveyId },
+  } = req
+  if (includeSurveyId) {
+    await sendUserSurvey({ res, user })
+  } else {
+    sendResponse(res, user)
+  }
 }
 
 const authenticationSuccessful = (req: Request, res: Response, next: NextFunction, user: User) =>
