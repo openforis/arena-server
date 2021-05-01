@@ -69,9 +69,9 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
 const sendUser = async (options: { res: Response; req: Request; user: User }) => {
   const { res, req, user } = options
   const {
-    query: { includeSurveyId },
+    query: { includeSurvey },
   } = req
-  if (includeSurveyId) {
+  if (includeSurvey) {
     await sendUserSurvey({ res, user })
   } else {
     sendResponse(res, user)

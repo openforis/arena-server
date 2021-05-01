@@ -20,7 +20,7 @@ export default (): void =>
 
     test('Login success with surveyId', async () => {
       const { body } = await global.api
-        .post(`${ApiEndpoint.auth.login()}?includeSurveyId=true`)
+        .post(`${ApiEndpoint.auth.login()}?includeSurvey=true`)
         .send(mockUser)
         .expect(200)
       expect(body.survey).toBeDefined()
