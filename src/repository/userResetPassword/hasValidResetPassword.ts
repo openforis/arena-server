@@ -1,5 +1,5 @@
-import { TableUserResetPassword } from '../../db/table/schemaPublic/userResetPassword'
-import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
+import { TableUserResetPassword } from '../../db'
+import { SqlSelectBuilder } from '../../db'
 import { BaseProtocol, DB } from '../../db'
 
 export const hasValidResetPassword = (options: { userUuid: string }, client: BaseProtocol = DB): Promise<boolean> => {

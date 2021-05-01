@@ -1,10 +1,11 @@
 import { Survey } from '@openforis/arena-core'
 import { BaseProtocol, DB, SqlSelectBuilder, TableSurvey } from '../../db'
-import { DBs } from '../../db/dbs/index'
+import { DBs } from '../../db'
 
 /**
  * Returns a survey by id.
  *
+ * @param options
  * @param client - Database client.
  */
 export const get = async (

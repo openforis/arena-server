@@ -4,7 +4,7 @@ import { createTerminus } from '@godaddy/terminus'
 import { DB } from '../../db'
 import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
-import { WebSocketServer } from '../../webSocket/server'
+import { WebSocketServer } from '../../webSocket'
 import { ArenaApp } from '../arenaApp'
 import { onShutdown } from './stop'
 
