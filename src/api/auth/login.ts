@@ -42,8 +42,6 @@ export const deletePrefSurvey = (user: User): User => {
   return _user
 }
 
-const sendResponse = (res: Response, user: User) => res.json({ user })
-
 const sendUserSurvey = async (options: { res: Response; user: User }) => {
   const { res, user } = options
   const surveyId = user.prefs?.surveys?.current
@@ -63,7 +61,7 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
     // Survey not found with user pref
     // removing user pref
     const _user = deletePrefSurvey(user)
-    sendResponse(res, await updateUserPrefs(_user))
+    res.json({ user: await updateUserPrefs(_user) })
   }
 }
 
@@ -73,7 +71,7 @@ const sendUser = async (options: { res: Response; req: Request; user: User }) =>
   if (includeSurvey) {
     await sendUserSurvey({ res, user })
   } else {
-    sendResponse(res, user)
+    res.json({ user })
   }
 }
 
