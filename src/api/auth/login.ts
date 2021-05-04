@@ -6,6 +6,7 @@ import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
 import { Logger } from '../../log'
 import { AuthGroupRepository } from '../../repository'
+import { Requests } from '../../utils'
 
 const logger = new Logger('AuthAPI')
 
@@ -68,9 +69,7 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
 
 const sendUser = async (options: { res: Response; req: Request; user: User }) => {
   const { res, req, user } = options
-  const {
-    query: { includeSurvey },
-  } = req
+  const { includeSurvey } = Requests.getParams(req)
   if (includeSurvey) {
     await sendUserSurvey({ res, user })
   } else {
