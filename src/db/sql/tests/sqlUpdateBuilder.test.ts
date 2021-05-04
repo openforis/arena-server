@@ -10,7 +10,7 @@ describe('SqlUpdateBuilder builds correct:', () => {
   test('update+set', async () => {
     const table = new TableUser()
 
-    const sql = new SqlUpdateBuilder().update(table).set(`prefs = prefs || $1::jsonb`).build()
+    const sql = new SqlUpdateBuilder().update(table).set(`prefs`, `prefs || $1::jsonb`).build()
 
     expect(sql).toBe(`${update} ${set}`)
   })
@@ -20,7 +20,7 @@ describe('SqlUpdateBuilder builds correct:', () => {
 
     const sql = new SqlUpdateBuilder()
       .update(table)
-      .set(`prefs = prefs || $1::jsonb`)
+      .set(`prefs`, `prefs || $1::jsonb`)
       .where(`${table.uuid} = $2`)
       .build()
 
@@ -33,7 +33,7 @@ describe('SqlUpdateBuilder builds correct:', () => {
 
     const sql = new SqlUpdateBuilder()
       .update(table)
-      .set(`prefs = prefs || $1::jsonb`)
+      .set(`prefs`, `prefs || $1::jsonb`)
       .where(`${table.uuid} = $2`)
       .returning(...selectFields)
       .build()
