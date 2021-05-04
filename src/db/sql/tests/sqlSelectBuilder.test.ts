@@ -131,7 +131,7 @@ describe('SqlSelectBuilder builds correct:', () => {
     expect(sql).toBe(`${select} ${from} ${where} ${groupBy} ${offset} ${limit}`)
   })
 
-  test('groupBy works', async () => {
+  test('orderBy works', async () => {
     const tableAuthGroup = new TableAuthGroup()
 
     const sql = new SqlSelectBuilder()
