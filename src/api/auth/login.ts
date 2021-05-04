@@ -5,19 +5,9 @@ import { Authorizer, ServiceRegistry, ServiceType, SurveyService, User, UserServ
 import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
 import { Logger } from '../../log'
-import { AuthGroupRepository } from '../../repository'
 import { Requests } from '../../utils'
 
 const logger = new Logger('AuthAPI')
-
-export const updateUserPrefs = async (userToUpdate: User): Promise<User> => {
-  const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
-  const user = await service.updateUserPrefs({ userToUpdate })
-  return {
-    ...user,
-    authGroups: await AuthGroupRepository.getMany({ userUuid: user.uuid }),
-  }
-}
 
 export const deletePrefSurvey = (user: User): User => {
   const surveyId = user.prefs?.surveys?.current
@@ -60,8 +50,10 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
     // Survey not found with user pref
     // removing user pref
-    const _user = deletePrefSurvey(user)
-    res.json({ user: await updateUserPrefs(_user) })
+    const userToUpdate = deletePrefSurvey(user)
+    const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+
+    res.json({ user: await service.updateUserPrefs({ userToUpdate }) })
   }
 }
 
