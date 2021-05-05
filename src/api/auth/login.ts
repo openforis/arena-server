@@ -12,22 +12,7 @@ const logger = new Logger('AuthAPI')
 export const deletePrefSurvey = (user: User): User => {
   const surveyId = user.prefs?.surveys?.current
   if (!surveyId) return user
-  const current = { current: -1 }
-  const surveys = {
-    ...user.prefs?.surveys,
-    [-1]: { cycle: 0 },
-  }
-
-  const _user: User = {
-    ...user,
-    prefs: {
-      ...user.prefs,
-      surveys: {
-        ...surveys,
-        ...current,
-      },
-    },
-  }
+  const _user: User = { ...user }
   delete _user.prefs?.surveys?.[surveyId]
   return _user
 }
