@@ -3,11 +3,11 @@ import { SqlBuilder } from './sqlBuilder'
 import { Table } from '../table'
 import { Column } from '../column'
 
-type setType = { column: Column | string; value: string }
+type SetType = { column: Column | string; value: string }
 
 export class SqlUpdateBuilder extends SqlBuilder {
   private _update: Table | null = null
-  private _set: setType[] = []
+  private _set: SetType[] = []
   private _where: string[] = []
   private _returning: Column[] = []
 
@@ -37,7 +37,7 @@ export class SqlUpdateBuilder extends SqlBuilder {
     const _getColumnName = (column: Column | string) => (typeof column === 'string' ? column : column.getColumnName())
     const parts: Array<string> = [
       `UPDATE ${this._update}`,
-      `SET ${this._set.map(({ column, value }: setType) => `${_getColumnName(column)} = ${value}`).join(', ')}`,
+      `SET ${this._set.map(({ column, value }: SetType) => `${_getColumnName(column)} = ${value}`).join(', ')}`,
     ]
 
     if (!Objects.isEmpty(this._where)) {
