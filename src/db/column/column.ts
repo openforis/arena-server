@@ -12,6 +12,10 @@ export class Column {
     this.type = type
   }
 
+  getColumnName(): string {
+    return this.columnName
+  }
+
   toString(): string {
     return `${this.table.alias}.${this.columnName}`
   }
