@@ -24,4 +24,5 @@ export {
   TableUserResetPassword,
   TableAuthGroup,
   TableAuthGroupUser,
+  TableActivityLog,
 } from './table'

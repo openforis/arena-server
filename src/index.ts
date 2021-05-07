@@ -26,6 +26,7 @@ export {
   TableUserResetPassword,
   TableAuthGroup,
   TableAuthGroupUser,
+  TableActivityLog,
 } from './db'
 export type { BaseProtocol } from './db'
 
