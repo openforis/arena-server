@@ -36,15 +36,14 @@ export const SurveyCreate: ExpressInitializer = {
           survey: await validator.validate(requestSurvey, fieldValidators),
           surveyProps: await validator.validate(requestSurvey.props, fieldValidatorsProps),
         }
+
         if (validation.survey.valid && validation.surveyProps.valid) {
-          const newSurvey = SurveyFactory.createInstance(...requestSurvey)
+          const newSurvey = SurveyFactory.createInstance({ ...requestSurvey })
           // const survey = await SurveyService.insertSurvey({ user, surveyInfo: surveyInfoTarget })
 
           res.json({ survey: newSurvey })
-          return
         } else {
           res.json({ validation })
-          return
         }
       } catch (error) {
         next(error)
