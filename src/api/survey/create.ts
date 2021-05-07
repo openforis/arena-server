@@ -38,7 +38,7 @@ export const SurveyCreate: ExpressInitializer = {
         }
 
         if (validation.survey.valid && validation.surveyProps.valid) {
-          const newSurvey = SurveyFactory.createInstance({ ...requestSurvey })
+          const newSurvey = SurveyFactory.createInstance(requestSurvey)
           // const survey = await SurveyService.insertSurvey({ user, surveyInfo: surveyInfoTarget })
 
           res.json({ survey: newSurvey })
