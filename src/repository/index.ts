@@ -1,3 +1,4 @@
+export { ActivityLogRepository } from './activityLog'
 export { AuthGroupRepository } from './authGroup'
 export { SurveyRepository } from './survey'
 export { UserRepository } from './user'
