@@ -6,6 +6,14 @@ import { mockUser, mockUserInvalid } from '../../mock/user'
 
 export default (): void =>
   describe(`Login ${ApiEndpoint.auth.login()}`, () => {
+    test('Login fail', async () => {
+      const { body, status } = await global.api.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
+
+      const message: string = body.message
+      expect(status).toBe(401)
+      expect(message).toBe('Missing credentials')
+    })
+
     test('Login success', async () => {
       const { body } = await global.api.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
 
@@ -19,15 +27,15 @@ export default (): void =>
     })
 
     test('Login success with surveyId', async () => {
-      const { body } = await global.api.post(ApiEndpoint.auth.login('includeSurvey')).send(mockUser).expect(200)
+      const { body, headers } = await global.api
+        .post(ApiEndpoint.auth.login('includeSurvey'))
+        .send(mockUser)
+        .expect(200)
       expect(body.survey).toBeDefined()
-    })
+      expect(headers).toBeDefined()
+      expect(headers['set-cookie']).toBeDefined()
 
-    test('Login fail', async () => {
-      const { body, status } = await global.api.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
-
-      const message: string = body.message
-      expect(status).toBe(401)
-      expect(message).toBe('Missing credentials')
+      // Save cookie for tests
+      global.api.cookie = headers['set-cookie']
     })
   })
