@@ -18,7 +18,7 @@ export const updateUserPrefs = async (options: { userToUpdate: User }, client: B
 
   const sql = new SqlUpdateBuilder()
     .update(table)
-    .set(table.prefs, `prefs || $1::jsonb`)
+    .set(table.prefs, `${table.prefs} || $1::jsonb`)
     .where(`${table.uuid} = $2`)
     .returning(...selectFields)
     .build()

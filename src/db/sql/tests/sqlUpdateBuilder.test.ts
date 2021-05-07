@@ -2,7 +2,7 @@ import { TableUser } from '../../table'
 import { SqlUpdateBuilder } from '../sqlUpdateBuilder'
 
 const update = 'UPDATE public."user" AS _u'
-const set = 'SET prefs = prefs || $1::jsonb'
+const set = 'SET prefs = _u.prefs || $1::jsonb'
 const where = 'WHERE _u.uuid = $2'
 const returning = 'RETURNING _u.uuid, _u.name, _u.email, _u.prefs, _u.status, _u.props'
 
@@ -10,7 +10,7 @@ describe('SqlUpdateBuilder builds correct:', () => {
   test('update+set', async () => {
     const table = new TableUser()
 
-    const sql = new SqlUpdateBuilder().update(table).set(table.prefs, `prefs || $1::jsonb`).build()
+    const sql = new SqlUpdateBuilder().update(table).set(table.prefs, `${table.prefs} || $1::jsonb`).build()
 
     expect(sql).toBe(`${update} ${set}`)
   })
@@ -20,7 +20,7 @@ describe('SqlUpdateBuilder builds correct:', () => {
 
     const sql = new SqlUpdateBuilder()
       .update(table)
-      .set(table.prefs, `prefs || $1::jsonb`)
+      .set(table.prefs, `${table.prefs} || $1::jsonb`)
       .where(`${table.uuid} = $2`)
       .build()
 
@@ -33,7 +33,7 @@ describe('SqlUpdateBuilder builds correct:', () => {
 
     const sql = new SqlUpdateBuilder()
       .update(table)
-      .set(table.prefs, `prefs || $1::jsonb`)
+      .set(table.prefs, `${table.prefs} || $1::jsonb`)
       .where(`${table.uuid} = $2`)
       .returning(...selectFields)
       .build()
