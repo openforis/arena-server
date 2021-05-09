@@ -1,10 +1,6 @@
 import { Record } from '@openforis/arena-core'
-import { BaseProtocol, DB } from '../../db'
-import { TableRecord } from '../../db/table/schemaSurvey/record'
-import { TableSurvey } from '../../db/table/schemaPublic/survey'
-import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
+import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableRecord, TableSurvey } from '../../db'
 import { dbTransformCallback } from './transformCallback'
-import { DBs } from '../../db/dbs/index'
 
 export const get = async (
   options: {

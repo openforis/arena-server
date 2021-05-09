@@ -56,6 +56,9 @@ export class SqlSelectBuilder extends SqlBuilder {
   }
 
   build(): string {
+    if (Objects.isEmpty(this._select) || Objects.isEmpty(this._from))
+      throw new Error(`missingParams, ${this._select}, ${this._from}`)
+
     const parts: Array<string> = [`SELECT ${this._select.join(', ')}`, `FROM ${this._from.join(' ')}`]
 
     if (!Objects.isEmpty(this._join)) {

@@ -32,4 +32,6 @@ export const ProcessEnv = {
   sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET || 'session-cookie-secret',
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: process.env.USE_HTTPS === 'true',
+
+  disableLogging: process.env.NODE_ENV === 'test' && process.env.DISABLE_LOGS === 'true',
 }

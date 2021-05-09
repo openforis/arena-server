@@ -1,15 +1,18 @@
 import { Survey } from '@openforis/arena-core'
 import { BaseProtocol, DB, SqlSelectBuilder, TableSurvey } from '../../db'
-import { DBs } from '../../db/dbs/index'
+import { DBs } from '../../db'
 
 /**
  * Returns a survey by id.
  *
+ * @param options
  * @param client - Database client.
  */
 export const get = async (
   options: {
     surveyId: number
+    draft?: boolean
+    backup?: boolean
   },
   client: BaseProtocol = DB
 ): Promise<Survey> => {
@@ -30,5 +33,9 @@ export const get = async (
     .where(`${table.id} = $1`)
     .build()
 
-  return client.one<Survey>(sql, [options.surveyId], (row) => DBs.transformCallback({ row }))
+  const { draft, backup } = options
+
+  return client.one<Survey>(sql, [options.surveyId], (row) =>
+    DBs.transformCallback({ row, assocPublishedDraft: false, draft, backup })
+  )
 }

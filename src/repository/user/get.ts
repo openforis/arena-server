@@ -8,6 +8,7 @@ type getOptionsType = { userUuid: string } | { email: string } | { email: string
 /**
  * Returns a user by id.
  *
+ * @param options
  * @param client - Database client.
  */
 export const get = async (options: getOptionsType, client: BaseProtocol = DB): Promise<User | null> => {

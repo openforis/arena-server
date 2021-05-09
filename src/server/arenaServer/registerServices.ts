@@ -1,6 +1,5 @@
 import { ServiceRegistry, ServiceType } from '@openforis/arena-core'
-import { SurveyServiceServer } from '../../service'
-import { UserServiceServer } from '../../service/user/index'
+import { SurveyServiceServer, UserServiceServer } from '../../service'
 
 export const registerServices = (): void => {
   ServiceRegistry.getInstance()

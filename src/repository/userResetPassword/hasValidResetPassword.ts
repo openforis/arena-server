@@ -1,6 +1,4 @@
-import { TableUserResetPassword } from '../../db/table/schemaPublic/userResetPassword'
-import { SqlSelectBuilder } from '../../db/sql/sqlSelectBuilder'
-import { BaseProtocol, DB } from '../../db'
+import { BaseProtocol, DB, SqlSelectBuilder, TableUserResetPassword } from '../../db'
 
 export const hasValidResetPassword = (options: { userUuid: string }, client: BaseProtocol = DB): Promise<boolean> => {
   if (!('userUuid' in options)) throw new Error(`missingParams, ${options}`)
