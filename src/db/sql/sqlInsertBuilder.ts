@@ -7,6 +7,7 @@ export class SqlInsertBuilder extends SqlBuilder {
   private _table: Table | null = null
   private _columns: Column[] = []
   private _values: any[] = []
+  private _returning: Column[] = []
 
   insertInto(table: Table, ...columns: Column[]): this {
     this._table = table
@@ -16,6 +17,11 @@ export class SqlInsertBuilder extends SqlBuilder {
 
   values(...values: any[]): this {
     this._values.push(...values)
+    return this
+  }
+
+  returning(...returning: Column[]): this {
+    this._returning.push(...returning)
     return this
   }
 
@@ -29,6 +35,10 @@ export class SqlInsertBuilder extends SqlBuilder {
       `INSERT INTO ${this._table} (${this._columns.join(', ')})`,
       `VALUES (${this._values.join(', ')})`,
     ]
+
+    if (!Objects.isEmpty(this._returning)) {
+      parts.push(`RETURNING ${this._returning.join(', ')}`)
+    }
 
     return parts.join(' ')
   }

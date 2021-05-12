@@ -3,6 +3,7 @@ import { SqlInsertBuilder } from '../sqlInsertBuilder'
 
 const insert = 'INSERT INTO survey_1."activity_log" AS _al (_al.type, _al.user_uuid, _al.content, _al.system)'
 const into = 'VALUES ($1, $2, $3::jsonb, $4)'
+const returning = 'RETURNING _al.type, _al.user_uuid, _al.content, _al.system'
 
 describe('SqlInsertBuilder builds correct:', () => {
   test('insert+into', async () => {
@@ -14,6 +15,17 @@ describe('SqlInsertBuilder builds correct:', () => {
       .build()
 
     expect(sql).toBe(`${insert} ${into}`)
+  })
+  test('insert+into+returning', async () => {
+    const table = new TableActivityLog(1)
+
+    const sql = new SqlInsertBuilder()
+      .insertInto(table, table.type, table.userUuid, table.content, table.system)
+      .values('$1', '$2', '$3::jsonb', '$4')
+      .returning(table.type, table.userUuid, table.content, table.system)
+      .build()
+
+    expect(sql).toBe(`${insert} ${into} ${returning}`)
   })
 })
 
