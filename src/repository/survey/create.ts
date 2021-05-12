@@ -27,7 +27,7 @@ export const create = async (
   const sql = new SqlInsertBuilder()
     .insertInto(table, ...columns)
     .values('$1', '$2', '$3', '$4', '$5', '$6', '$7')
-    .returning(...columns, table.dateCreated, table.dateCreated)
+    .returning(...columns, table.dateCreated, table.dateCreated, table.id)
     .build()
 
   return client.one<Survey>(

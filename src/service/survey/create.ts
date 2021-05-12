@@ -22,19 +22,25 @@ export const create: SurveyService['create'] = async (
 
   const survey = client.tx(async (t) => {
     // TODO: Imeplement method
+    const newSurvey = SurveyFactory.createInstance({
+      ownerUuid: user.uuid,
+      name,
+      label,
+      languages: [lang],
+      template,
+    })
+
     const _survey: Survey = await SurveyRepository.create(
       {
-        survey: SurveyFactory.createInstance({
-          ownerUuid: user.uuid,
-          name,
-          label,
-          languages: [lang],
-          template,
-        }),
+        survey: newSurvey,
+        propsDraft: newSurvey.props,
       },
       t
     )
+
     const surveyId = _survey.id
+
+    if (!surveyId) return null
 
     // Create survey data schema
     await DBMigrator.migrateSurveySchema(surveyId)
