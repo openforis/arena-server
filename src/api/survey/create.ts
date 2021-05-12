@@ -3,45 +3,27 @@ import { Express } from 'express'
 import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
-import { Validator, FieldValidators, ValidatorErrorKeys, SurveyFactory } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, SurveyService, Surveys } from '@openforis/arena-core'
+import { Requests } from '../../utils'
 
 export const SurveyCreate: ExpressInitializer = {
   init: (express: Express): void => {
     express.post(ApiEndpoint.survey.create(), ApiAuthMiddleware.requireAdminPermission, async (req, res, next) => {
       try {
-        // const user = Requests.getUser(req)
+        const user = Requests.getUser(req)
         const requestSurvey = req.body
 
-        // const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+        const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+        const surveys = (await service.getManyByName(requestSurvey.name)) || []
 
-        // TODO: Move survey validation out
-        //  ["id", "uuid", "published", "draft", "ownerUuid", "authGroups", "props", "template"]
-        const fieldValidators = {
-          ownerUuid: [FieldValidators.required('required_field')],
-          authGroups: [FieldValidators.required('required_field')],
-          props: [FieldValidators.required('required_field')],
-        }
-        // TODO:
-        // "name", "languages", "labels", "srs", "cycles", "descriptions", "collectUri"
-        const fieldValidatorsProps = {
-          name: [
-            FieldValidators.required(ValidatorErrorKeys.nameRequired),
-            FieldValidators.notKeyword(ValidatorErrorKeys.nameCannotBeKeyword),
-          ],
-          languages: [FieldValidators.required(ValidatorErrorKeys.surveyInfoEdit.langRequired)],
-          srs: [FieldValidators.required(ValidatorErrorKeys.surveyInfoEdit.srsRequired)],
-        }
-        const validator = new Validator()
-        const validation = {
-          survey: await validator.validate(requestSurvey, fieldValidators),
-          surveyProps: await validator.validate(requestSurvey.props, fieldValidatorsProps),
-        }
+        const validation = await Surveys.validateNewSurvey(requestSurvey, surveys)
 
-        if (validation.survey.valid && validation.surveyProps.valid) {
-          const newSurvey = SurveyFactory.createInstance(requestSurvey)
-          // const survey = await SurveyService.insertSurvey({ user, surveyInfo: surveyInfoTarget })
+        if (validation.valid) {
+          const { name, label, lang, template = false } = requestSurvey
 
-          res.json({ survey: newSurvey })
+          const survey = await service.create({ user, name, label, lang, template })
+
+          res.json({ survey })
         } else {
           res.json({ validation })
         }
