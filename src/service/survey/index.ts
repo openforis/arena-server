@@ -2,6 +2,8 @@ import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } fr
 
 import { getAllIds } from './getAllIds'
 import { get } from './get'
+import { getManyByName } from './getManyByName'
+import { create } from './create'
 
 export const SurveyServiceServer: SurveyService = {
   // @ts-ignore
@@ -22,11 +24,7 @@ export const SurveyServiceServer: SurveyService = {
     throw new Error('TODO')
   },
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  create(options: { name: string; label: string; lang: LanguageCode; user: User }): Promise<Survey> {
-    throw new Error('TODO')
-  },
+  create,
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -43,6 +41,8 @@ export const SurveyServiceServer: SurveyService = {
   getMany(options: { limit?: number; offset?: number; user: User }): Promise<Array<Survey>> {
     throw new Error('TODO')
   },
+
+  getManyByName,
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -12,6 +12,7 @@ export class TableSurvey extends TableSchemaPublic {
   readonly propsDraft: Column = new Column(this, 'props_draft', ColumnType.jsonb)
   readonly meta: Column = new Column(this, 'meta', ColumnType.jsonb)
   readonly ownerUuid: Column = new Column(this, 'owner_uuid', ColumnType.uuid)
+  readonly template: Column = new Column(this, 'template', ColumnType.boolean)
 
   constructor() {
     super('survey')

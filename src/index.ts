@@ -7,6 +7,9 @@ export {
   DB,
   DBMigrator,
   SqlSelectBuilder,
+  SqlUpdateBuilder,
+  SqlInsertBuilder,
+  SqlJoinBuilder,
   SQLs,
   Schemata,
   TableSchemaPublic,
@@ -23,6 +26,7 @@ export {
   TableUserResetPassword,
   TableAuthGroup,
   TableAuthGroupUser,
+  TableActivityLog,
 } from './db'
 export type { BaseProtocol } from './db'
 

@@ -1,5 +1,7 @@
 export { TableSchemaSurvey } from './tableSchemaSurvey'
 
+export { TableActivityLog } from './activityLog'
+
 export { TableChain } from './chain'
 export { TableChainNodeDef } from './chainNodeDef'
 export { TableChainNodeDefAggregate } from './chainNodeDefAggregate'

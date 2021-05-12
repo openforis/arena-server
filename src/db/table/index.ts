@@ -16,6 +16,7 @@ export {
   TableChainNodeDefAggregate,
   TableNodeDef,
   TableRecord,
+  TableActivityLog,
 } from './schemaSurvey'
 
 export { TableResultSchemaSurveyRdb, TableSchemaSurveyRdb } from './schemaSurveyRdb'
