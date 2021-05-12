@@ -16,10 +16,6 @@ export const create: SurveyService['create'] = async (
   client: BaseProtocol = DB
 ) => {
   const { user, name, lang, label, template, createRootEntityDef = true, system = false } = params
-  // const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
-  // const userService = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
-  // const nodeDefService = ServiceRegistry.getInstance().getService(ServiceType.nodeDef) as NodeDefService
-
   const survey = client.tx(async (t) => {
     // TODO: Imeplement method
     const newSurvey = SurveyFactory.createInstance({

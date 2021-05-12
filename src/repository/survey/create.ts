@@ -2,7 +2,7 @@ import { Survey } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableSurvey } from '../../db'
 
 /**
- * Returns a list of surveys by name.
+ * Create new Survey
  *
  * @param options - Contains options for query
  * @param client - Database client.
