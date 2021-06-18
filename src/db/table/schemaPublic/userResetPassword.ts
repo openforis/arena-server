@@ -7,6 +7,6 @@ export class TableUserResetPassword extends TableSchemaPublic {
   readonly dateCreated: Column = new Column(this, 'date_created', ColumnType.timeStamp)
 
   constructor() {
-    super('"user_reset_password"')
+    super('user_reset_password')
   }
 }
