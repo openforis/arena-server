@@ -64,6 +64,7 @@
     "clean": "rimraf dist ./node_modules/.cache/",
     "copy-assets": "copyfiles -u 1 src/**/*.sql dist/",
     "dbmigrate:create": "ts-node src/db/dbMigrator/migration/create.ts",
+    "format": "prettier --write \"src/**/*.+(ts|js|jsx|json|yml|yaml|css|md|vue)\"",
     "jest": "jest --detectOpenHandles",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
