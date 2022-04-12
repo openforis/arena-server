@@ -20,6 +20,7 @@ jobs:
         if: always()
         with:
           access_token: ${{ secrets.ACCESS_TOKEN }}
+      - run: yarn install
       - name: 'Automated Version Bump'
         uses: 'phips28/gh-action-bump-version@master'
         env:
@@ -36,8 +37,7 @@ jobs:
       - run: echo "\"@openforis:registry\"" "\"https://npm.pkg.github.com\"" > .yarnrc
       - run: cat .npmrc
       - run: cat .yarnrc
-      - run: npm install
-      - run: npm publish
+      - run: yarn publish
       - name: Enable "include administrators" branch protection
         uses: benjefferies/branch-protection-bot@master
         if: always() # Force to always run this step to ensure "include administrators" is always turned back on
