@@ -20,6 +20,10 @@ jobs:
         if: always()
         with:
           access_token: ${{ secrets.ACCESS_TOKEN }}
+      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.ACCESS_TOKEN }}" > .npmrc
+      - run: echo "\"@openforis:registry\"" "\"https://npm.pkg.github.com\"" > .yarnrc
+      - run: cat .npmrc
+      - run: cat .yarnrc
       - run: yarn install
       - name: 'Automated Version Bump'
         uses: 'phips28/gh-action-bump-version@master'
@@ -33,10 +37,6 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: '@openforis'
 
-      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.ACCESS_TOKEN }}" > .npmrc
-      - run: echo "\"@openforis:registry\"" "\"https://npm.pkg.github.com\"" > .yarnrc
-      - run: cat .npmrc
-      - run: cat .yarnrc
       - run: yarn publish
       - name: Enable "include administrators" branch protection
         uses: benjefferies/branch-protection-bot@master
