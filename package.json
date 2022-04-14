@@ -68,7 +68,6 @@
     "jest": "jest --detectOpenHandles",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
-    "postversion": "git push --follow-tags",
     "prepare": "run-s clean build",
     "test": "run-s clean tsc:test copy-assets jest",
     "test:watch": "run-s clean tsc:test copy-assets \"jest --watchAll\"",
