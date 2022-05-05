@@ -65,7 +65,6 @@ export const AuthLogin: ExpressInitializer = {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
       passport.authenticate('local', (err, user, info) => {
         if (err) return next(err)
-        if (info) return res.json({ message: info.message })
         if (user) return authenticationSuccessful(req, res, next, user)
         return res.status(401).json(info)
       })(req, res, next)
