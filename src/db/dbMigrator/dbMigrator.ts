@@ -49,7 +49,7 @@ const migrateAll = async (): Promise<void> => {
     await migrateSurveySchemas()
 
     logger.info('database migrations completed')
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`error running database migrations: ${error.toString()}`)
     throw error
   }

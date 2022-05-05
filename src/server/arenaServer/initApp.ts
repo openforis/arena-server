@@ -35,7 +35,6 @@ export const initApp = (): ArenaApp => {
   const session = SessionMiddleware.init(app)
   AuthenticationMiddleware.init(app)
 
-  // authApi.init(app)
   Api.init(app)
 
   ErrorMiddleware.init(app)

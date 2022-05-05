@@ -31,9 +31,8 @@ export abstract class Thread<MessageIn extends WorkerMessage<any>, MessageOut ex
   protected async messageHandler(msg: MessageIn): Promise<void> {
     try {
       await this.onMessage(msg)
-    } catch (error) {
-      const errorMessage = error.toString()
-      this.logger.error(`Error in thread:  ${errorMessage}`)
+    } catch (error: any) {
+      this.logger.error(`Error in thread:  ${error.toString()}`)
       this.logger.error(error.stack)
       this.postMessage({ error, type: WorkerMessageType.error })
     }

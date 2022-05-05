@@ -31,7 +31,7 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
       survey = await service.get({ surveyId, draft: true, validate: true })
     }
     res.json({ user, survey })
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
     // Survey not found with user pref
     // removing user pref
@@ -65,6 +65,7 @@ export const AuthLogin: ExpressInitializer = {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
       passport.authenticate('local', (err, user, info) => {
         if (err) return next(err)
+        if (info) return res.json({ message: info.message })
         if (user) return authenticationSuccessful(req, res, next, user)
         return res.status(401).json(info)
       })(req, res, next)

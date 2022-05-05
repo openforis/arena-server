@@ -43,7 +43,7 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
     }
 
     done(null, user)
-  } catch (error) {
+  } catch (error: any) {
     sendError(error.toString())
   }
 }
@@ -63,7 +63,7 @@ export const AuthenticationMiddleware: ExpressInitializer = {
 
     express.use(passport.session())
 
-    passport.use(localStrategy)
+    passport.use('local', localStrategy)
 
     passport.serializeUser((user, done) => done(null, user?.uuid))
 

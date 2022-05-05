@@ -16,7 +16,8 @@ export interface JobConstructor {
 
 export abstract class JobServer<C extends JobContext = JobContext, R = undefined>
   extends EventEmitter
-  implements Job<R> {
+  implements Job<R>
+{
   summary: JobSummary<R>
   protected readonly logger = new Logger(`Job ${this.constructor.name}`)
   protected context: C
@@ -79,10 +80,10 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
         // 5. if errors found or job has been canceled, throw an error to rollback transaction
         throw new ServerError('jobCanceledOrErrorsFound')
       }
-    } catch (error) {
+    } catch (error: any) {
       if (this.summary.status === JobStatus.running) {
         // Error found, change status only if not changed already
-        this.logger.error(`${error.stack || error}`)
+        this.logger.error(error.stack || error)
         this.addError({
           error: {
             valid: false,
