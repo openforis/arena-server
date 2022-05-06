@@ -1,6 +1,5 @@
-import { getApiPath } from './common'
+import { getPath } from './common'
 
 export const auth = {
-  login: (includeSurvey?: string): string =>
-    `${getApiPath('auth', 'login')}${includeSurvey ? '?includeSurvey=true' : ''}`,
+  login: (includeSurvey?: string): string => `${getPath('auth', 'login')}${includeSurvey ? '?includeSurvey=true' : ''}`,
 }

@@ -31,7 +31,7 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
       survey = await service.get({ surveyId, draft: true, validate: true })
     }
     res.json({ user, survey })
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
     // Survey not found with user pref
     // removing user pref
