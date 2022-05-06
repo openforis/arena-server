@@ -68,7 +68,7 @@
     "jest": "jest --detectOpenHandles",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
-    "prepare": "husky install",
+    "prepare": "run-s build && husky install",
     "test": "run-s clean tsc:test copy-assets jest",
     "test:watch": "run-s clean tsc:test copy-assets \"jest --watchAll\"",
     "tsc": "tsc",
