@@ -36,8 +36,8 @@ jobs:
       - run: echo "\"@openforis:registry\"" "\"https://npm.pkg.github.com\"" > .yarnrc
       - run: cat .npmrc
       - run: cat .yarnrc
-      - run: yarn install
-      - run: yarn publish
+      - run: npm install
+      - run: npm publish
       - name: Enable "include administrators" branch protection
         uses: benjefferies/branch-protection-bot@master
         if: always() # Force to always run this step to ensure "include administrators" is always turned back on

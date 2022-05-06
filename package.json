@@ -73,8 +73,7 @@
     "test:watch": "run-s clean tsc:test copy-assets \"jest --watchAll\"",
     "tsc": "tsc",
     "tsc:test": "tsc --project tsconfig.test.json",
-    "tsc:watch": "tsc --watch",
-    "version": "git add -A src"
+    "tsc:watch": "tsc --watch"
   },
   "files": [
     "dist/**/*"
