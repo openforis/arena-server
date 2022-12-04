@@ -8,7 +8,7 @@ import { ExpressInitializer } from '../expressInitializer'
 
 export const SessionMiddleware: ExpressInitializer<RequestHandler> = {
   init(express: Express): RequestHandler {
-    const PgSession = connectPgSimple(expressSession)
+    const PgSession = connectPgSimple(<any>expressSession)
 
     const options = {
       secret: ProcessEnv.sessionIdCookieSecret as string,
@@ -25,7 +25,7 @@ export const SessionMiddleware: ExpressInitializer<RequestHandler> = {
       }),
     }
 
-    const session = expressSession(options)
+    const session = expressSession(<any>options)
     express.use(session)
 
     return session
