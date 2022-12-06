@@ -11,12 +11,33 @@ import { onShutdown } from './stop'
 const logger: Logger = new Logger('Arena server')
 
 export const start = (app: ArenaApp): Promise<Server> => {
-  return new Promise<Server>((resolve) => {
+  return new Promise<Server>((resolve, reject) => {
     logger.info(`server starting`)
     const port = ProcessEnv.port
 
     const server: Server = app.express.listen(port)
-    WebSocketServer.init(app, server)
+
+    const onListening = () => {
+      //TODO: schedulers
+      // await RecordPreviewCleanup.init()
+      // await TempFilesCleanup.init()
+      // await UserResetPasswordCleanup.init()
+      server.removeListener('error', onError)
+
+      logger.info(`server started and listening on port ${port}`)
+
+      resolve(server)
+    }
+
+    const onError = (error: Error): void => {
+      server.removeListener('listening', onListening)
+
+      logger.error(`error starting server: ${error}`)
+
+      reject(error)
+    }
+
+    server.once('error', onError)
 
     createTerminus(server, {
       healthChecks: {
@@ -26,15 +47,9 @@ export const start = (app: ArenaApp): Promise<Server> => {
       },
       onShutdown,
     })
-    server.once('listening', () => {
-      //TODO: schedulers
-      // await RecordPreviewCleanup.init()
-      // await TempFilesCleanup.init()
-      // await UserResetPasswordCleanup.init()
 
-      logger.info(`server started and listening on port ${port}`)
+    WebSocketServer.init(app, server)
 
-      resolve(server)
-    })
+    server.once('listening', onListening)
   })
 }

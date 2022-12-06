@@ -1,3 +1,4 @@
+import { Objects } from '@openforis/arena-core'
 import { NextFunction, Request, Response } from 'express'
 import { Server } from 'http'
 import { Server as SocketServer, Socket } from 'socket.io'
@@ -17,7 +18,8 @@ export class WebSocketServer {
         app.session(socket.request as Request, {} as Response, next as NextFunction)
       })
       .on(WebSocketEvent.connection, (socket) => {
-        const userUuid = socket.request.session.passport?.user
+        const session = (socket.request as Request).session
+        const userUuid = Objects.path(['passport', 'user'])(session)
         const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
         WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
 
