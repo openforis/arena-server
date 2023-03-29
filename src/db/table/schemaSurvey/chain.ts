@@ -10,6 +10,7 @@ export class TableChain extends TableSchemaSurvey {
   readonly validation: Column = new Column(this, 'validation', ColumnType.jsonb)
   readonly statusExec: Column = new Column(this, 'status_exec', ColumnType.varchar)
   readonly scriptCommon: Column = new Column(this, 'script_common', ColumnType.varchar)
+  readonly scriptEnd: Column = new Column(this, 'script_end', ColumnType.varchar)
 
   constructor(surveyId: number) {
     super(surveyId, 'chain')
