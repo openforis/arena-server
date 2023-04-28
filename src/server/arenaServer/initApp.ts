@@ -1,6 +1,5 @@
 import express, { Express } from 'express'
 import bodyParser from 'body-parser'
-import cookieParser from 'cookie-parser'
 import expressFileUpload from 'express-fileupload'
 import compression from 'compression'
 
@@ -20,7 +19,6 @@ export const initApp = (): ArenaApp => {
 
   if (ProcessEnv.useHttps) HttpsMiddleware.init(app)
   app.use(bodyParser.json({ limit: '5000kb' }))
-  app.use(cookieParser())
   app.use(
     expressFileUpload({
       // Limit upload to 1 GB
