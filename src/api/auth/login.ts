@@ -63,7 +63,7 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
 export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
-      passport.authenticate('local', (err, user, info) => {
+      passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) return next(err)
         if (user) return authenticationSuccessful(req, res, next, user)
         return res.status(401).json(info)
