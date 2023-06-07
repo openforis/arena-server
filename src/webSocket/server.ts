@@ -48,10 +48,9 @@ export class WebSocketServer {
 
   static notifyUser(userUuid: string, eventType: string, message: any): void {
     const socketIds = WebSocketServer.socketIdsByUserUuid.get(userUuid)
-    socketIds &&
-      socketIds.forEach((socketId) => {
-        WebSocketServer.notifySocket(socketId, eventType, message)
-      })
+    socketIds?.forEach((socketId) => {
+      WebSocketServer.notifySocket(socketId, eventType, message)
+    })
   }
 
   static isSocketConnected(socketId: string): boolean {
@@ -65,7 +64,7 @@ export class WebSocketServer {
       WebSocketServer.socketIdsByUserUuid.set(userUuid, new Set())
     }
     const socketIds = WebSocketServer.socketIdsByUserUuid.get(userUuid)
-    socketIds && socketIds.add(socket.id)
+    socketIds?.add(socket.id)
   }
 
   private static deleteSocket(userUuid: string, socketId: string): void {
