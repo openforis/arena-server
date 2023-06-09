@@ -34,22 +34,27 @@ export class WebSocketServer {
       })
   }
 
-  static notifySocket(socketId: string, eventType: string, message: any): void {
+  static notifySocket(socketId: string, eventType: string, message: any): boolean {
     const socket = WebSocketServer.socketsById.get(socketId)
 
     if (socket) {
       socket.emit(eventType, message)
+      return true
     } else {
       WebSocketServer.logger.error(`socket with ID ${socketId} not found!`)
+      return false
     }
   }
 
   static notifyUser(userUuid: string, eventType: string, message: any): void {
     const socketIds = WebSocketServer.socketIdsByUserUuid.get(userUuid)
-    socketIds &&
-      socketIds.forEach((socketId) => {
-        WebSocketServer.notifySocket(socketId, eventType, message)
-      })
+    socketIds?.forEach((socketId) => {
+      WebSocketServer.notifySocket(socketId, eventType, message)
+    })
+  }
+
+  static isSocketConnected(socketId: string): boolean {
+    return WebSocketServer.socketsById.has(socketId)
   }
 
   private static addSocket(userUuid: string, socket: Socket): void {
@@ -59,7 +64,7 @@ export class WebSocketServer {
       WebSocketServer.socketIdsByUserUuid.set(userUuid, new Set())
     }
     const socketIds = WebSocketServer.socketIdsByUserUuid.get(userUuid)
-    socketIds && socketIds.add(socket.id)
+    socketIds?.add(socket.id)
   }
 
   private static deleteSocket(userUuid: string, socketId: string): void {
