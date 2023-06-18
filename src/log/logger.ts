@@ -1,3 +1,5 @@
+import { Logger as LoggerCore } from '@openforis/arena-core'
+
 import { LogLevel } from './logLevel'
 import { getLogger } from './log4js'
 import { ProcessEnv } from '../processEnv'
@@ -5,7 +7,7 @@ import { ProcessEnv } from '../processEnv'
 /**
  * Logger class with custom prefix.
  */
-export class Logger {
+export class Logger implements LoggerCore {
   private static readonly LOGGER = getLogger('arena')
   private readonly prefix: string
 

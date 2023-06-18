@@ -13,10 +13,13 @@ export interface JobConstructor {
 export abstract class JobServer<C extends JobContextServer, R = undefined> extends AbstractJob<C, R> {
   public constructor(context: C, jobs: JobServer<C, any>[] = []) {
     super(context, jobs)
-    this.logger = new Logger(`Job ${this.constructor.name}`)
   }
 
   protected throwError(errorKey: string): void {
     throw new ServerError(errorKey)
+  }
+
+  protected createLogger(): Logger {
+    return new Logger(`Job ${this.constructor.name}`)
   }
 }
