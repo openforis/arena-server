@@ -1,10 +1,10 @@
 import path from 'path'
-import { JobStatus } from '@openforis/arena-core'
+import { JobMessageInType, JobMessageOutType, JobStatus } from '@openforis/arena-core'
 
 import { WebSocketEvent, WebSocketServer } from '../webSocket'
 import { Worker } from '../thread'
-import { JobMessageInType, JobMessageOut, JobMessageOutType } from './jobMessage'
-import { JobContext } from './jobContext'
+import { JobMessageOut } from './jobMessage'
+import { JobContextServer } from './jobContext'
 
 export class JobManager {
   private static workers = new Map<string, Worker<any>>()
@@ -33,7 +33,7 @@ export class JobManager {
     }
   }
 
-  static executeJob<C extends JobContext = JobContext>(data: C): Worker<C> {
+  static executeJob<C extends JobContextServer = JobContextServer>(data: C): Worker<C> {
     const worker = new Worker<C>(path.resolve(__dirname, 'jobThread.js'), data)
     worker.on('message', JobManager.onMessage)
     JobManager.workers.set(data.user.uuid, worker)

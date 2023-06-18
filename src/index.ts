@@ -26,8 +26,8 @@ export {
 } from './db'
 export type { BaseProtocol } from './db'
 
-export { JobManager, JobServer, JobMessageInType, JobMessageOutType, JobRegistry } from './job'
-export type { JobContext, JobMessageIn, JobMessageOut } from './job'
+export { JobManager, JobServer, JobRegistry } from './job'
+export type { JobContextServer, JobMessageIn, JobMessageOut } from './job'
 
 export { Logger } from './log'
 

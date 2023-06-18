@@ -1,13 +1,15 @@
 import { isMainThread } from 'worker_threads'
 
+import { JobMessageInType, JobMessageOutType } from '@openforis/arena-core'
+
 import { ServerError } from '../server'
 import { Thread } from '../thread'
 import { JobServer } from './job'
-import { JobContext } from './jobContext'
-import { JobMessageIn, JobMessageInType, JobMessageOut, JobMessageOutType } from './jobMessage'
+import { JobContextServer } from './jobContext'
+import { JobMessageIn, JobMessageOut } from './jobMessage'
 import { JobRegistry } from './jobRegistry'
 
-export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMessageOut, C> {
+export class JobThread<C extends JobContextServer> extends Thread<JobMessageIn, JobMessageOut, C> {
   private job: JobServer<any, any> | undefined
 
   constructor() {

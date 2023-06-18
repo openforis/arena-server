@@ -1,7 +1,7 @@
 import { JobServer } from '../job'
-import { JobContext } from '../jobContext'
+import { JobContextServer } from '../jobContext'
 
-interface SimpleJobContext extends JobContext {
+interface SimpleJobContext extends JobContextServer {
   result?: number
 }
 

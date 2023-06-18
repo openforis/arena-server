@@ -2,11 +2,11 @@ import { JobStatus, JobSummary, UserFactory, UserStatus, UserTitle, UUIDs } from
 import { Worker } from '../../thread'
 import { JobManager } from '../jobManager'
 import { JobMessageOut } from '../jobMessage'
-import { JobContext } from '../jobContext'
+import { JobContextServer } from '../jobContext'
 import { SimpleJob, SimpleJobWithJobs } from './testJobs'
 
 const waitForJobStatus = <R>(
-  worker: Worker<JobContext>,
+  worker: Worker<JobContextServer>,
   status: JobStatus = JobStatus.succeeded
 ): Promise<JobSummary<R>> =>
   new Promise<JobSummary<R>>((resolve) => {
