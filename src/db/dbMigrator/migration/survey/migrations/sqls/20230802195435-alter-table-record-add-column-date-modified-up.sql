@@ -1,5 +1,5 @@
 ALTER TABLE record
-    ADD COLUMN date_modified TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'UTC');
+    ADD COLUMN IF NOT EXISTS date_modified TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'UTC');
 
 UPDATE
     record r
