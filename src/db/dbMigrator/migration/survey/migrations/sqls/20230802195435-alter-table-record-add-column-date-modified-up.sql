@@ -4,7 +4,7 @@ ALTER TABLE record
 UPDATE
     record r
 SET
-    date_modified = (
+    date_modified =(
         SELECT
             MAX(date_modified)
         FROM
@@ -13,9 +13,12 @@ SET
             node.record_uuid = r.uuid
         GROUP BY
             node.record_uuid)
-WHERE EXISTS (
-    SELECT * 
-    FROM node 
-    WHERE node.record_uuid = r.uuid)
-;
+WHERE
+    EXISTS (
+        SELECT
+            *
+        FROM
+            node
+        WHERE
+            node.record_uuid = r.uuid);
 
