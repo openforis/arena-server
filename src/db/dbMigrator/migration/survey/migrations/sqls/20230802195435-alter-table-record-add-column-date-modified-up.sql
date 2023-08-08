@@ -1,5 +1,5 @@
 ALTER TABLE record
-    ADD COLUMN date_modified TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'UTC');
+    ADD COLUMN IF NOT EXISTS date_modified TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'UTC');
 
 UPDATE
     record r
@@ -12,5 +12,13 @@ SET
         WHERE
             node.record_uuid = r.uuid
         GROUP BY
-            node.record_uuid);
+            node.record_uuid)
+WHERE
+    EXISTS (
+        SELECT
+            *
+        FROM
+            node
+        WHERE
+            node.record_uuid = r.uuid);
 
