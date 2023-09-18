@@ -15,7 +15,7 @@ export class JobManager {
     worker.postMessage({ type: JobMessageInType.cancel })
   }
 
-  private static async onMessage(msg: JobMessageOut): Promise<void> {
+  private static onMessage(msg: JobMessageOut): void {
     if (msg.type === JobMessageOutType.summaryUpdate) {
       const { summary } = msg
       const { status, userUuid } = summary
