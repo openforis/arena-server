@@ -20,7 +20,7 @@ export class SimpleJob extends JobServer<SimpleJobContext, number> {
 
   protected async prepareResult(): Promise<number> {
     await super.prepareResult()
-    return this.context.result || 3
+    return this.context.result ?? 3
   }
 }
 

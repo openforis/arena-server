@@ -1,6 +1,4 @@
-import { Record, RecordService } from '@openforis/arena-core'
-
-import { User } from '@openforis/arena-core'
+import { Record, RecordService, User } from '@openforis/arena-core'
 
 import { get } from './get'
 
