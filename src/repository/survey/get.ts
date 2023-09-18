@@ -1,6 +1,5 @@
 import { Survey } from '@openforis/arena-core'
-import { BaseProtocol, DB, SqlSelectBuilder, TableSurvey } from '../../db'
-import { DBs } from '../../db'
+import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableSurvey } from '../../db'
 
 /**
  * Returns a survey by id.

@@ -35,10 +35,11 @@ export class SqlUpdateBuilder extends SqlBuilder {
     if (Objects.isEmpty(this._update) || Objects.isEmpty(this._set))
       throw new Error(`missingParams, ${this._update}, ${this._set}`)
     const _getColumnName = (column: Column | string) => (typeof column === 'string' ? column : column.columnName)
-    const parts: Array<string> = [
-      `UPDATE ${this._update}`,
-      `SET ${this._set.map(({ column, value }: SetType) => `${_getColumnName(column)} = ${value}`).join(', ')}`,
-    ]
+    const _buildSetValue = (params: SetType): string => {
+      const { column, value } = params
+      return `${_getColumnName(column)} = ${value}`
+    }
+    const parts: Array<string> = [`UPDATE ${this._update}`, `SET ${this._set.map(_buildSetValue).join(', ')}`]
 
     if (!Objects.isEmpty(this._where)) {
       parts.push(`WHERE ${this._where.join(' ')}`)

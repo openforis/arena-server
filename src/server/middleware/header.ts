@@ -10,12 +10,12 @@ const maxAgeSeconds = 60 * 60 * 24 * 365
 export const HeaderMiddleware: ExpressInitializer = {
   init(express: Express): void {
     express.use((req, res, next) => {
-      if (req.path.match(apiRegexp)) {
+      if (apiRegexp.test(req.path)) {
         res.set('Cache-Control', 'no-store')
-      } else if (req.path.match(bundleRegexp)) {
+      } else if (bundleRegexp.test(req.path)) {
         res.set('Cache-Control', `public, max-age=${maxAgeSeconds}`)
         //  Resource-reference cache-busted with uuidv4 in the end (see webpack.config.js)
-      } else if (req.query.bust && (req.query.bust as string).match(bustRegexp)) {
+      } else if (req.query.bust && bustRegexp.test(req.query.bust as string)) {
         res.set('Cache-Control', `public, max-age=${maxAgeSeconds}`)
       } else {
         res.set('Cache-Control', 'no-store')

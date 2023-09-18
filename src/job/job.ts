@@ -83,7 +83,7 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
     } catch (error: any) {
       if (this.summary.status === JobStatus.running) {
         // Error found, change status only if not changed already
-        this.logger.error(error.stack || error)
+        this.logger.error(error.stack ?? error)
         this.addError({
           error: {
             valid: false,
@@ -194,7 +194,7 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
 
   protected addError(error: any, errorKey?: string): void {
     if (!this.summary.errors) this.summary.errors = {}
-    const key = errorKey || String(this.summary.processed + 1)
+    const key = errorKey ?? String(this.summary.processed + 1)
     this.summary.errors[key] = error
   }
 }

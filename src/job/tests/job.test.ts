@@ -25,7 +25,7 @@ afterAll(async () => {
 
 describe('Job', () => {
   const user = UserFactory.createInstance({
-    email: 'test@arena.com',
+    email: 'test@openforis-arena.org',
     name: 'Tester',
     status: UserStatus.ACCEPTED,
     title: UserTitle.mr,

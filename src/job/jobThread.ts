@@ -10,9 +10,7 @@ import { JobRegistry } from './jobRegistry'
 export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMessageOut, C> {
   private job: JobServer<any, any> | undefined
 
-  constructor() {
-    super()
-
+  startJob() {
     JobRegistry.getInstance().then((jobRegistry: JobRegistry) => {
       const Job = jobRegistry.get(this.data.type)
       if (!Job) throw new ServerError('jobNotRegistered', this.data)
@@ -41,4 +39,4 @@ export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMes
   }
 }
 
-if (!isMainThread) new JobThread()
+if (!isMainThread) new JobThread().startJob()
