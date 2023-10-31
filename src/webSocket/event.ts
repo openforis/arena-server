@@ -13,5 +13,6 @@ export enum WebSocketEvent {
   nodeValidationsUpdate = 'nodeValidationsUpdate',
   recordDelete = 'recordDelete',
   recordSessionExpired = 'recordSessionExpired',
+  surveyUpdate = 'surveyUpdate',
   threadError = 'threadError',
 }
