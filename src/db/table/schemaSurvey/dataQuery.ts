@@ -12,4 +12,8 @@ export class TableDataQuery extends TableSchemaSurvey {
   constructor(surveyId: number) {
     super(surveyId, 'data_query')
   }
+
+  get summaryColumns(): Column[] {
+    return [this.id, this.uuid, this.props, this.dateCreated, this.dateModified]
+  }
 }

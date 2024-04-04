@@ -29,7 +29,11 @@ export const transformCallback = (options: {
 
   // Assoc published and draft properties based on props
   const currentRow = backup || assocPublishedDraft ? _assocPublishedDraft(row) : row
-  const rowUpdated = Objects.camelize(currentRow, { skip: ['validation', 'props', 'props_draft'] })
+  const rowUpdated = Objects.camelize(currentRow, { skip: ['validation', 'props', 'props_draft'], sideEffect: true })
+
+  if (!Object.hasOwn(rowUpdated, 'props_draft')) {
+    return rowUpdated
+  }
 
   if (!backup) {
     return mergeProps({ row: rowUpdated, draft })
@@ -40,3 +44,5 @@ export const transformCallback = (options: {
   delete rowUpdated.props_draft
   return rowUpdated
 }
+
+export const transformCallbackCount = (row: any): number => Number(row?.count)

@@ -23,8 +23,9 @@ const migrateSchema = async (params: { schema?: string; migrationsFolder?: strin
 }
 
 const migrateSurveySchema = async (surveyId: number): Promise<void> => {
-  logger.info(`starting db migrations for survey ${surveyId}`)
+  logger.info(`migrations for survey ${surveyId} - start`)
   await migrateSchema({ schema: Schemata.getSchemaSurvey(surveyId) })
+  logger.info(`migrations for survey ${surveyId} - end`)
 }
 
 const migrateSurveySchemas = async (): Promise<void> => {
@@ -33,7 +34,7 @@ const migrateSurveySchemas = async (): Promise<void> => {
 
   logger.info(`starting survey migrations for ${surveyIds.length} surveys`)
 
-  for (const surveyId of surveyIds) {
+  for await (const surveyId of surveyIds) {
     await migrateSurveySchema(surveyId)
   }
 
