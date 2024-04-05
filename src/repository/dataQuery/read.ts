@@ -2,7 +2,7 @@ import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableDataQuery } from '../../d
 import { DataQuerySummary } from '../../model'
 import { SqlSelectCountBuilder } from '../../db/sql'
 
-export const countAll = (params: { surveyId: number }, client: BaseProtocol = DB): Promise<number> => {
+export const count = (params: { surveyId: number }, client: BaseProtocol = DB): Promise<number> => {
   const { surveyId } = params
   const table = new TableDataQuery(surveyId)
   const sql = new SqlSelectCountBuilder().selectCountFrom(table).build()

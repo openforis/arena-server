@@ -9,15 +9,34 @@ import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
 
+const getDataQueryService = (): DataQueryService =>
+  ServiceRegistry.getInstance().getService(ServerServiceType.dataQuery) as DataQueryService
+
 export const DataQueryRead: ExpressInitializer = {
   init: (express: Express): void => {
-    express.get(ApiEndpoint.dataQuery.dataQueriesCount(':surveyId'), (req, res, next) => {
+    express.get(ApiEndpoint.dataQuery.dataQueriesCount(':surveyId'), async (req, res, next) => {
       try {
         const { surveyId } = Requests.getParams(req)
 
-        const service = ServiceRegistry.getInstance().getService(ServerServiceType.dataQuery)
+        const service = getDataQueryService()
 
-        res.json({})
+        const count = await service.count({ surveyId })
+
+        res.json({ count })
+      } catch (error) {
+        next(error)
+      }
+    })
+
+    express.get(ApiEndpoint.dataQuery.dataQueries(':surveyId'), async (req, res, next) => {
+      try {
+        const { surveyId } = Requests.getParams(req)
+
+        const service = getDataQueryService()
+
+        const list = await service.getAll({ surveyId })
+
+        res.json({ list })
       } catch (error) {
         next(error)
       }

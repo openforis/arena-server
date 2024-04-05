@@ -20,10 +20,11 @@ export interface DataQuery {
 export interface DataQuerySummaryProps {
   name?: string
   labels?: Labels
+  descriptions?: Labels
 }
 
 export interface DataQuerySummary {
-  content?: any
+  content?: DataQuery
   dateCreated?: string
   dateModified?: string
   id?: number

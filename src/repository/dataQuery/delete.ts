@@ -1,8 +1,8 @@
 import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
 import { DataQuerySummary } from '../../model'
-import { SqlDeleteBuilder } from '../../db/sql'
+import { SqlDeleteBuilder } from '../../db'
 
-export const deleteQuerySummary = (
+export const deleteItem = (
   params: { surveyId: number; uuid: string },
   client: BaseProtocol = DB
 ): Promise<DataQuerySummary | null> => {

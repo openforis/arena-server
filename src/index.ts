@@ -36,8 +36,6 @@ export { Logger } from './log'
 
 export { ProcessEnv, NodeEnv } from './processEnv'
 
-export { DataQueryService } from './service'
-
 export { Worker, Thread, WorkerMessageType, WorkerCache } from './thread'
 export type { WorkerErrorMessage, WorkerMessage } from './thread'
 

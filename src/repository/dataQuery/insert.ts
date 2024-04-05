@@ -2,14 +2,14 @@ import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableDataQuery } from '../../d
 import { DataQuerySummary } from '../../model'
 
 export const insert = (
-  params: { surveyId: number; querySummary: DataQuerySummary },
+  params: { surveyId: number; item: DataQuerySummary },
   client: BaseProtocol = DB
 ): Promise<DataQuerySummary> => {
-  const { surveyId, querySummary } = params
-  if (!surveyId || !querySummary) throw new Error(`missingParams, ${params}`)
+  const { surveyId, item } = params
+  if (!surveyId || !item) throw new Error(`missingParams, ${params}`)
 
   const table = new TableDataQuery(surveyId)
-  const { content, props, uuid } = querySummary
+  const { content, props, uuid } = item
 
   const values = {
     [table.content.columnName]: content,

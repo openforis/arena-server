@@ -1,22 +1,12 @@
-import { User } from '@openforis/arena-core'
-
 import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
 import { DataQuerySummary } from '../../model'
 
-/**
- * Updates query summary
- *
- * @param params
- * @param params.querySummary - query summary to update
- * @param client - Database client.
- */
-
 export const update = async (
-  params: { surveyId: number; querySummary: DataQuerySummary },
+  params: { surveyId: number; item: DataQuerySummary },
   client: BaseProtocol = DB
-): Promise<User> => {
-  const { surveyId, querySummary } = params
+): Promise<DataQuerySummary> => {
+  const { surveyId, item } = params
 
   const table = new TableDataQuery(surveyId)
 
@@ -28,7 +18,5 @@ export const update = async (
     .returning(...table.summaryColumns)
     .build()
 
-  return client.one(sql, [querySummary.props, querySummary.content, querySummary.uuid], (row) =>
-    DBs.transformCallback({ row })
-  )
+  return client.one(sql, [item.props, item.content, item.uuid], (row) => DBs.transformCallback({ row }))
 }

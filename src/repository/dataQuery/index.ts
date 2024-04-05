@@ -1,11 +1,11 @@
 import { insert } from './insert'
-import { countAll, getAll, getByUuid } from './read'
+import { count, getAll, getByUuid } from './read'
 import { update } from './update'
-import { deleteQuerySummary } from './delete'
+import { deleteItem } from './delete'
 
 export const DataQueryRepository = {
-  countAll,
-  deleteQuerySummary,
+  count,
+  deleteItem,
   getByUuid,
   getAll,
   insert,
