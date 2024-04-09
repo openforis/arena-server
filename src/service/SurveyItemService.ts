@@ -1,7 +1,7 @@
-import { Service } from '@openforis/arena-core'
+import { ArenaService } from '@openforis/arena-core'
 import { BaseProtocol } from '../db'
 
-export interface SurveyItemService<T> extends Service {
+export interface SurveyItemService<T> extends ArenaService {
   count(params: { surveyId: number }, client?: BaseProtocol): Promise<number>
 
   getAll(params: { surveyId: number }, client?: BaseProtocol): Promise<T[]>

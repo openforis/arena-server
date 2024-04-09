@@ -41,5 +41,19 @@ export const DataQueryRead: ExpressInitializer = {
         next(error)
       }
     })
+
+    express.get(ApiEndpoint.dataQuery.dataQuery(':surveyId', ':querySummaryUuid'), async (req, res, next) => {
+      try {
+        const { surveyId, querySummaryUuid } = Requests.getParams(req)
+
+        const service = getDataQueryService()
+
+        const dataQuerySummary = await service.getByUuid({ surveyId, uuid: querySummaryUuid })
+
+        res.json(dataQuerySummary)
+      } catch (error) {
+        next(error)
+      }
+    })
   },
 }

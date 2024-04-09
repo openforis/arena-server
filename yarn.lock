@@ -858,10 +858,8 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@openforis/arena-core@^0.0.187":
+"@openforis/arena-core@../arena-core":
   version "0.0.187"
-  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/0.0.187/a6b3d96d5e7f1de958c15c78daece4b07477d5ec#a6b3d96d5e7f1de958c15c78daece4b07477d5ec"
-  integrity sha512-yzZu0zEJ1XPsRi0tB2BA+meiEo7vX0WWkQhec5sAAOYWM+mt0Kz4G9Jt9UWZxMEbusjArhljZ1VkA9R88u8Zsg==
   dependencies:
     "@jsep-plugin/regex" "^1.0.3"
     bignumber.js "^9.1.2"

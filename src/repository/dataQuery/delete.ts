@@ -1,5 +1,6 @@
+import { DataQuerySummary } from '@openforis/arena-core'
+
 import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
-import { DataQuerySummary } from '../../model'
 import { SqlDeleteBuilder } from '../../db'
 
 export const deleteItem = (

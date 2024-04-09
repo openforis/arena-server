@@ -1,5 +1,6 @@
+import { DataQuerySummary } from '@openforis/arena-core'
+
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableDataQuery } from '../../db'
-import { DataQuerySummary } from '../../model'
 import { SqlSelectCountBuilder } from '../../db/sql'
 
 export const count = (params: { surveyId: number }, client: BaseProtocol = DB): Promise<number> => {

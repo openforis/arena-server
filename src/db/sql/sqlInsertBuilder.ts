@@ -39,7 +39,7 @@ export class SqlInsertBuilder extends SqlBuilder {
       valuesParams.push(`$/${columnName}/`)
     })
 
-    const parts = [`INSERT INTO ${this._table}`, `(${columnNames.join(', ')})`, `VALUES (${valuesParams.join(', ')}`]
+    const parts = [`INSERT INTO ${this._table}`, `(${columnNames.join(', ')})`, `VALUES (${valuesParams.join(', ')})`]
 
     if (!Objects.isEmpty(this._returning)) {
       parts.push(`RETURNING ${this._returning.join(', ')}`)

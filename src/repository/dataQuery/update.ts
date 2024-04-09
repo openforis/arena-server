@@ -1,6 +1,7 @@
+import { DataQuerySummary } from '@openforis/arena-core'
+
 import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
-import { DataQuerySummary } from '../../model'
 
 export const update = async (
   params: { surveyId: number; item: DataQuerySummary },

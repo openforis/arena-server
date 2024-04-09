@@ -1,5 +1,6 @@
+import { DataQuerySummary } from '@openforis/arena-core'
+
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableDataQuery } from '../../db'
-import { DataQuerySummary } from '../../model'
 
 export const insert = (
   params: { surveyId: number; item: DataQuerySummary },

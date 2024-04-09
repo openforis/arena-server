@@ -1,4 +1,5 @@
-import { DataQuerySummary } from '../../model'
+import { DataQuerySummary } from '@openforis/arena-core'
+
 import { DataQueryRepository } from '../../repository/dataQuery'
 import { SurveyItemService } from '../SurveyItemService'
 

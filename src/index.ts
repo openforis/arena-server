@@ -29,9 +29,6 @@ export type { BaseProtocol } from './db'
 export { JobManager, JobServer, JobMessageInType, JobMessageOutType, JobRegistry } from './job'
 export type { JobContext, JobMessageIn, JobMessageOut } from './job'
 
-export type { DataQuery, DataQuerySummary, DataQuerySummaryProps } from './model'
-export { DataQueryMode, DataQuerySummaries } from './model'
-
 export { Logger } from './log'
 
 export { ProcessEnv, NodeEnv } from './processEnv'
