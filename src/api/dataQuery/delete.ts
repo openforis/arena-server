@@ -12,16 +12,15 @@ import { ApiEndpoint } from '../endpoint'
 const getDataQueryService = (): DataQueryService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.dataQuery)
 
-export const DataQueryUpdate: ExpressInitializer = {
+export const DataQueryDelete: ExpressInitializer = {
   init: (express: Express): void => {
-    express.put(ApiEndpoint.dataQuery.dataQuery(':surveyId', ':queryUuid'), async (req, res, next) => {
+    express.delete(ApiEndpoint.dataQuery.dataQuery(':surveyId', ':queryUuid'), async (req, res, next) => {
       try {
-        const { surveyId } = Requests.getParams(req)
-        const querySummary = req.body
+        const { surveyId, queryUuid } = Requests.getParams(req)
 
         const service = getDataQueryService()
 
-        const querySummaryUpdated = await service.update({ surveyId, item: querySummary })
+        const querySummaryUpdated = await service.deleteItem({ surveyId, uuid: queryUuid })
 
         res.json(querySummaryUpdated)
       } catch (error) {

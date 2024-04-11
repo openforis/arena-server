@@ -21,15 +21,19 @@ export const transformCallback = (options: {
   draft?: boolean
   assocPublishedDraft?: boolean
   backup?: boolean
+  skip?: string[]
 }): any => {
-  const { row, draft = false, assocPublishedDraft = false, backup = false } = options
+  const { row, draft = false, assocPublishedDraft = false, backup = false, skip = [] } = options
   if (row === null) {
     return null
   }
 
   // Assoc published and draft properties based on props
   const currentRow = backup || assocPublishedDraft ? _assocPublishedDraft(row) : row
-  const rowUpdated = Objects.camelize(currentRow, { skip: ['validation', 'props', 'props_draft'], sideEffect: true })
+  const rowUpdated = Objects.camelize(currentRow, {
+    skip: ['validation', 'props', 'props_draft', ...skip],
+    sideEffect: true,
+  })
 
   if (!Object.hasOwn(rowUpdated, 'props_draft')) {
     return rowUpdated

@@ -46,5 +46,7 @@ export const getByUuid = async (
     .where(`${table.uuid} = $1`)
     .build()
 
-  return client.one<DataQuerySummary>(sql, [uuid], (row) => DBs.transformCallback({ row }))
+  return client.one<DataQuerySummary>(sql, [uuid], (row) =>
+    DBs.transformCallback({ row, skip: [table.content.columnName] })
+  )
 }
