@@ -1,4 +1,7 @@
 export { SQLs } from './sqls'
-export { SqlSelectBuilder } from './sqlSelectBuilder'
+export { SqlDeleteBuilder } from './sqlDeleteBuilder'
+export { SqlInsertBuilder } from './sqlInsertBuilder'
 export { SqlJoinBuilder } from './sqlJoinBuilder'
+export { SqlSelectBuilder } from './sqlSelectBuilder'
+export { SqlSelectCountBuilder } from './sqlSelectCountBuilder'
 export { SqlUpdateBuilder } from './sqlUpdateBuilder'

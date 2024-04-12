@@ -1,5 +1,5 @@
 import { Response } from 'express'
-import { ServerError, ServerErrorCode, UnauthorizedError } from '../server'
+import { ServerError, ServerErrorCode, UnauthorizedError } from '../server/error'
 
 enum Status {
   ok = 'ok',

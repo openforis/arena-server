@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^4.12.1",
-    "@openforis/arena-core": "^0.0.174",
+    "@openforis/arena-core": "^0.0.188",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "compression": "^1.7.4",

@@ -9,7 +9,7 @@ import {
   Users,
   UserService,
 } from '@openforis/arena-core'
-import { UnauthorizedError } from '../../server'
+import { UnauthorizedError } from '../../server/error'
 import { Requests } from '../../utils'
 
 type PermissionFn = (user: User, ...args: Array<any>) => boolean
@@ -34,56 +34,47 @@ const checkPermission = (req: Request, next: NextFunction, permissionFn: Permiss
   }
 }
 
-const requireSurveyPermission = (permissionFn: PermissionFn) => async (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { surveyId } = Requests.getParams(req)
-    const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
-    const survey = await service.get({ surveyId })
+const requireSurveyPermission =
+  (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const { surveyId } = Requests.getParams(req)
+      const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+      const survey = await service.get({ surveyId })
 
-    checkPermission(req, next, permissionFn, survey)
-  } catch (error) {
-    next(error)
+      checkPermission(req, next, permissionFn, survey)
+    } catch (error) {
+      next(error)
+    }
   }
-}
 
-const requireRecordPermission = (permissionFn: PermissionFn) => async (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { surveyId, recordUuid } = Requests.getParams(req)
-    const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
-    const record = await service.get({ surveyId, recordUuid })
+const requireRecordPermission =
+  (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const { surveyId, recordUuid } = Requests.getParams(req)
+      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
+      const record = await service.get({ surveyId, recordUuid })
 
-    checkPermission(req, next, permissionFn, record)
-  } catch (error) {
-    next(error)
+      checkPermission(req, next, permissionFn, record)
+    } catch (error) {
+      next(error)
+    }
   }
-}
 
-const requireUserPermission = (permissionFn: PermissionFn) => async (
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { surveyId, userUuid } = Requests.getParams(req)
-    const serviceRegistry = ServiceRegistry.getInstance()
-    const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
-    const userService = serviceRegistry.getService(ServiceType.user) as UserService
-    const survey = await surveyService.get({ surveyId })
-    const userToEdit = await userService.get({ userUuid })
+const requireUserPermission =
+  (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const { surveyId, userUuid } = Requests.getParams(req)
+      const serviceRegistry = ServiceRegistry.getInstance()
+      const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
+      const userService = serviceRegistry.getService(ServiceType.user) as UserService
+      const survey = await surveyService.get({ surveyId })
+      const userToEdit = await userService.get({ userUuid })
 
-    checkPermission(req, next, permissionFn, survey, userToEdit)
-  } catch (error) {
-    next(error)
+      checkPermission(req, next, permissionFn, survey, userToEdit)
+    } catch (error) {
+      next(error)
+    }
   }
-}
 
 export const ApiAuthMiddleware = {
   // Admin

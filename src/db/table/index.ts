@@ -14,6 +14,7 @@ export {
   TableChain,
   TableChainNodeDef,
   TableChainNodeDefAggregate,
+  TableDataQuery,
   TableNodeDef,
   TableRecord,
 } from './schemaSurvey'
