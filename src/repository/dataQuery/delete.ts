@@ -1,7 +1,6 @@
 import { DataQuerySummary } from '@openforis/arena-core'
 
-import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
-import { SqlDeleteBuilder } from '../../db'
+import { BaseProtocol, DB, DBs, SqlDeleteBuilder, TableDataQuery } from '../../db'
 
 export const deleteItem = (
   params: { surveyId: number; uuid: string },
