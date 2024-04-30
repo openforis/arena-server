@@ -1,14 +1,14 @@
 import { DBMigrator } from '../../db'
 import { ArenaApp } from '../arenaApp'
-import { initApp } from './initApp'
+import { InitAppOptions, initApp } from './initApp'
 import { registerServices } from './registerServices'
 import { start } from './start'
 import { stop } from './stop'
 
-const init = async (): Promise<ArenaApp> => {
+const init = async (options?: InitAppOptions): Promise<ArenaApp> => {
   registerServices()
   await DBMigrator.migrateAll()
-  return initApp()
+  return initApp(options)
 }
 
 export const ArenaServer = {
