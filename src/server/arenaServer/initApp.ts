@@ -1,5 +1,4 @@
 import express, { Express } from 'express'
-import bodyParser from 'body-parser'
 import expressFileUpload from 'express-fileupload'
 import compression from 'compression'
 
@@ -14,15 +13,25 @@ import {
 } from '../middleware'
 import { Api } from '../../api'
 
-export const initApp = (): ArenaApp => {
+export interface InitAppOptions {
+  fileSizeLimit?: number
+  bodyParseLimit?: string
+}
+
+const defaultOptions: InitAppOptions = {
+  fileSizeLimit: 1024 * 1024 * 1024, // 1GB
+  bodyParseLimit: '5000kb',
+}
+
+export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
+  const { bodyParseLimit, fileSizeLimit } = { ...defaultOptions, ...options }
   const app: Express = express()
 
   if (ProcessEnv.useHttps) HttpsMiddleware.init(app)
-  app.use(bodyParser.json({ limit: '5000kb' }))
+  app.use(express.json({ limit: bodyParseLimit }))
   app.use(
     expressFileUpload({
-      // Limit upload to 1 GB
-      limits: { fileSize: 1024 * 1024 * 1024 },
+      limits: { fileSize: fileSizeLimit },
       abortOnLimit: true,
       useTempFiles: true,
       tempFileDir: ProcessEnv.tempFolder,
