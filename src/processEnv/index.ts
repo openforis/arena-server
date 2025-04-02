@@ -26,6 +26,7 @@ export const ProcessEnv = {
   pgPort: Number(pgPort),
   pgDatabase,
   pgSsl: process.env.PGSSL === 'true',
+  disableDbMigrations: process.env.DISABLE_DB_MIGRATIONS === 'true',
 
   // Express
   port: process.env.PORT || '9090',
@@ -33,5 +34,6 @@ export const ProcessEnv = {
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: process.env.USE_HTTPS === 'true',
 
+  // Logging
   disableLogging: process.env.NODE_ENV === 'test' && process.env.DISABLE_LOGS === 'true',
 }
