@@ -40,6 +40,7 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   app.use(compression({ threshold: 512 }))
   HeaderMiddleware.init(app)
   const session = SessionMiddleware.init(app)
+
   AuthenticationMiddleware.init(app)
 
   Api.init(app)

@@ -1,6 +1,7 @@
+import { Express, RequestHandler } from 'express'
 import passport from 'passport'
 import { VerifyFunctionWithRequest, Strategy as LocalStrategy } from 'passport-local'
-import { Express } from 'express'
+import { ExtractJwt, Strategy as JWTStrategy } from 'passport-jwt'
 import {
   FieldValidators,
   User,
@@ -12,7 +13,9 @@ import {
   UserService,
 } from '@openforis/arena-core'
 
+import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
+
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
 
@@ -57,6 +60,30 @@ const localStrategy = new LocalStrategy(
   _verifyCallback
 )
 
+const jwtStrategy = new JWTStrategy(
+  {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: ProcessEnv.sessionIdCookieSecret,
+  },
+  (jwtPayload, done) => {
+    if (Date.now() > jwtPayload.expires) {
+      return done(ValidatorErrorKeys.user.authenticationTokenExpired)
+    }
+    return done(null, jwtPayload)
+  }
+)
+
+const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
+  const allowedPaths = [/^\/auth\/.*$/, /^\/guest\/.*$/, /^\/img\/.*$/]
+  if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
+    next()
+  } else if (!req.user) {
+    res.status(401).send({ message: 'Unauthorized' })
+  } else {
+    next()
+  }
+}
+
 export const AuthenticationMiddleware: ExpressInitializer = {
   init(express: Express): void {
     express.use(passport.initialize())
@@ -64,6 +91,8 @@ export const AuthenticationMiddleware: ExpressInitializer = {
     express.use(passport.session())
 
     passport.use('local', localStrategy)
+
+    passport.use('jwt', jwtStrategy)
 
     passport.serializeUser((user, done) => done(null, user?.uuid))
 
@@ -74,5 +103,7 @@ export const AuthenticationMiddleware: ExpressInitializer = {
 
       done(null, user)
     })
+
+    express.use(isAuthorizedMiddleware)
   },
 }
