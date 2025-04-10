@@ -1,6 +1,7 @@
 import express, { Express } from 'express'
 import expressFileUpload from 'express-fileupload'
 import compression from 'compression'
+import cookieParser from 'cookie-parser'
 
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
@@ -27,7 +28,9 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   const { bodyParseLimit, fileSizeLimit } = { ...defaultOptions, ...options }
   const app: Express = express()
 
-  if (ProcessEnv.useHttps) HttpsMiddleware.init(app)
+  if (ProcessEnv.useHttps) {
+    HttpsMiddleware.init(app)
+  }
   app.use(express.json({ limit: bodyParseLimit }))
   app.use(
     expressFileUpload({
@@ -38,6 +41,7 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
     })
   )
   app.use(compression({ threshold: 512 }))
+  app.use(cookieParser())
   HeaderMiddleware.init(app)
   const session = SessionMiddleware.init(app)
 

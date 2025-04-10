@@ -60,19 +60,15 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
   req.logIn(user, { session: false }, (err) => {
     if (err) {
       next(err)
-      return
     } else {
-      /** assigns payload to req.user */
       const payload = {
-        username: user.email,
+        userUuid: user.uuid,
         expires: Date.now() + jwtExpireMs,
       }
-      /** generate a signed json web token and return it in the response */
       const token = jwt.sign(JSON.stringify(payload), ProcessEnv.sessionIdCookieSecret)
-      /** assign our jwt to the cookie */
       res.cookie('jwt', token, { httpOnly: true, secure: true })
       res.status(200)
-      return sendUser({ res, req, user })
+      sendUser({ res, req, user })
     }
   })
 
