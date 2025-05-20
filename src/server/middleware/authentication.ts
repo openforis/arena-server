@@ -17,6 +17,8 @@ import {
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
 
+const allowedPaths = [/^\/$/, /^\/auth\/login$/, /^\/guest\/.*$/, /^\/img\/.*$/]
+
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
 
@@ -90,13 +92,12 @@ const jwtStrategy = new JWTStrategy(
 )
 
 const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
-  const allowedPaths = [/^\/auth\/login$/, /^\/auth\/user$/, /^\/guest\/.*$/, /^\/img\/.*$/]
   if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
     passport.authenticate('jwt', { session: false }, (err: any, user: User) => {
       if (err) {
-        next(err)
+        res.status(401).send({ message: err.toString() })
       } else if (!user) {
         res.status(401).send({ message: 'Unauthorized' })
       } else {

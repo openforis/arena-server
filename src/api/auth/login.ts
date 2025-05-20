@@ -12,7 +12,8 @@ import { ProcessEnv } from '../../processEnv'
 
 const logger = new Logger('AuthAPI')
 
-const jwtExpireMs = 30 * 60 * 1000 // 30 mins
+const jwtCookieName = 'jwt'
+const jwtExpireMs = 24 * 60 * 60 * 1000 // 24 hours
 
 export const deletePrefSurvey = (user: User): User => {
   const surveyId = user.prefs?.surveys?.current
@@ -66,7 +67,7 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
         expires: Date.now() + jwtExpireMs,
       }
       const token = jwt.sign(JSON.stringify(payload), ProcessEnv.sessionIdCookieSecret)
-      res.cookie('jwt', token, { httpOnly: true, secure: true })
+      res.cookie(jwtCookieName, token, { httpOnly: true, secure: true })
       res.status(200)
       sendUser({ res, req, user })
     }
