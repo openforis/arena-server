@@ -17,7 +17,7 @@ import {
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
 
-const allowedPaths = [/^\/$/, /^\/auth\/login$/, /^\/guest\/.*$/, /^\/img\/.*$/]
+const allowedPaths = [/^\/$/, /^\/api\/surveyTemplates$/, /^\/auth\/login$/, /^\/guest\/.*$/, /^\/img\/.*$/]
 
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
