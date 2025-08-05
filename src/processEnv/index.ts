@@ -26,6 +26,7 @@ export const ProcessEnv = {
   pgPort: Number(pgPort),
   pgDatabase,
   pgSsl: process.env.PGSSL === 'true',
+  pgSslAllowUnauthorized: process.env.PGSSL_ALLOW_UNAUTHORIZED === 'true',
   disableDbMigrations: process.env.DISABLE_DB_MIGRATIONS === 'true',
 
   // Express

@@ -27,13 +27,15 @@ const pgp = pgPromise(initOptions)
 // 1114 is OID for timestamp in Postgres
 pgp.pg.types.setTypeParser(1114, (str: string) => new Date(`${str} GMT`))
 
+// SSL connection configuration
+const sslConfig = ProcessEnv.pgSsl ? { rejectUnauthorized: !ProcessEnv.pgSslAllowUnauthorized } : false
+
 const configCommon = {
   // How long a client is allowed to remain idle before being closed
   idleTimeoutMillis: 30000,
   // Max number of clients in the pool
   max: 30,
-  // Whether to use ssl connections
-  ssl: ProcessEnv.pgSsl,
+  ssl: sslConfig,
 }
 
 const config = ProcessEnv.dbUrl
