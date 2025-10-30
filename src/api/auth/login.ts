@@ -1,5 +1,4 @@
 import { Express, NextFunction, Request, Response } from 'express'
-import jwt from 'jsonwebtoken'
 import passport from 'passport'
 
 import {
@@ -8,23 +7,19 @@ import {
   ServiceType,
   SurveyService,
   User,
-  UserRefreshTokenService,
+  UserAuthTokenService,
   UserRefreshTokenProps,
   UserService,
 } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
-import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../../server'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
-import { JwtPayload } from './jwtPayload'
 
 const logger = new Logger('AuthAPI')
 
 const jwtCookieName = 'jwt'
-const jwtExpireMs = 60 * 60 * 1000 // 1 hour
-const jwtExpiresIn = '1h' // 1 hour
 const jwtRefreshTokenCookieName = 'refreshToken'
 
 export const deletePrefSurvey = (user: User): User => {
@@ -77,25 +72,20 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
     } else {
       const { uuid: userUuid } = user
 
-      const now: number = Date.now()
-      const tokenPayload: JwtPayload = {
-        userUuid,
-        iat: now,
-        exp: now + jwtExpireMs,
-      }
-      const token = jwt.sign(JSON.stringify(tokenPayload), ProcessEnv.refreshTokenSecret, { expiresIn: jwtExpiresIn })
+      const serviceRegistry = ServiceRegistry.getInstance()
+      const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
+
+      const token = userAuthTokenService.createAuthToken({ userUuid })
 
       const refreshTokenProps: UserRefreshTokenProps = { userAgent: req.headers['user-agent'] ?? '' }
 
-      const serviceRegistry = ServiceRegistry.getInstance()
-      const userRefreshTokenService: UserRefreshTokenService = serviceRegistry.getService(ServiceType.userRefreshToken)
-
-      userRefreshTokenService
-        .create({ userUuid, props: refreshTokenProps })
+      userAuthTokenService
+        .createRefreshToken({ userUuid, props: refreshTokenProps })
         .then((refreshTokenObj) => {
           const { token: refreshToken } = refreshTokenObj
-          res.cookie(jwtCookieName, token, { httpOnly: true, secure: true })
-          res.cookie(jwtRefreshTokenCookieName, refreshToken, { httpOnly: true, secure: true })
+          const cookieOptions = { httpOnly: true, secure: true }
+          res.cookie(jwtCookieName, token, cookieOptions)
+          res.cookie(jwtRefreshTokenCookieName, refreshToken, cookieOptions)
           res.status(200)
           sendUser({ res, req, user })
         })
