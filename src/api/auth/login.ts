@@ -1,6 +1,6 @@
-import { Express, Response, Request, NextFunction } from 'express'
-import passport from 'passport'
+import { Express, NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
+import passport from 'passport'
 
 import {
   Authorizer,
@@ -9,15 +9,15 @@ import {
   SurveyService,
   User,
   UserRefreshTokenService,
+  UserRefreshTokenProps,
   UserService,
-  UUIDs,
 } from '@openforis/arena-core'
 
-import { ExpressInitializer } from '../../server'
-import { ApiEndpoint } from '../endpoint'
 import { Logger } from '../../log'
-import { Requests } from '../../utils'
 import { ProcessEnv } from '../../processEnv'
+import { ExpressInitializer } from '../../server'
+import { Requests } from '../../utils'
+import { ApiEndpoint } from '../endpoint'
 import { JwtPayload } from './jwtPayload'
 
 const logger = new Logger('AuthAPI')
@@ -26,8 +26,6 @@ const jwtCookieName = 'jwt'
 const jwtExpireMs = 60 * 60 * 1000 // 1 hour
 const jwtExpiresIn = '1h' // 1 hour
 const jwtRefreshTokenCookieName = 'refreshToken'
-const jwtRefresshTokenExpireMs = 7 * 24 * 60 * 60 * 1000 // 1 week
-const jwtRefreshExpiresIn = '1w' // 1 week
 
 export const deletePrefSurvey = (user: User): User => {
   const surveyId = user.prefs?.surveys?.current
@@ -72,33 +70,6 @@ const sendUser = async (options: { res: Response; req: Request; user: User }) =>
   }
 }
 
-const createAndStoreRefreshToken = async (options: { userUuid: string; req: Request }) => {
-  const now = Date.now()
-  const { userUuid, req } = options
-  const refreshTokenUuid = UUIDs.v4()
-  const refreshTokenExpiresAtDate = new Date(now + jwtRefresshTokenExpireMs)
-  const refreshTokenPayload: JwtPayload = {
-    userUuid,
-    uuid: refreshTokenUuid,
-    iat: now,
-    exp: refreshTokenExpiresAtDate.getTime(),
-  }
-  const refreshToken = jwt.sign(refreshTokenPayload, ProcessEnv.refreshTokenSecret, {
-    expiresIn: jwtRefreshExpiresIn,
-  })
-  const serviceRegistry = ServiceRegistry.getInstance()
-  const userRefreshTokenService: UserRefreshTokenService = serviceRegistry.getService(ServiceType.userRefreshToken)
-
-  await userRefreshTokenService.create({
-    uuid: refreshTokenUuid,
-    userUuid,
-    token: refreshToken,
-    dateCreated: new Date(),
-    expiresAt: refreshTokenExpiresAtDate,
-    props: { userAgent: req.headers['user-agent'] ?? '' },
-  })
-}
-
 const authenticationSuccessful = (req: Request, res: Response, next: NextFunction, user: User) =>
   req.logIn(user, { session: false }, async (err) => {
     if (err) {
@@ -114,8 +85,15 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
       }
       const token = jwt.sign(JSON.stringify(tokenPayload), ProcessEnv.refreshTokenSecret, { expiresIn: jwtExpiresIn })
 
-      createAndStoreRefreshToken({ userUuid, req })
-        .then((refreshToken) => {
+      const refreshTokenProps: UserRefreshTokenProps = { userAgent: req.headers['user-agent'] ?? '' }
+
+      const serviceRegistry = ServiceRegistry.getInstance()
+      const userRefreshTokenService: UserRefreshTokenService = serviceRegistry.getService(ServiceType.userRefreshToken)
+
+      userRefreshTokenService
+        .create({ userUuid, props: refreshTokenProps })
+        .then((refreshTokenObj) => {
+          const { token: refreshToken } = refreshTokenObj
           res.cookie(jwtCookieName, token, { httpOnly: true, secure: true })
           res.cookie(jwtRefreshTokenCookieName, refreshToken, { httpOnly: true, secure: true })
           res.status(200)
