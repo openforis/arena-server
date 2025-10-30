@@ -4,6 +4,7 @@ export {
   TableSchemaPublic,
   TableSurvey,
   TableUser,
+  TableUserRefreshToken,
   TableUserResetPassword,
   TableAuthGroup,
   TableAuthGroupUser,

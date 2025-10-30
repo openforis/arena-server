@@ -1,5 +1,6 @@
 export { AuthGroupRepository } from './authGroup'
 export { SurveyRepository } from './survey'
 export { UserRepository } from './user'
+export { UserRefreshTokenRepository } from './userRefreshToken'
 export { UserResetPasswordRepository } from './userResetPassword'
 export { RecordRepository } from './record'
