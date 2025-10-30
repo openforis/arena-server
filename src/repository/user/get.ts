@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { User } from '@openforis/arena-core'
+import { User, UserStatus } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlSelectBuilder, TableUser } from '../../db'
 
@@ -16,34 +16,41 @@ export const get = async (options: getOptionsType, client: BaseProtocol = DB): P
 
   const table = new TableUser()
   const selectFields = [table.uuid, table.name, table.email, table.prefs, table.status, table.props]
-  let value = ''
-  let column
+  let filterByValue = ''
+  let filterByColumn
   if ('password' in options) {
-    value = options.email
-    column = table.email
+    filterByValue = options.email
+    filterByColumn = table.email
     // Using email and password to fetch user
     // Do not include password by default
     selectFields.push(table.password)
   } else if ('userUuid' in options) {
-    value = options.userUuid
-    column = table.uuid
+    filterByValue = options.userUuid
+    filterByColumn = table.uuid
   } else if ('email' in options) {
-    value = options.email
-    column = table.email
+    filterByValue = options.email
+    filterByColumn = table.email
   }
 
   const sql = new SqlSelectBuilder()
     .select(...selectFields)
     .from(table)
-    .where(`${column} = $1`)
+    .where(`${filterByColumn} = $1`)
     .build()
 
-  const user = await client.oneOrNone<User>(sql, [value])
-  if (!user) return null
-  // Incorrect password check
-  if ('password' in options && user.password && !(await bcrypt.compareSync(options.password, user.password)))
+  const user = await client.oneOrNone<User>(sql, [filterByValue])
+  if (!user) {
     return null
-  if (user.password) delete user.password
-
+  }
+  // Incorrect password check
+  if (
+    'password' in options &&
+    (user.status !== UserStatus.ACCEPTED || !user.password || !bcrypt.compareSync(options.password, user.password))
+  ) {
+    return null
+  }
+  if (user.password) {
+    delete user.password
+  }
   return user
 }
