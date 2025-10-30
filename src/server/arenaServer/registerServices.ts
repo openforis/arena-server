@@ -12,5 +12,5 @@ export const registerServices = (): void => {
     .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
     .registerService(ServiceType.survey, SurveyServiceServer)
     .registerService(ServiceType.user, UserServiceServer)
-    .registerService(ServiceType.userRefreshToken, UserRefreshTokenServiceServer)
+    .registerService(ServiceType.userAuthToken, UserRefreshTokenServiceServer)
 }
