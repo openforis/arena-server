@@ -13,4 +13,8 @@ export class TableUserRefreshToken extends TableSchemaPublic {
   constructor() {
     super('user_refresh_token')
   }
+
+  get columns() {
+    return [this.uuid, this.userUuid, this.token, this.props, this.dateCreated, this.expiresAt, this.revoked]
+  }
 }

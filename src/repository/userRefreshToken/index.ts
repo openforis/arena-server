@@ -1,12 +1,12 @@
 import { deleteExpired } from './deleteExpired'
-import { getByUuid } from './getByToken'
+import { getByUuid } from './getByUuid'
 import { insert } from './insert'
 import { revoke } from './revoke'
 import { revokeAll } from './revokeAll'
 
 export const UserRefreshTokenRepository = {
   insert,
-  getByToken: getByUuid,
+  getByUuid,
   revoke,
   revokeAll,
   deleteExpired,
