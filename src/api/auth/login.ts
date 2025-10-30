@@ -9,6 +9,7 @@ import { ApiEndpoint } from '../endpoint'
 import { Logger } from '../../log'
 import { Requests } from '../../utils'
 import { ProcessEnv } from '../../processEnv'
+import { JwtPayload } from './jwtPayload'
 
 const logger = new Logger('AuthAPI')
 
@@ -25,15 +26,16 @@ export const deletePrefSurvey = (user: User): User => {
 
 const sendUserSurvey = async (options: { res: Response; user: User }) => {
   const { res, user } = options
+  const servuceRegistry = ServiceRegistry.getInstance()
   const surveyId = user.prefs?.surveys?.current
   try {
-    const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+    const surveyService = servuceRegistry.getService(ServiceType.survey) as SurveyService
     let survey = null
     if (surveyId) {
-      survey = await service.get({ surveyId, draft: false, validate: false })
+      survey = await surveyService.get({ surveyId, draft: false, validate: false })
     }
     if (survey && surveyId && Authorizer.canEditSurvey(user, survey)) {
-      survey = await service.get({ surveyId, draft: true, validate: true })
+      survey = await surveyService.get({ surveyId, draft: true, validate: true })
     }
     res.json({ user, survey })
   } catch (error: any) {
@@ -41,9 +43,9 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
     // Survey not found with user pref
     // removing user pref
     const userToUpdate = deletePrefSurvey(user)
-    const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+    const userService = servuceRegistry.getService(ServiceType.user) as UserService
 
-    res.json({ user: await service.updateUserPrefs({ userToUpdate }) })
+    res.json({ user: await userService.updateUserPrefs({ userToUpdate }) })
   }
 }
 
@@ -62,9 +64,10 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
     if (err) {
       next(err)
     } else {
-      const payload = {
+      const payload: JwtPayload = {
         userUuid: user.uuid,
-        expires: Date.now() + jwtExpireMs,
+        exp: Date.now() + jwtExpireMs,
+        iat: Date.now(),
       }
       const token = jwt.sign(JSON.stringify(payload), ProcessEnv.sessionIdCookieSecret)
       res.cookie(jwtCookieName, token, { httpOnly: true, secure: true })
