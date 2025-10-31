@@ -8,6 +8,7 @@ import {
   ServiceRegistry,
   ServiceType,
   User,
+  UserAuthTokenPayload,
   UserService,
   UserStatus,
   Validator,
@@ -16,6 +17,7 @@ import {
 
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
+import { jwtCookieName } from '../../api/auth/authApiCommon'
 
 const allowedPaths = [/^\/$/, /^\/api\/surveyTemplates$/, /^\/auth\/login$/, /^\/guest\/.*$/, /^\/img\/.*$/]
 
@@ -65,12 +67,12 @@ const localStrategy = new LocalStrategy(
 
 const jwtStrategy = new JWTStrategy(
   {
-    jwtFromRequest: (req) => req.cookies?.jwt,
-    secretOrKey: ProcessEnv.sessionIdCookieSecret,
+    jwtFromRequest: (req) => req.cookies?.[jwtCookieName],
+    secretOrKey: ProcessEnv.refreshTokenSecret,
     passReqToCallback: true,
   },
-  (req, jwtPayload, done) => {
-    if (Date.now() > jwtPayload.expires) {
+  (req, jwtPayload: UserAuthTokenPayload, done) => {
+    if (Date.now() > jwtPayload.exp) {
       return done('JWT expired')
     }
     const { userUuid } = jwtPayload
@@ -91,11 +93,13 @@ const jwtStrategy = new JWTStrategy(
   }
 )
 
+const jwtStrategyName = 'jwt'
+
 const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
   if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
-    passport.authenticate('jwt', { session: false }, (err: any, user: User) => {
+    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
       if (err) {
         res.status(401).send({ message: err.toString() })
       } else if (!user) {
@@ -112,7 +116,7 @@ export const AuthenticationMiddleware: ExpressInitializer = {
     express.use(passport.initialize())
 
     passport.use('local', localStrategy)
-    passport.use('jwt', jwtStrategy)
+    passport.use(jwtStrategyName, jwtStrategy)
 
     express.use(isAuthorizedMiddleware)
   },

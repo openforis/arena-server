@@ -8,7 +8,6 @@ import {
   SurveyService,
   User,
   UserAuthTokenService,
-  UserRefreshTokenProps,
   UserService,
 } from '@openforis/arena-core'
 
@@ -75,7 +74,7 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
 
       const authToken = userAuthTokenService.createAuthToken({ userUuid })
 
-      const refreshTokenProps: UserRefreshTokenProps = extractRefreshTokenProps({ req })
+      const refreshTokenProps = extractRefreshTokenProps({ req })
 
       userAuthTokenService
         .createRefreshToken({ userUuid, props: refreshTokenProps })

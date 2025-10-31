@@ -2,10 +2,12 @@ import jwt from 'jsonwebtoken'
 import pgPromise from 'pg-promise'
 
 import {
+  UserAuthRefreshToken,
+  UserAuthRefreshTokenPayload,
+  UserAuthRefreshTokenProps,
   UserAuthToken,
+  UserAuthTokenPayload,
   UserAuthTokenService,
-  UserRefreshToken,
-  UserRefreshTokenProps,
   UUIDs,
 } from '@openforis/arena-core'
 
@@ -15,28 +17,14 @@ import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
 import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userRefreshTokenServiceConstants'
 
-type JwtPayload = {
-  userUuid: string
-  uuid?: string
-  exp: number
-  iat: number
-}
-
-type RefreshTokenPayload = {
-  uuid: string
-  userUuid: string
-  exp: number
-  iat: number
-}
-
 const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.refreshTokenSecret)
 
-const createRefreshTokenInternal = (options: { userUuid: string }): UserRefreshToken => {
+const createRefreshTokenInternal = (options: { userUuid: string }): UserAuthRefreshToken => {
   const { userUuid } = options
   const now = Date.now()
   const uuid = UUIDs.v4()
   const expiresAt = new Date(now + jwtRefresshTokenExpireMs)
-  const payload: RefreshTokenPayload = {
+  const payload: UserAuthRefreshTokenPayload = {
     uuid: uuid,
     userUuid,
     iat: now,
@@ -51,7 +39,7 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
     const { userUuid } = options
     const now = Date.now()
     const expiresAt = new Date(now + jwtExpiresMs)
-    const payload: JwtPayload = {
+    const payload: UserAuthTokenPayload = {
       userUuid,
       iat: now,
       exp: expiresAt.getTime(),
@@ -60,14 +48,14 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
     return { token, dateCreated: new Date(now), expiresAt }
   },
   async createRefreshToken(
-    options: { userUuid: string; props: UserRefreshTokenProps },
+    options: { userUuid: string; props: UserAuthRefreshTokenProps },
     client = DB
-  ): Promise<UserRefreshToken> {
+  ): Promise<UserAuthRefreshToken> {
     const { userUuid, props } = options
     const { token, expiresAt } = createRefreshTokenInternal({ userUuid })
     return UserRefreshTokenRepository.insert({ userUuid, token, expiresAt, props }, client)
   },
-  async getByUuid(tokenUuid: string): Promise<UserRefreshToken | null> {
+  async getByUuid(tokenUuid: string): Promise<UserAuthRefreshToken | null> {
     return UserRefreshTokenRepository.getByUuid(tokenUuid)
   },
   async revoke(options: { tokenUuid: string }): Promise<void> {
@@ -79,9 +67,9 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
     return UserRefreshTokenRepository.revokeAll({ userUuid })
   },
   async rotateRefreshToken(
-    options: { oldRefreshTokenUuid: string; userUuid: string; props: UserRefreshTokenProps },
+    options: { oldRefreshTokenUuid: string; userUuid: string; props: UserAuthRefreshTokenProps },
     client: pgPromise.IDatabase<any> = DB
-  ): Promise<UserRefreshToken> {
+  ): Promise<UserAuthRefreshToken> {
     return client.tx(async (t) => {
       const { oldRefreshTokenUuid, userUuid, props } = options
       await UserRefreshTokenRepository.revoke(oldRefreshTokenUuid, t)
@@ -90,8 +78,8 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
   },
   async rotateTokens(options: {
     refreshToken: string
-    refreshTokenProps: UserRefreshTokenProps
-  }): Promise<{ authToken: UserAuthToken; refreshToken: UserRefreshToken } | null> {
+    refreshTokenProps: UserAuthRefreshTokenProps
+  }): Promise<{ authToken: UserAuthToken; refreshToken: UserAuthRefreshToken } | null> {
     const { refreshToken, refreshTokenProps } = options
     if (!refreshToken) {
       return null

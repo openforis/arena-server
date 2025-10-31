@@ -1,4 +1,4 @@
-import { UserRefreshToken } from '@openforis/arena-core'
+import { UserAuthRefreshToken } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserRefreshToken } from '../../db'
 
 type InsertOptions = {
@@ -14,7 +14,7 @@ type InsertOptions = {
  * @param options - The refresh token data
  * @param client - Database client
  */
-export const insert = async (options: InsertOptions, client: BaseProtocol = DB): Promise<UserRefreshToken> => {
+export const insert = async (options: InsertOptions, client: BaseProtocol = DB): Promise<UserAuthRefreshToken> => {
   const { userUuid, token, expiresAt, props = {} } = options
 
   const table = new TableUserRefreshToken()
@@ -32,5 +32,5 @@ export const insert = async (options: InsertOptions, client: BaseProtocol = DB):
     .returning(...table.columns)
     .build()
 
-  return client.one<UserRefreshToken>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<UserAuthRefreshToken>(sql, values, (row) => DBs.transformCallback({ row }))
 }

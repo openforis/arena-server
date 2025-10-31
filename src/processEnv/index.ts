@@ -31,7 +31,7 @@ export const ProcessEnv = {
 
   // Express
   port: process.env.PORT || '9090',
-  refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || 'refresh-token',
+  refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || 'refresh-token-secret',
   sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET || 'session-cookie-secret',
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: process.env.USE_HTTPS === 'true',
