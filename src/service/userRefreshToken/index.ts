@@ -13,12 +13,7 @@ import { DB } from '../../db'
 
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-import {
-  jwtExpiresIn,
-  jwtExpiresMs,
-  jwtRefreshExpiresIn,
-  jwtRefresshTokenExpireMs,
-} from './userRefreshTokenServiceConstants'
+import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userRefreshTokenServiceConstants'
 
 type JwtPayload = {
   userUuid: string
@@ -34,34 +29,36 @@ type RefreshTokenPayload = {
   iat: number
 }
 
-const createRefreshTokenInternal = (options: { userUuid: string }): { token: string; expiresAt: Date } => {
+const signToken = (payload: object, expiresIn: number): string =>
+  jwt.sign(JSON.stringify(payload), ProcessEnv.refreshTokenSecret, { expiresIn })
+
+const createRefreshTokenInternal = (options: { userUuid: string }): UserRefreshToken => {
   const { userUuid } = options
   const now = Date.now()
-  const refreshTokenUuid = UUIDs.v4()
+  const uuid = UUIDs.v4()
   const expiresAt = new Date(now + jwtRefresshTokenExpireMs)
-  const refreshTokenPayload: RefreshTokenPayload = {
-    uuid: refreshTokenUuid,
+  const payload: RefreshTokenPayload = {
+    uuid: uuid,
     userUuid,
     iat: now,
     exp: expiresAt.getTime(),
   }
-  const token = jwt.sign(refreshTokenPayload, ProcessEnv.refreshTokenSecret, {
-    expiresIn: jwtRefreshExpiresIn,
-  })
-  return { token, expiresAt }
+  const token = signToken(payload, jwtRefresshTokenExpireMs)
+  return { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props: {} }
 }
 
 export const UserRefreshTokenServiceServer: UserAuthTokenService = {
   createAuthToken(options: { userUuid: string }): UserAuthToken {
     const { userUuid } = options
-    const nowMs: number = Date.now()
-    const tokenPayload: JwtPayload = {
+    const nowMs = Date.now()
+    const expiresAt = new Date(nowMs + jwtExpiresMs)
+    const payload: JwtPayload = {
       userUuid,
       iat: nowMs,
-      exp: nowMs + jwtExpiresMs,
+      exp: expiresAt.getTime(),
     }
-    const token = jwt.sign(JSON.stringify(tokenPayload), ProcessEnv.refreshTokenSecret, { expiresIn: jwtExpiresIn })
-    return { token, dateCreated: new Date(nowMs), expiresAt: new Date(nowMs + jwtExpiresMs) }
+    const token = signToken(payload, jwtExpiresMs)
+    return { token, dateCreated: new Date(nowMs), expiresAt }
   },
   async createRefreshToken(
     options: { userUuid: string; props: UserRefreshTokenProps },
@@ -127,9 +124,4 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
   },
 }
 
-export {
-  jwtExpiresIn,
-  jwtExpiresMs,
-  jwtRefreshExpiresIn,
-  jwtRefresshTokenExpireMs,
-} from './userRefreshTokenServiceConstants'
+export { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userRefreshTokenServiceConstants'
