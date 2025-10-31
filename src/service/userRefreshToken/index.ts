@@ -29,8 +29,7 @@ type RefreshTokenPayload = {
   iat: number
 }
 
-const signToken = (payload: object, expiresIn: number): string =>
-  jwt.sign(JSON.stringify(payload), ProcessEnv.refreshTokenSecret, { expiresIn })
+const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.refreshTokenSecret)
 
 const createRefreshTokenInternal = (options: { userUuid: string }): UserRefreshToken => {
   const { userUuid } = options
@@ -43,22 +42,22 @@ const createRefreshTokenInternal = (options: { userUuid: string }): UserRefreshT
     iat: now,
     exp: expiresAt.getTime(),
   }
-  const token = signToken(payload, jwtRefresshTokenExpireMs)
+  const token = signToken(payload)
   return { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props: {} }
 }
 
 export const UserRefreshTokenServiceServer: UserAuthTokenService = {
   createAuthToken(options: { userUuid: string }): UserAuthToken {
     const { userUuid } = options
-    const nowMs = Date.now()
-    const expiresAt = new Date(nowMs + jwtExpiresMs)
+    const now = Date.now()
+    const expiresAt = new Date(now + jwtExpiresMs)
     const payload: JwtPayload = {
       userUuid,
-      iat: nowMs,
+      iat: now,
       exp: expiresAt.getTime(),
     }
-    const token = signToken(payload, jwtExpiresMs)
-    return { token, dateCreated: new Date(nowMs), expiresAt }
+    const token = signToken(payload)
+    return { token, dateCreated: new Date(now), expiresAt }
   },
   async createRefreshToken(
     options: { userUuid: string; props: UserRefreshTokenProps },
