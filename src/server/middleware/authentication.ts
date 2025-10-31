@@ -19,7 +19,14 @@ import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
 import { jwtCookieName } from '../../api/auth/authApiCommon'
 
-const allowedPaths = [/^\/$/, /^\/api\/surveyTemplates$/, /^\/auth\/login$/, /^\/guest\/.*$/, /^\/img\/.*$/]
+const allowedPaths = [
+  /^\/$/,
+  /^\/auth\/login$/,
+  /^\/auth\/token\/refresh$/,
+  /^\/api\/surveyTemplates$/,
+  /^\/guest\/.*$/,
+  /^\/img\/.*$/,
+]
 
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
