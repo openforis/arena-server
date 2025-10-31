@@ -16,7 +16,7 @@ import { Logger } from '../../log'
 import { ExpressInitializer } from '../../server'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
-import { setAuthCookies } from './authApiCommon'
+import { extractRefreshTokenProps, setAuthCookies } from './authApiCommon'
 
 const logger = new Logger('AuthAPI')
 
@@ -75,7 +75,7 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
 
       const authToken = userAuthTokenService.createAuthToken({ userUuid })
 
-      const refreshTokenProps: UserRefreshTokenProps = { userAgent: req.headers['user-agent'] ?? '' }
+      const refreshTokenProps: UserRefreshTokenProps = extractRefreshTokenProps({ req })
 
       userAuthTokenService
         .createRefreshToken({ userUuid, props: refreshTokenProps })

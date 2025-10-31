@@ -2,7 +2,7 @@ import { ServiceRegistry, ServiceType, UserAuthTokenService } from '@openforis/a
 
 import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
-import { jwtRefreshTokenCookieName, setAuthCookies } from './authApiCommon'
+import { extractRefreshTokenProps, jwtRefreshTokenCookieName, setAuthCookies } from './authApiCommon'
 
 export const AuthTokenRefresh: ExpressInitializer = {
   init: (express): void => {
@@ -14,7 +14,7 @@ export const AuthTokenRefresh: ExpressInitializer = {
 
       const authTokenRotationResult = await userRefreshTokenService.rotateTokens({
         refreshToken,
-        refreshTokenProps: { userAgent: req.headers['user-agent'] ?? '' },
+        refreshTokenProps: extractRefreshTokenProps({ req }),
       })
       if (!authTokenRotationResult) {
         return res.status(401).json({ message: 'Invalid or revoked refresh token' })
