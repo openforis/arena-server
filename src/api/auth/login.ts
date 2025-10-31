@@ -16,11 +16,9 @@ import { Logger } from '../../log'
 import { ExpressInitializer } from '../../server'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
+import { setAuthCookies } from './authApiCommon'
 
 const logger = new Logger('AuthAPI')
-
-const jwtCookieName = 'jwt'
-const jwtRefreshTokenCookieName = 'refreshToken'
 
 export const deletePrefSurvey = (user: User): User => {
   const surveyId = user.prefs?.surveys?.current
@@ -75,17 +73,14 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
       const serviceRegistry = ServiceRegistry.getInstance()
       const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
 
-      const token = userAuthTokenService.createAuthToken({ userUuid })
+      const authToken = userAuthTokenService.createAuthToken({ userUuid })
 
       const refreshTokenProps: UserRefreshTokenProps = { userAgent: req.headers['user-agent'] ?? '' }
 
       userAuthTokenService
         .createRefreshToken({ userUuid, props: refreshTokenProps })
-        .then((refreshTokenObj) => {
-          const { token: refreshToken } = refreshTokenObj
-          const cookieOptions = { httpOnly: true, secure: true }
-          res.cookie(jwtCookieName, token, cookieOptions)
-          res.cookie(jwtRefreshTokenCookieName, refreshToken, cookieOptions)
+        .then((refreshToken) => {
+          setAuthCookies({ res, authToken, refreshToken })
           res.status(200)
           sendUser({ res, req, user })
         })

@@ -1,18 +1,24 @@
 import jwt from 'jsonwebtoken'
 import pgPromise from 'pg-promise'
 
-import { UserAuthTokenService, UserRefreshToken, UserRefreshTokenProps, UUIDs } from '@openforis/arena-core'
+import {
+  UserAuthToken,
+  UserAuthTokenService,
+  UserRefreshToken,
+  UserRefreshTokenProps,
+  UUIDs,
+} from '@openforis/arena-core'
 
 import { DB } from '../../db'
 
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-
-const jwtExpireMs = 60 * 60 * 1000 // 1 hour
-const jwtExpiresIn = '1h' // 1 hour
-
-const jwtRefresshTokenExpireMs = 7 * 24 * 60 * 60 * 1000 // 1 week
-const jwtRefreshExpiresIn = '1w' // 1 week
+import {
+  jwtExpiresIn,
+  jwtExpiresMs,
+  jwtRefreshExpiresIn,
+  jwtRefresshTokenExpireMs,
+} from './userRefreshTokenServiceConstants'
 
 type JwtPayload = {
   userUuid: string
@@ -46,16 +52,16 @@ const createRefreshTokenInternal = (options: { userUuid: string }): { token: str
 }
 
 export const UserRefreshTokenServiceServer: UserAuthTokenService = {
-  createAuthToken(options: { userUuid: string }): string {
+  createAuthToken(options: { userUuid: string }): UserAuthToken {
     const { userUuid } = options
-    const now: number = Date.now()
+    const nowMs: number = Date.now()
     const tokenPayload: JwtPayload = {
       userUuid,
-      iat: now,
-      exp: now + jwtExpireMs,
+      iat: nowMs,
+      exp: nowMs + jwtExpiresMs,
     }
     const token = jwt.sign(JSON.stringify(tokenPayload), ProcessEnv.refreshTokenSecret, { expiresIn: jwtExpiresIn })
-    return token
+    return { token, dateCreated: new Date(nowMs), expiresAt: new Date(nowMs + jwtExpiresMs) }
   },
   async createRefreshToken(
     options: { userUuid: string; props: UserRefreshTokenProps },
@@ -86,7 +92,44 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
       return this.createRefreshToken({ userUuid, props }, t)
     })
   },
+  async rotateTokens(options: {
+    refreshToken: string
+    refreshTokenProps: UserRefreshTokenProps
+  }): Promise<{ authToken: UserAuthToken; refreshToken: UserRefreshToken } | null> {
+    const { refreshToken, refreshTokenProps } = options
+    if (!refreshToken) {
+      return null
+    }
+    try {
+      const decodedPayload = jwt.verify(refreshToken, ProcessEnv.refreshTokenSecret)
+      const { uuid } = decodedPayload as any
+
+      const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid)
+
+      if (!tokenRecord || tokenRecord.revoked || new Date() > tokenRecord.expiresAt) {
+        // If found but revoked/expired, reject. If not found, it's invalid.
+        return null
+      }
+      const { userUuid } = tokenRecord
+      const newAuthToken = this.createAuthToken({ userUuid })
+      const newRefreshToken = await this.rotateRefreshToken({
+        oldRefreshTokenUuid: uuid,
+        userUuid,
+        props: refreshTokenProps,
+      })
+      return { authToken: newAuthToken, refreshToken: newRefreshToken }
+    } catch (err) {
+      return null
+    }
+  },
   async deleteExpired(): Promise<number> {
     return UserRefreshTokenRepository.deleteExpired()
   },
 }
+
+export {
+  jwtExpiresIn,
+  jwtExpiresMs,
+  jwtRefreshExpiresIn,
+  jwtRefresshTokenExpireMs,
+} from './userRefreshTokenServiceConstants'
