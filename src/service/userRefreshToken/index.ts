@@ -25,7 +25,7 @@ const createRefreshTokenInternal = (options: { userUuid: string }): UserAuthRefr
   const uuid = UUIDs.v4()
   const expiresAt = new Date(now + jwtRefresshTokenExpireMs)
   const payload: UserAuthRefreshTokenPayload = {
-    uuid: uuid,
+    uuid,
     userUuid,
     iat: now,
     exp: expiresAt.getTime(),
@@ -52,8 +52,8 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
     client = DB
   ): Promise<UserAuthRefreshToken> {
     const { userUuid, props } = options
-    const { token, expiresAt } = createRefreshTokenInternal({ userUuid })
-    return UserRefreshTokenRepository.insert({ userUuid, token, expiresAt, props }, client)
+    const { uuid, token, expiresAt } = createRefreshTokenInternal({ userUuid })
+    return UserRefreshTokenRepository.insert({ uuid, userUuid, token, expiresAt, props }, client)
   },
   async getByUuid(tokenUuid: string): Promise<UserAuthRefreshToken | null> {
     return UserRefreshTokenRepository.getByUuid(tokenUuid)
