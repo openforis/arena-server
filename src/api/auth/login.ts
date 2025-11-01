@@ -15,7 +15,7 @@ import { Logger } from '../../log'
 import { ExpressInitializer } from '../../server'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
-import { extractRefreshTokenProps, setAuthCookies } from './authApiCommon'
+import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
 
 const logger = new Logger('AuthAPI')
 
@@ -52,13 +52,13 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
   }
 }
 
-const sendUser = async (options: { res: Response; req: Request; user: User }) => {
-  const { res, req, user } = options
+const sendUser = async (options: { res: Response; req: Request; user: User; authToken: string }) => {
+  const { res, req, user, authToken } = options
   const { includeSurvey } = Requests.getParams(req)
   if (includeSurvey) {
     await sendUserSurvey({ res, user })
   } else {
-    res.json({ user })
+    res.json({ user, authToken })
   }
 }
 
@@ -79,9 +79,8 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
       userAuthTokenService
         .createRefreshToken({ userUuid, props: refreshTokenProps })
         .then((refreshToken) => {
-          setAuthCookies({ res, authToken, refreshToken })
-          res.status(200)
-          sendUser({ res, req, user })
+          setRefreshTokenCookie({ res, refreshToken })
+          sendUser({ res, req, user, authToken: authToken.token })
         })
         .catch((error) => {
           next(error)

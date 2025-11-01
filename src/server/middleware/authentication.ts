@@ -1,6 +1,6 @@
 import { Express, RequestHandler } from 'express'
 import passport from 'passport'
-import { Strategy as JWTStrategy } from 'passport-jwt'
+import { Strategy as JWTStrategy, ExtractJwt } from 'passport-jwt'
 import { Strategy as LocalStrategy, VerifyFunctionWithRequest } from 'passport-local'
 
 import {
@@ -17,7 +17,6 @@ import {
 
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
-import { jwtCookieName } from '../../api/auth/authApiCommon'
 
 const allowedPaths = [
   /^\/$/,
@@ -74,7 +73,7 @@ const localStrategy = new LocalStrategy(
 
 const jwtStrategy = new JWTStrategy(
   {
-    jwtFromRequest: (req) => req.cookies?.[jwtCookieName],
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: ProcessEnv.refreshTokenSecret,
     passReqToCallback: true,
   },

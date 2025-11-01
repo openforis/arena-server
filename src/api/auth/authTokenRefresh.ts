@@ -2,7 +2,7 @@ import { ServiceRegistry, ServiceType, UserAuthTokenService } from '@openforis/a
 
 import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
-import { extractRefreshTokenProps, jwtRefreshTokenCookieName, setAuthCookies } from './authApiCommon'
+import { extractRefreshTokenProps, jwtRefreshTokenCookieName, setRefreshTokenCookie } from './authApiCommon'
 
 export const AuthTokenRefresh: ExpressInitializer = {
   init: (express): void => {
@@ -21,9 +21,9 @@ export const AuthTokenRefresh: ExpressInitializer = {
       }
       const { authToken, refreshToken: newRefreshToken } = authTokenRotationResult
 
-      setAuthCookies({ res, authToken, refreshToken: newRefreshToken })
+      setRefreshTokenCookie({ res, refreshToken: newRefreshToken })
 
-      return res.status(200).json({ message: 'Token refreshed successfully' })
+      return res.status(200).json({ authToken: authToken.token, message: 'Token refreshed successfully' })
     })
   },
 }
