@@ -19,10 +19,13 @@ import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userRefreshTokenServic
 
 const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.refreshTokenSecret)
 
-const createRefreshTokenInternal = (options: { userUuid: string }): UserAuthRefreshToken => {
-  const { userUuid } = options
-  const now = Date.now()
+const createRefreshTokenInternal = (options: {
+  userUuid: string
+  props: UserAuthRefreshTokenProps
+}): UserAuthRefreshToken => {
+  const { userUuid, props } = options
   const uuid = UUIDs.v4()
+  const now = Date.now()
   const expiresAt = new Date(now + jwtRefresshTokenExpireMs)
   const payload: UserAuthRefreshTokenPayload = {
     uuid,
@@ -31,7 +34,7 @@ const createRefreshTokenInternal = (options: { userUuid: string }): UserAuthRefr
     exp: expiresAt.getTime(),
   }
   const token = signToken(payload)
-  return { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props: {} }
+  return { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props }
 }
 
 export const UserRefreshTokenServiceServer: UserAuthTokenService = {
@@ -52,8 +55,8 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
     client = DB
   ): Promise<UserAuthRefreshToken> {
     const { userUuid, props } = options
-    const { uuid, token, expiresAt } = createRefreshTokenInternal({ userUuid })
-    return UserRefreshTokenRepository.insert({ uuid, userUuid, token, expiresAt, props }, client)
+    const token = createRefreshTokenInternal({ userUuid, props })
+    return UserRefreshTokenRepository.insert(token, client)
   },
   async getByUuid(tokenUuid: string): Promise<UserAuthRefreshToken | null> {
     return UserRefreshTokenRepository.getByUuid(tokenUuid)
