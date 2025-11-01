@@ -22,6 +22,7 @@ export {
   TableRecord,
   TableSurvey,
   TableUser,
+  TableUserRefreshToken,
   TableUserResetPassword,
   TableAuthGroup,
   TableAuthGroupUser,

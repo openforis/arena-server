@@ -11,7 +11,7 @@ export const SessionMiddleware: ExpressInitializer<RequestHandler> = {
     const PgSession = connectPgSimple(<any>expressSession)
 
     const options = {
-      secret: ProcessEnv.sessionIdCookieSecret as string,
+      secret: ProcessEnv.sessionIdCookieSecret,
       resave: false,
       saveUninitialized: true,
       cookie: {
