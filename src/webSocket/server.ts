@@ -1,12 +1,10 @@
-import { NextFunction, Request, Response } from 'express'
 import { Server } from 'http'
-import { Server as SocketServer, Socket } from 'socket.io'
-import cookie from 'cookie'
 import jwt from 'jsonwebtoken'
+import { Socket, Server as SocketServer } from 'socket.io'
 
 import { Logger } from '../log'
-import { ArenaApp } from '../server'
 import { ProcessEnv } from '../processEnv'
+import { ArenaApp } from '../server'
 import { WebSocketEvent } from './event'
 
 export class WebSocketServer {
@@ -14,40 +12,35 @@ export class WebSocketServer {
   private static socketsById = new Map<string, Socket>()
   private static socketIdsByUserUuid = new Map<string, Set<string>>()
 
-  static init(app: ArenaApp, server: Server): void {
-    new SocketServer(server)
-      .use((socket, next) => {
-        app.session(socket.request as Request, {} as Response, next as NextFunction)
-      })
-      .on(WebSocketEvent.connection, (socket) => {
-        const cookiesRaw = socket.request.headers.cookie ?? ''
-        const cookies = cookie.parse(cookiesRaw)
-        const { jwt: jwtToken } = cookies
-        if (!jwtToken) {
-          // user not authorized
-          socket.disconnect()
+  static init(_app: ArenaApp, server: Server): void {
+    new SocketServer(server).use((socket, next) => {
+      const { token } = socket.handshake.auth ?? {}
+      if (!token) {
+        return next(new Error('Authentication error: Token required'))
+      }
+      try {
+        const jwtPayload = jwt.verify(token, ProcessEnv.refreshTokenSecret)
+        const { userUuid } = (jwtPayload as any) ?? {}
+
+        // Attach userUuid to socket data for later use
+        socket.data.userUuid = userUuid
+
+        const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
+        WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
+
+        if (userUuid) {
+          this.addSocket(userUuid, socket)
+
+          socket.on(WebSocketEvent.disconnect, () => {
+            WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
+            WebSocketServer.deleteSocket(userUuid, socket.id)
+          })
         }
-        jwt.verify(jwtToken, ProcessEnv.sessionIdCookieSecret, (err, jwtPayload) => {
-          if (err) {
-            socket.disconnect()
-          } else {
-            const { userUuid } = (jwtPayload as any) ?? {}
-            // const session = (socket.request as Request).session
-            // const userUuid = Objects.path(['passport', 'user'])(session)
-            const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
-            WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
-
-            if (userUuid) {
-              this.addSocket(userUuid, socket)
-
-              socket.on(WebSocketEvent.disconnect, () => {
-                WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
-                WebSocketServer.deleteSocket(userUuid, socket.id)
-              })
-            }
-          }
-        })
-      })
+      } catch (error) {
+        socket.disconnect()
+        return next(new Error('Authentication error: Invalid token'))
+      }
+    })
   }
 
   static notifySocket(socketId: string, eventType: string, message: any): boolean {

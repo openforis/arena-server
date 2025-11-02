@@ -15,7 +15,7 @@ import { DB } from '../../db'
 
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userRefreshTokenServiceConstants'
+import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userAuthTokenServiceConstants'
 
 const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.refreshTokenSecret)
 
@@ -37,7 +37,7 @@ const createRefreshTokenInternal = (options: {
   return { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props }
 }
 
-export const UserRefreshTokenServiceServer: UserAuthTokenService = {
+export const UserAuthTokenServiceServer: UserAuthTokenService = {
   createAuthToken(options: { userUuid: string }): UserAuthToken {
     const { userUuid } = options
     const now = Date.now()
@@ -89,7 +89,7 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
     }
     try {
       const decodedPayload = jwt.verify(refreshToken, ProcessEnv.refreshTokenSecret)
-      const { uuid } = decodedPayload as any
+      const { uuid } = decodedPayload as UserAuthRefreshTokenPayload
 
       const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid)
 
@@ -114,4 +114,4 @@ export const UserRefreshTokenServiceServer: UserAuthTokenService = {
   },
 }
 
-export { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userRefreshTokenServiceConstants'
+export { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userAuthTokenServiceConstants'
