@@ -6,6 +6,7 @@ import { Logger } from '../log'
 import { ProcessEnv } from '../processEnv'
 import { ArenaApp } from '../server'
 import { WebSocketEvent } from './event'
+import { UserAuthTokenPayload } from '@openforis/arena-core'
 
 export class WebSocketServer {
   private static logger: Logger = new Logger(`WebSocketServer`)
@@ -20,7 +21,7 @@ export class WebSocketServer {
       }
       try {
         const jwtPayload = jwt.verify(token, ProcessEnv.refreshTokenSecret)
-        const { userUuid } = (jwtPayload as any) ?? {}
+        const { userUuid } = jwtPayload as UserAuthTokenPayload
 
         // Attach userUuid to socket data for later use
         socket.data.userUuid = userUuid
