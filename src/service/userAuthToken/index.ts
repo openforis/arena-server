@@ -19,10 +19,23 @@ import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userAuthTokenServiceCo
 
 const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.refreshTokenSecret)
 
-const createRefreshTokenInternal = (options: {
-  userUuid: string
-  props: UserAuthRefreshTokenProps
-}): UserAuthRefreshToken => {
+const createAuthToken = (options: { userUuid: string }) => {
+  const { userUuid } = options
+  const now = Date.now()
+  const expiresAt = new Date(now + jwtExpiresMs)
+  const payload: UserAuthTokenPayload = {
+    userUuid,
+    iat: now,
+    exp: expiresAt.getTime(),
+  }
+  const token = signToken(payload)
+  return { token, dateCreated: new Date(now), expiresAt }
+}
+
+function createAndStoreRefreshToken(
+  options: { userUuid: string; props: UserAuthRefreshTokenProps },
+  client: pgPromise.IBaseProtocol<any> = DB
+) {
   const { userUuid, props } = options
   const uuid = UUIDs.v4()
   const now = Date.now()
@@ -34,29 +47,19 @@ const createRefreshTokenInternal = (options: {
     exp: expiresAt.getTime(),
   }
   const token = signToken(payload)
-  return { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props }
+  const refreshToken = { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props }
+  return UserRefreshTokenRepository.insert(refreshToken, client)
 }
 
 export const UserAuthTokenServiceServer: UserAuthTokenService = {
-  createAuthToken(options: { userUuid: string }): UserAuthToken {
-    const { userUuid } = options
-    const now = Date.now()
-    const expiresAt = new Date(now + jwtExpiresMs)
-    const payload: UserAuthTokenPayload = {
-      userUuid,
-      iat: now,
-      exp: expiresAt.getTime(),
-    }
-    const token = signToken(payload)
-    return { token, dateCreated: new Date(now), expiresAt }
-  },
-  async createRefreshToken(
+  async createTokens(
     options: { userUuid: string; props: UserAuthRefreshTokenProps },
-    client = DB
-  ): Promise<UserAuthRefreshToken> {
+    dbClient?: any
+  ): Promise<{ authToken: UserAuthToken; refreshToken: UserAuthRefreshToken }> {
     const { userUuid, props } = options
-    const token = createRefreshTokenInternal({ userUuid, props })
-    return UserRefreshTokenRepository.insert(token, client)
+    const authToken = createAuthToken({ userUuid })
+    const refreshToken = await createAndStoreRefreshToken({ userUuid, props }, dbClient)
+    return { authToken, refreshToken }
   },
   async getByUuid(tokenUuid: string): Promise<UserAuthRefreshToken | null> {
     return UserRefreshTokenRepository.getByUuid(tokenUuid)
@@ -69,25 +72,18 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
     const { userUuid } = options
     return UserRefreshTokenRepository.revokeAll({ userUuid })
   },
-  async rotateRefreshToken(
-    options: { oldRefreshTokenUuid: string; userUuid: string; props: UserAuthRefreshTokenProps },
-    client: pgPromise.IDatabase<any> = DB
-  ): Promise<UserAuthRefreshToken> {
-    return client.tx(async (t) => {
-      const { oldRefreshTokenUuid, userUuid, props } = options
-      await UserRefreshTokenRepository.revoke(oldRefreshTokenUuid, t)
-      return this.createRefreshToken({ userUuid, props }, t)
-    })
-  },
-  async rotateTokens(options: {
-    refreshToken: string
-    refreshTokenProps: UserAuthRefreshTokenProps
-  }): Promise<{ authToken: UserAuthToken; refreshToken: UserAuthRefreshToken } | null> {
+  async rotateTokens(
+    options: {
+      refreshToken: string
+      refreshTokenProps: UserAuthRefreshTokenProps
+    },
+    dbClient: any = DB
+  ): Promise<{ authToken: UserAuthToken; refreshToken: UserAuthRefreshToken } | null> {
     const { refreshToken, refreshTokenProps } = options
     if (!refreshToken) {
       return null
     }
-    try {
+    return dbClient.tx(async (t: pgPromise.ITask<any>) => {
       const decodedPayload = jwt.verify(refreshToken, ProcessEnv.refreshTokenSecret)
       const { uuid } = decodedPayload as UserAuthRefreshTokenPayload
 
@@ -98,16 +94,14 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
         return null
       }
       const { userUuid } = tokenRecord
-      const newAuthToken = this.createAuthToken({ userUuid })
-      const newRefreshToken = await this.rotateRefreshToken({
-        oldRefreshTokenUuid: uuid,
-        userUuid,
-        props: refreshTokenProps,
-      })
+      const newAuthToken = createAuthToken({ userUuid })
+
+      await UserRefreshTokenRepository.revoke(uuid, t)
+
+      const newRefreshToken = await createAndStoreRefreshToken({ userUuid, props: refreshTokenProps }, t)
+
       return { authToken: newAuthToken, refreshToken: newRefreshToken }
-    } catch (err) {
-      return null
-    }
+    })
   },
   async deleteExpired(): Promise<number> {
     return UserRefreshTokenRepository.deleteExpired()

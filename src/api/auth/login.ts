@@ -72,13 +72,11 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
       const serviceRegistry = ServiceRegistry.getInstance()
       const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
 
-      const authToken = userAuthTokenService.createAuthToken({ userUuid })
-
       const refreshTokenProps = extractRefreshTokenProps({ req })
 
       userAuthTokenService
-        .createRefreshToken({ userUuid, props: refreshTokenProps })
-        .then((refreshToken) => {
+        .createTokens({ userUuid, props: refreshTokenProps })
+        .then(({ authToken, refreshToken }) => {
           setRefreshTokenCookie({ res, refreshToken })
           sendUser({ res, req, user, authToken: authToken.token })
         })
