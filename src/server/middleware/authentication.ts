@@ -22,6 +22,7 @@ const allowedPaths = [
   /^\/$/,
   /^\/auth\/login$/,
   /^\/auth\/token\/refresh$/,
+  /^\/api\/public\/.*$/,
   /^\/api\/surveyTemplates$/,
   /^\/guest\/.*$/,
   /^\/img\/.*$/,
