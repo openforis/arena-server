@@ -5,13 +5,7 @@ import cookieParser from 'cookie-parser'
 
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
-import {
-  AuthenticationMiddleware,
-  ErrorMiddleware,
-  HeaderMiddleware,
-  HttpsMiddleware,
-  SessionMiddleware,
-} from '../middleware'
+import { AuthenticationMiddleware, ErrorMiddleware, HeaderMiddleware, HttpsMiddleware } from '../middleware'
 import { Api } from '../../api'
 
 export interface InitAppOptions {
@@ -43,7 +37,6 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   app.use(compression({ threshold: 512 }))
   app.use(cookieParser())
   HeaderMiddleware.init(app)
-  const session = SessionMiddleware.init(app)
 
   AuthenticationMiddleware.init(app)
 
@@ -51,5 +44,5 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
 
   ErrorMiddleware.init(app)
 
-  return { express: app, session }
+  return { express: app }
 }

@@ -7,7 +7,7 @@ import { extractRefreshTokenProps, jwtRefreshTokenCookieName, setRefreshTokenCoo
 export const AuthTokenRefresh: ExpressInitializer = {
   init: (express): void => {
     express.post(ApiEndpoint.auth.tokenRefresh(), async (req, res) => {
-      const refreshToken = req.cookies[jwtRefreshTokenCookieName]
+      const refreshToken = req.cookies?.[jwtRefreshTokenCookieName]
 
       const serviceRegistry = ServiceRegistry.getInstance()
       const userRefreshTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
