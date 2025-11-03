@@ -8,6 +8,7 @@ import {
   UserAuthToken,
   UserAuthTokenPayload,
   UserAuthTokenService,
+  UserTokenPayload,
   UUIDs,
 } from '@openforis/arena-core'
 
@@ -17,7 +18,7 @@ import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
 import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userAuthTokenServiceConstants'
 
-const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.refreshTokenSecret)
+const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
 
 const createAuthToken = (options: { userUuid: string }) => {
   const { userUuid } = options
@@ -84,8 +85,8 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
       return null
     }
     return dbClient.tx(async (t: pgPromise.ITask<any>) => {
-      const decodedPayload = jwt.verify(refreshToken, ProcessEnv.refreshTokenSecret)
-      const { uuid } = decodedPayload as UserAuthRefreshTokenPayload
+      const decodedPayload = this.verifyAuthToken(refreshToken) as UserAuthRefreshTokenPayload
+      const { uuid } = decodedPayload
 
       const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid)
 
@@ -105,6 +106,9 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
   },
   async deleteExpired(): Promise<number> {
     return UserRefreshTokenRepository.deleteExpired()
+  },
+  verifyAuthToken<P extends UserTokenPayload>(token: string): P {
+    return jwt.verify(token, ProcessEnv.userAuthTokenSecret) as P
   },
 }
 

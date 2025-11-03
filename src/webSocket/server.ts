@@ -1,11 +1,9 @@
 import { Server } from 'http'
-import jwt from 'jsonwebtoken'
 import { Socket, Server as SocketServer } from 'socket.io'
 
-import { UserAuthTokenPayload } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, UserAuthTokenPayload, UserAuthTokenService } from '@openforis/arena-core'
 
 import { Logger } from '../log'
-import { ProcessEnv } from '../processEnv'
 import { ArenaApp } from '../server'
 import { WebSocketEvent } from './event'
 
@@ -14,33 +12,44 @@ export class WebSocketServer {
   private static socketsById = new Map<string, Socket>()
   private static socketIdsByUserUuid = new Map<string, Set<string>>()
 
+  static verifyAuthToken = ({ socket }: { socket: Socket }) => {
+    const { token } = socket.handshake.auth ?? {}
+    if (!token) {
+      WebSocketServer.logger.error(`authentication token not found`)
+      socket.disconnect()
+      return null
+    }
+    try {
+      const service: UserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
+      const jwtPayload: UserAuthTokenPayload = service.verifyAuthToken(token)
+      const { userUuid } = jwtPayload
+      return userUuid
+    } catch (error) {
+      socket.disconnect()
+      WebSocketServer.logger.error(`authentication token validation error: ${error}`)
+      return null
+    }
+  }
+
   static init(_app: ArenaApp, server: Server): void {
     new SocketServer(server).on(WebSocketEvent.connection, (socket) => {
-      const { token } = socket.handshake.auth ?? {}
-      if (!token) {
-        throw new Error('Authentication error: Token required')
+      const userUuid = WebSocketServer.verifyAuthToken({ socket })
+      if (!userUuid) {
+        return
       }
-      try {
-        const jwtPayload = jwt.verify(token, ProcessEnv.refreshTokenSecret)
-        const { userUuid } = jwtPayload as UserAuthTokenPayload
+      // Attach userUuid to socket data for later use
+      socket.data.userUuid = userUuid
 
-        // Attach userUuid to socket data for later use
-        socket.data.userUuid = userUuid
+      const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
+      WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
 
-        const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
-        WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
+      if (userUuid) {
+        this.addSocket(userUuid, socket)
 
-        if (userUuid) {
-          this.addSocket(userUuid, socket)
-
-          socket.on(WebSocketEvent.disconnect, () => {
-            WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
-            WebSocketServer.deleteSocket(userUuid, socket.id)
-          })
-        }
-      } catch (error) {
-        socket.disconnect()
-        throw new Error('Authentication error: Invalid token')
+        socket.on(WebSocketEvent.disconnect, () => {
+          WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
+          WebSocketServer.deleteSocket(userUuid, socket.id)
+        })
       }
     })
   }

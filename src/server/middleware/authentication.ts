@@ -74,7 +74,7 @@ const localStrategy = new LocalStrategy(
 const jwtStrategy = new JWTStrategy(
   {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: ProcessEnv.refreshTokenSecret,
+    secretOrKey: ProcessEnv.userAuthTokenSecret,
     passReqToCallback: true,
   },
   (req, jwtPayload: UserAuthTokenPayload, done) => {
