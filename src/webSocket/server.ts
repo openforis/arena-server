@@ -2,11 +2,12 @@ import { Server } from 'http'
 import jwt from 'jsonwebtoken'
 import { Socket, Server as SocketServer } from 'socket.io'
 
+import { UserAuthTokenPayload } from '@openforis/arena-core'
+
 import { Logger } from '../log'
 import { ProcessEnv } from '../processEnv'
 import { ArenaApp } from '../server'
 import { WebSocketEvent } from './event'
-import { UserAuthTokenPayload } from '@openforis/arena-core'
 
 export class WebSocketServer {
   private static logger: Logger = new Logger(`WebSocketServer`)
@@ -14,10 +15,10 @@ export class WebSocketServer {
   private static socketIdsByUserUuid = new Map<string, Set<string>>()
 
   static init(_app: ArenaApp, server: Server): void {
-    new SocketServer(server).use((socket, next) => {
+    new SocketServer(server).on(WebSocketEvent.connection, (socket) => {
       const { token } = socket.handshake.auth ?? {}
       if (!token) {
-        return next(new Error('Authentication error: Token required'))
+        throw new Error('Authentication error: Token required')
       }
       try {
         const jwtPayload = jwt.verify(token, ProcessEnv.refreshTokenSecret)
@@ -39,7 +40,7 @@ export class WebSocketServer {
         }
       } catch (error) {
         socket.disconnect()
-        return next(new Error('Authentication error: Invalid token'))
+        throw new Error('Authentication error: Invalid token')
       }
     })
   }
