@@ -4,7 +4,7 @@ import { mockUser } from '../mock/user'
 export const insertTestUser = async (): Promise<void> =>
   DB.tx(async (tx) => {
     const { name, email } = mockUser
-    const passwordEncrypted = '$2a$10$6y2oUZVrQ7aXed.47h4sHeJA8VVA2dW9ObtO/XLveXSzQKBvTOyou'
+    const passwordEncrypted = '$2a$10$zwh0mqd3.q8T1dxsqtpNC.KW6D8CxnpavGlTbe5xM/WmolNjr145m' // Test_123
 
     const userDb = await tx.oneOrNone(
       `SELECT *
