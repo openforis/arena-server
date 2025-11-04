@@ -107,8 +107,7 @@ const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
   if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
-    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User, options: any) => {
-      console.error('===options', options)
+    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
       if (user) {
         next()
       } else if (err) {
