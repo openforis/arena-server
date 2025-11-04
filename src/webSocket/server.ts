@@ -12,7 +12,7 @@ export class WebSocketServer {
   private static socketsById = new Map<string, Socket>()
   private static socketIdsByUserUuid = new Map<string, Set<string>>()
 
-  static verifyAuthToken = ({ socket }: { socket: Socket }) => {
+  private static verifyAuthToken = ({ socket }: { socket: Socket }) => {
     const { token } = socket.handshake.auth ?? {}
     if (!token) {
       WebSocketServer.logger.error(`authentication token not found`)
