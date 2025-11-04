@@ -88,6 +88,7 @@ const jwtStrategy = new JWTStrategy(
       .get({ userUuid })
       .then((user) => {
         if (user) {
+          // attach user to the request for later use
           req.user = user
           done(null, user)
         } else {
@@ -107,12 +108,13 @@ const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
     next()
   } else {
     passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
-      if (err) {
-        res.status(401).send({ message: err.toString() })
-      } else if (!user) {
-        res.status(401).send({ message: 'Unauthorized' })
-      } else {
+      if (user) {
         next()
+      } else if (err) {
+        res.status(401).send({ message: err.toString() })
+      } else {
+        // user associated to the auth token is missing
+        res.status(401).send({ message: 'Unauthorized' })
       }
     })(req, res, next)
   }
