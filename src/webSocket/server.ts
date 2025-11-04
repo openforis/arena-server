@@ -32,25 +32,27 @@ export class WebSocketServer {
   }
 
   static init(_app: ArenaApp, server: Server): void {
-    new SocketServer(server).on(WebSocketEvent.connection, (socket) => {
+    const socketServer = new SocketServer(server)
+
+    socketServer.on(WebSocketEvent.connection, (socket) => {
       const userUuid = WebSocketServer.verifyAuthToken({ socket })
-      if (!userUuid) {
-        return
-      }
-      // Attach userUuid to socket data for later use
-      socket.data.userUuid = userUuid
 
       const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
       WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
 
-      if (userUuid) {
-        this.addSocket(userUuid, socket)
-
-        socket.on(WebSocketEvent.disconnect, () => {
-          WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
-          WebSocketServer.deleteSocket(userUuid, socket.id)
-        })
+      if (!userUuid) {
+        return
       }
+
+      // Attach userUuid to socket data for later use
+      socket.data.userUuid = userUuid
+
+      this.addSocket(userUuid, socket)
+
+      socket.on(WebSocketEvent.disconnect, () => {
+        WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
+        WebSocketServer.deleteSocket(userUuid, socket.id)
+      })
     })
   }
 
