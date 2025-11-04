@@ -20,10 +20,10 @@ import { ExpressInitializer } from '../expressInitializer'
 
 const allowedPaths = [
   /^\/$/,
-  /^\/auth\/login$/,
-  /^\/auth\/token\/refresh$/,
+  /^\/auth\/login\/?$/,
+  /^\/auth\/token\/refresh\/?$/,
   /^\/api\/public\/.*$/,
-  /^\/api\/surveyTemplates$/,
+  /^\/api\/surveyTemplates\/?$/,
   /^\/guest\/.*$/,
   /^\/img\/.*$/,
 ]
@@ -34,8 +34,8 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
   const validator = new Validator()
 
   const { valid: isValidUser } = await validator.validate(
-    { email },
-    { email: [FieldValidators.email('invalid_email')] }
+    { email, password },
+    { email: [FieldValidators.email('invalid_email')], password: [FieldValidators.required('password_required')] }
   )
 
   if (!isValidUser) {
@@ -107,7 +107,8 @@ const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
   if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
-    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
+    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User, options: any) => {
+      console.error('===options', options)
       if (user) {
         next()
       } else if (err) {
