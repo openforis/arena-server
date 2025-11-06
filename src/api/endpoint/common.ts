@@ -1,4 +1,4 @@
-export const getPath = (...pathParts: Array<string>): string => `/${pathParts.join('/')}/`
+export const getPath = (...pathParts: Array<string>): string => `/${pathParts.join('/')}`
 
 export const getApiPath = (...pathParts: Array<string>): string => getPath('api', ...pathParts)
 
