@@ -1,5 +1,8 @@
+import { CookieOptions, Request, Response } from 'express'
+
 import { UserAuthRefreshToken, UserAuthRefreshTokenProps } from '@openforis/arena-core'
-import { Request, Response } from 'express'
+
+import { ApiEndpoint } from '../endpoint'
 
 export const jwtRefreshTokenCookieName = 'refreshToken'
 
@@ -10,6 +13,12 @@ export const extractRefreshTokenProps = (options: { req: Request }): UserAuthRef
 
 export const setRefreshTokenCookie = (options: { res: Response; refreshToken: UserAuthRefreshToken }) => {
   const { res, refreshToken } = options
-  const cookieOptions = { httpOnly: true, secure: true }
-  res.cookie(jwtRefreshTokenCookieName, refreshToken.token, { ...cookieOptions, expires: refreshToken.expiresAt })
+  const cookieOptions: CookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    path: ApiEndpoint.auth.tokenRefresh(),
+    expires: refreshToken.expiresAt,
+  }
+  res.cookie(jwtRefreshTokenCookieName, refreshToken.token, cookieOptions)
 }
