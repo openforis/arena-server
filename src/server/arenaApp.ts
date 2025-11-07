@@ -1,12 +1,11 @@
-import { Express, RequestHandler } from 'express'
 import { User as ArenaUser } from '@openforis/arena-core'
+import { Express } from 'express'
 
 /**
  * Express app wrapper.
  */
 export interface ArenaApp {
   express: Express
-  session: RequestHandler
 }
 
 declare global {
