@@ -30,7 +30,7 @@ export const ProcessEnv = {
   disableDbMigrations: process.env.DISABLE_DB_MIGRATIONS === 'true',
 
   // Express
-  port: process.env.PORT || '9090',
+  port: Number(process.env.PORT ?? 9090),
   userAuthTokenSecret: process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
   sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET || 'session-cookie-secret',
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
