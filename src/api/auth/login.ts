@@ -27,8 +27,8 @@ export const deletePrefSurvey = (user: User): User => {
   return _user
 }
 
-const sendUserSurvey = async (options: { res: Response; user: User }) => {
-  const { res, user } = options
+const sendUserSurvey = async (options: { res: Response; user: User; authToken: string }) => {
+  const { res, user, authToken } = options
   const serviceRegistry = ServiceRegistry.getInstance()
   const surveyId = user.prefs?.surveys?.current
   try {
@@ -40,15 +40,15 @@ const sendUserSurvey = async (options: { res: Response; user: User }) => {
     if (survey && surveyId && Authorizer.canEditSurvey(user, survey)) {
       survey = await surveyService.get({ surveyId, draft: true, validate: true })
     }
-    res.json({ user, survey })
+    res.json({ user, survey, authToken })
   } catch (error: any) {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
     // Survey not found with user pref
     // removing user pref
     const userToUpdate = deletePrefSurvey(user)
     const userService = serviceRegistry.getService(ServiceType.user) as UserService
-
-    res.json({ user: await userService.updateUserPrefs({ userToUpdate }) })
+    const userUpdated = await userService.updateUserPrefs({ userToUpdate })
+    res.json({ user: userUpdated, authToken })
   }
 }
 
@@ -56,7 +56,7 @@ const sendUser = async (options: { res: Response; req: Request; user: User; auth
   const { res, req, user, authToken } = options
   const { includeSurvey } = Requests.getParams(req)
   if (includeSurvey) {
-    await sendUserSurvey({ res, user })
+    await sendUserSurvey({ res, user, authToken })
   } else {
     res.json({ user, authToken })
   }
