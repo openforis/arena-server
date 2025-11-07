@@ -110,11 +110,9 @@ const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
     passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
       if (user) {
         next()
-      } else if (err) {
-        res.status(401).send({ message: err.toString() })
       } else {
-        // user associated to the auth token is missing
-        res.status(401).send({ message: 'Unauthorized' })
+        const message = err ? String(err) : 'Unauthorized'
+        res.status(401).send({ message })
       }
     })(req, res, next)
   }
