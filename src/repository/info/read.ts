@@ -1,5 +1,5 @@
 import { BaseProtocol, DB, SqlSelectBuilder, TableInfo } from '../../db'
-import { InfoItem } from './types'
+import { InfoItem, InfoItemKey } from './types'
 import { transformCallback } from './utils'
 
 /**
@@ -21,15 +21,7 @@ export const getAll = (client: BaseProtocol = DB): Promise<InfoItem[]> => {
  * @param params - Parameters containing the key name.
  * @param client - Database client.
  */
-export const getByKey = async (
-  params: {
-    keyName: string
-  },
-  client: BaseProtocol = DB
-): Promise<InfoItem | null> => {
-  const { keyName } = params
-  if (!keyName) throw new Error(`missingParams, ${params}`)
-
+export const getByKey = async (key: InfoItemKey, client: BaseProtocol = DB): Promise<InfoItem | null> => {
   const table = new TableInfo()
   const sql = new SqlSelectBuilder()
     .select(table.keyName, table.keyValue, table.modifiedDate)
@@ -37,5 +29,5 @@ export const getByKey = async (
     .where(`${table.keyName} = $1`)
     .build()
 
-  return client.oneOrNone<InfoItem>(sql, [keyName], transformCallback)
+  return client.oneOrNone<InfoItem>(sql, [key], transformCallback)
 }

@@ -9,8 +9,6 @@ import { transformCallback } from './utils'
  * @param client - Database client.
  */
 export const deleteItem = (key: InfoItemKey, client: BaseProtocol = DB): Promise<InfoItem | null> => {
-  if (!key) throw new Error(`missingParams, ${key}`)
-
   const table = new TableInfo()
 
   const values = {

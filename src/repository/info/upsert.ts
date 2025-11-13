@@ -11,7 +11,6 @@ import { transformCallback } from './utils'
  */
 export const upsert = (item: InfoItem, client: BaseProtocol = DB): Promise<InfoItem> => {
   const { key, value } = item
-  if (!key || value === undefined || value === null) throw new Error(`missingParams, ${item}`)
 
   const table = new TableInfo()
 

@@ -5,7 +5,7 @@
 export interface InfoItem {
   key: InfoItemKey
   value: string
-  modifiedDate: Date
+  modifiedDate?: Date
 }
 
 export enum InfoItemKey {
