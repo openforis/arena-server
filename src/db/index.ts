@@ -18,6 +18,7 @@ export {
   TableChainNodeDef,
   TableChainNodeDefAggregate,
   TableDataQuery,
+  TableInfo,
   TableNodeDef,
   TableRecord,
   TableSurvey,

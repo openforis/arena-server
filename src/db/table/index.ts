@@ -2,6 +2,7 @@ export { Table } from './table'
 
 export {
   TableSchemaPublic,
+  TableInfo,
   TableSurvey,
   TableUser,
   TableUserResetPassword,
