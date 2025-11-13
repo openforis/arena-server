@@ -863,20 +863,20 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@openforis/arena-core@^1.0.8":
-  version "1.0.8"
-  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/1.0.8/e683aa24fff471d2428741ca5eac9e4a7a695712#e683aa24fff471d2428741ca5eac9e4a7a695712"
-  integrity sha512-jE0YLrrXDIyn3vBUt8yS1uM/hGeLBe9X8DGkUhqp9DKqci7RsfvvdhA7n4vhZ+r7fJjdfQuVSgBhP6IsAh3cLA==
+"@openforis/arena-core@^1.0.50":
+  version "1.0.50"
+  resolved "https://npm.pkg.github.com/download/@openforis/arena-core/1.0.50/d21e9ac50a615d0e23bca0cef219d3c7f5fa4040#d21e9ac50a615d0e23bca0cef219d3c7f5fa4040"
+  integrity sha512-kDXELIsy40IsXlQ2pxNqDqai29ym07Nrlyem3Ynw0lMhATNncBbV/u3hGR/q7YKsyMjJnJHhD4DrhUd5gN+YGw==
   dependencies:
     "@jsep-plugin/regex" "^1.0.4"
-    bignumber.js "^9.1.2"
+    bignumber.js "^9.3.1"
     jsep "^1.4.0"
     lodash.differencewith "^4.5.0"
     lodash.frompairs "^4.0.1"
     lodash.isequal "^4.5.0"
     lodash.topairs "^4.3.0"
     moment "^2.30.1"
-    proj4 "^2.15.0"
+    proj4 "^2.19.10"
     uuid "^11.0.3"
 
 "@sinclair/typebox@^0.24.1":
@@ -1575,10 +1575,10 @@ bcryptjs@^2.4.3:
   resolved "https://registry.yarnpkg.com/bcryptjs/-/bcryptjs-2.4.3.tgz#9ab5627b93e60621ff7cdac5da9733027df1d0cb"
   integrity sha1-mrVie5PmBiH/fNrF2pczAn3x0Ms=
 
-bignumber.js@^9.1.2:
-  version "9.1.2"
-  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.1.2.tgz#b7c4242259c008903b13707983b5f4bbd31eda0c"
-  integrity sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==
+bignumber.js@^9.3.1:
+  version "9.3.1"
+  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.3.1.tgz#759c5aaddf2ffdc4f154f7b493e1c8770f88c4d7"
+  integrity sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==
 
 bluebird@^3.1.1:
   version "3.7.2"
@@ -4566,13 +4566,13 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
-proj4@^2.15.0:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/proj4/-/proj4-2.15.0.tgz#d77c9956861c8ed516071c4208d576cebe800eb5"
-  integrity sha512-LqCNEcPdI03BrCHxPLj29vsd5afsm+0sV1H/O3nTDKrv8/LA01ea1z4QADDMjUqxSXWnrmmQDjqFm1J/uZ5RLw==
+proj4@^2.19.10:
+  version "2.20.0"
+  resolved "https://registry.yarnpkg.com/proj4/-/proj4-2.20.0.tgz#059656589434f2eff02070806a5779ad4fc70070"
+  integrity sha512-9Mj5kUxQ6xBE5IzzkQcm0cRUH21FNp+wFp0AK7gBdPsiIc1iNwgNyCS4Lp55sPJum9DO8UNepZxEzrGPmm8RAg==
   dependencies:
     mgrs "1.0.0"
-    wkt-parser "^1.4.0"
+    wkt-parser "^1.5.1"
 
 prompt@^1.0.0:
   version "1.1.0"
@@ -5587,10 +5587,10 @@ winston@2.x:
     isstream "0.1.x"
     stack-trace "0.0.x"
 
-wkt-parser@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/wkt-parser/-/wkt-parser-1.4.0.tgz#7cca07a6ee5b4baf059b723e62d7fe95bc923bf5"
-  integrity sha512-qpwO7Ihds/YYDTi1aADFTI1Sm9YC/tTe3SHD24EeIlZxy7Ik6a1b4HOz7jAi0xdUAw487duqpo8OGu+Tf4nwlQ==
+wkt-parser@^1.5.1:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/wkt-parser/-/wkt-parser-1.5.2.tgz#a8eaf86ac2cc1d0a2e6a8082a930f5c7ebdb5771"
+  integrity sha512-1ZUiV1FTwSiSrgWzV9KXJuOF2BVW91KY/mau04BhnmgOdroRQea7Q0s5TVqwGLm0D2tZwObd/tBYXW49sSxp3Q==
 
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
   version "7.0.0"

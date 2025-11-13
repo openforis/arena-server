@@ -29,5 +29,5 @@ export const getByKey = async (key: InfoItemKey, client: BaseProtocol = DB): Pro
     .where(`${table.keyName} = $1`)
     .build()
 
-  return client.oneOrNone<InfoItem>(sql, [key], transformCallback)
+  return client.oneOrNone<InfoItem | null>(sql, [key], transformCallback)
 }
