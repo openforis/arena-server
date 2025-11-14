@@ -18,7 +18,7 @@ export const getAll = (client: BaseProtocol = DB): Promise<InfoItem[]> => {
 /**
  * Returns an info record by key name.
  *
- * @param params - Parameters containing the key name.
+ * @param key - The info item key.
  * @param client - Database client.
  */
 export const getByKey = async (key: InfoItemKey, client: BaseProtocol = DB): Promise<InfoItem | null> => {

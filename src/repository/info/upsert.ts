@@ -6,7 +6,7 @@ import { transformCallback } from './utils'
  * Inserts or updates an info record.
  * If a record with the same key_name exists, it will be updated.
  *
- * @param params - Parameters containing the info data.
+ * @param item - Info item.
  * @param client - Database client.
  */
 export const upsert = (item: InfoItem, client: BaseProtocol = DB): Promise<InfoItem> => {
