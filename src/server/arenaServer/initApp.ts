@@ -12,6 +12,7 @@ import {
   SessionMiddleware,
 } from '../middleware'
 import { Api } from '../../api'
+import { ServiceRegistry } from '@openforis/arena-core'
 
 export interface InitAppOptions {
   fileSizeLimit?: number
@@ -46,5 +47,5 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
 
   ErrorMiddleware.init(app)
 
-  return { express: app, session }
+  return { express: app, serviceRegistry: ServiceRegistry.getInstance(), session }
 }

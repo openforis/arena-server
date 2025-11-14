@@ -18,6 +18,9 @@ export const ProcessEnv = {
   debug: process.env.DEBUG === 'true',
   nodeEnv: process.env.NODE_ENV || NodeEnv.development,
 
+  // Application Version
+  applicationVersion: process.env.APPLICATION_VERSION ?? '2.0.0',
+
   // DB
   dbUrl,
   pgUser,
