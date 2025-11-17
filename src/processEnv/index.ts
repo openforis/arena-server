@@ -19,7 +19,7 @@ export const ProcessEnv = {
   nodeEnv: process.env.NODE_ENV || NodeEnv.development,
 
   // Application Version
-  applicationVersion: process.env.APPLICATION_VERSION ?? '2.0.0',
+  applicationVersion: process.env.APP_VERSION ?? '2.0.0',
 
   // DB
   dbUrl,
