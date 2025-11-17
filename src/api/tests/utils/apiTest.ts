@@ -1,11 +1,12 @@
-import { Server } from 'http'
 import request, { SuperTest, Test } from 'supertest'
+
+import { ArenaApp } from '../../../server'
 
 export class ApiTest {
   private readonly superTest: SuperTest<Test>
 
-  constructor(server: Server) {
-    this.superTest = request(server)
+  constructor(app: ArenaApp) {
+    this.superTest = request(app.express)
   }
 
   public get(url: string): Test {

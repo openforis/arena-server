@@ -3,11 +3,17 @@ import { AuthGroupName } from '@openforis/arena-core/dist/auth/authGroup'
 
 import { ApiEndpoint } from '../../../endpoint'
 import { mockUser, mockUserInvalid } from '../../mock/user'
+import { ApiTest } from '../../utils/apiTest'
+
+declare global {
+  // eslint-disable-next-line no-var
+  var api: ApiTest
+}
 
 export default (): void =>
   describe(`Login ${ApiEndpoint.auth.login()}`, () => {
     test('Login success', async () => {
-      const { body } = await global.api.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
+      const { body } = await globalThis.api.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
 
       const user: User = body.user
       expect(user).toBeDefined()
@@ -19,7 +25,7 @@ export default (): void =>
     })
 
     test('Login success with surveyId', async () => {
-      const { body } = await global.api
+      const { body } = await globalThis.api
         .post(ApiEndpoint.auth.login({ includeSurvey: true }))
         .send(mockUser)
         .expect(200)
@@ -27,7 +33,7 @@ export default (): void =>
     })
 
     test('Login fail', async () => {
-      const { body, status } = await global.api.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
+      const { body, status } = await globalThis.api.post(ApiEndpoint.auth.login()).send(mockUserInvalid).expect(401)
 
       const message: string = body.message
       expect(status).toBe(401)
