@@ -7,6 +7,7 @@ import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
 import { AuthenticationMiddleware, ErrorMiddleware, HeaderMiddleware, HttpsMiddleware } from '../middleware'
 import { Api } from '../../api'
+import { ServiceRegistry } from '@openforis/arena-core'
 
 export interface InitAppOptions {
   fileSizeLimit?: number
@@ -44,5 +45,5 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
 
   ErrorMiddleware.init(app)
 
-  return { express: app }
+  return { express: app, serviceRegistry: ServiceRegistry.getInstance() }
 }

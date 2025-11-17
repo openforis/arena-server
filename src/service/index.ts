@@ -1,5 +1,7 @@
 export type { DataQueryService } from './dataQuery'
 export { DataQueryServiceServer } from './dataQuery'
+export type { InfoService } from './info'
+export { InfoServiceServer } from './info'
 export { SurveyServiceServer } from './survey'
 export { UserServiceServer } from './user'
 export { UserAuthTokenServiceServer } from './userAuthToken'

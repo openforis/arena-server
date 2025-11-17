@@ -1,11 +1,12 @@
-import { User as ArenaUser } from '@openforis/arena-core'
 import { Express } from 'express'
+import { User as ArenaUser, ServiceRegistry } from '@openforis/arena-core'
 
 /**
  * Express app wrapper.
  */
 export interface ArenaApp {
   express: Express
+  serviceRegistry: ServiceRegistry
 }
 
 declare global {
