@@ -3,11 +3,12 @@ import expressFileUpload from 'express-fileupload'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
+import { ServiceRegistry } from '@openforis/arena-core'
+
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
 import { AuthenticationMiddleware, ErrorMiddleware, HeaderMiddleware, HttpsMiddleware } from '../middleware'
 import { Api } from '../../api'
-import { ServiceRegistry } from '@openforis/arena-core'
 
 export interface InitAppOptions {
   fileSizeLimit?: number
