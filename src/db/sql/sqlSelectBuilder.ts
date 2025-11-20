@@ -65,7 +65,7 @@ export class SqlSelectBuilder extends SqlBuilder {
       parts.push(`${this._join.map((join) => join.build()).join(' ')}`)
     }
     if (!Objects.isEmpty(this._where)) {
-      parts.push(`WHERE ${this._where.join(' ')}`)
+      parts.push(`WHERE ${this._where.join(' AND ')}`)
     }
     if (!Objects.isEmpty(this._groupBy)) {
       parts.push(`GROUP BY ${this._groupBy.join(', ')}`)

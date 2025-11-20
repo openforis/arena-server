@@ -6,12 +6,8 @@ import { insertTestUser } from './utils/insertTestUser'
 import login from './auth/login'
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      api: ApiTest
-    }
-  }
+  // eslint-disable-next-line no-var
+  var api: ApiTest
 }
 
 let server: Server
@@ -20,7 +16,7 @@ beforeAll(async () => {
   const app = await ArenaServer.init()
   server = await ArenaServer.start(app)
   await insertTestUser()
-  global.api = new ApiTest(server)
+  globalThis.api = new ApiTest(app)
 })
 
 afterAll(async () => {

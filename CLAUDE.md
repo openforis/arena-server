@@ -109,7 +109,7 @@ Required `.env` file (see `.env.template`):
 
 - Database: `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
 - Database SSL: `PGSSL`, `PGSSL_ALLOW_UNAUTHORIZED`
-- Express: `PORT`, `SESSION_ID_COOKIE_SECRET`, `TEMP_FOLDER`, `USE_HTTPS`
+- Express: `PORT`, `USER_AUTH_TOKEN_SECRET`, `TEMP_FOLDER`, `USE_HTTPS`
 - Migrations: `DISABLE_DB_MIGRATIONS`
 
 ### Local Development Database
