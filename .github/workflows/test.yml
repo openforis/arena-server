@@ -17,6 +17,10 @@ jobs:
           - 5444:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      NPM_REGISTRY_URL: https://npm.pkg.github.com
+      NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v5
 
@@ -28,15 +32,8 @@ jobs:
           auth-token: ${{secrets.ACCESS_TOKEN}}
           registry-url: 'https://npm.pkg.github.com'
           scope: '@openforis'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          NPM_REGISTRY_URL: https://npm.pkg.github.com
-          NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       - run: yarn
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          NPM_REGISTRY_URL: https://npm.pkg.github.com
-          NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      - run: yarn install --immutable
       - run: yarn test
         env:
           PGHOST: localhost
@@ -44,4 +41,3 @@ jobs:
           PGDATABASE: arena
           PGUSER: arena
           PGPASSWORD: arena
-          NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
