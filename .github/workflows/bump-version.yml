@@ -31,7 +31,8 @@ jobs:
           node-version: 24
           registry-url: https://npm.pkg.github.com/
           scope: '@openforis'
-
+        env:
+          NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.ACCESS_TOKEN }}" > .npmrc
       - run: echo "\"@openforis:registry\"" "\"https://npm.pkg.github.com\"" > .yarnrc
       - run: cat .npmrc
