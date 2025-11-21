@@ -87,5 +87,6 @@
   "bugs": {
     "url": "https://github.com/openforis/arena-server/issues"
   },
-  "homepage": "https://github.com/openforis/arena-server#readme"
+  "homepage": "https://github.com/openforis/arena-server#readme",
+  "packageManager": "yarn@4.11.0"
 }
