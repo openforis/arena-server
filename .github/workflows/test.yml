@@ -35,6 +35,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           NPM_REGISTRY_URL: https://npm.pkg.github.com
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: yarn test
         env:
           PGHOST: localhost
@@ -42,3 +43,4 @@ jobs:
           PGDATABASE: arena
           PGUSER: arena
           PGPASSWORD: arena
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
