@@ -27,7 +27,7 @@ export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMes
         this.postSummary()
         break
       case JobMessageInType.cancel:
-        this.job && (await this.job.cancel())
+        await this.job?.cancel()
         break
       default:
         this.logger.debug(`Skipping unknown message type: ${msg.type}`)
@@ -35,7 +35,9 @@ export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMes
   }
 
   private postSummary(): void {
-    this.job && this.postMessage({ type: JobMessageOutType.summaryUpdate, summary: this.job.summary })
+    if (this.job) {
+      this.postMessage({ type: JobMessageOutType.summaryUpdate, summary: this.job.summary })
+    }
   }
 }
 
