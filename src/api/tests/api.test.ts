@@ -6,7 +6,6 @@ import { insertTestUser } from './utils/insertTestUser'
 import login from './auth/login'
 
 declare global {
-  // eslint-disable-next-line no-var
   var api: ApiTest
 }
 

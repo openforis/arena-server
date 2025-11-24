@@ -6,7 +6,6 @@ import { mockUser, mockUserInvalid } from '../../mock/user'
 import { ApiTest } from '../../utils/apiTest'
 
 declare global {
-  // eslint-disable-next-line no-var
   var api: ApiTest
 }
 
