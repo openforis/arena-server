@@ -17,24 +17,23 @@ jobs:
           - 5444:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      NPM_REGISTRY_URL: https://npm.pkg.github.com
+      NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           always-auth: true
           auth-token: ${{secrets.ACCESS_TOKEN}}
           registry-url: 'https://npm.pkg.github.com'
           scope: '@openforis'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          NPM_REGISTRY_URL: https://npm.pkg.github.com
       - run: yarn
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          NPM_REGISTRY_URL: https://npm.pkg.github.com
+      - run: yarn install --immutable
       - run: yarn test
         env:
           PGHOST: localhost
