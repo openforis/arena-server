@@ -3,10 +3,10 @@ import { ArenaService } from '@openforis/arena-core'
 import { BaseProtocol } from '../../db'
 import { Message, MessageRepository } from '../../repository/message'
 
-const { create, deleteByUuid, getAll, getByUuid, getByUserUuid, update } = MessageRepository
+const { create, deleteByUuid, getAll, getAllSent, getByUuid, update } = MessageRepository
 
 export interface MessageService extends ArenaService {
-  create(message: Partial<Message> & Pick<Message, 'createdByUserUuid'>, client?: BaseProtocol): Promise<Message>
+  create(message: Partial<Message>, client?: BaseProtocol): Promise<Message>
 
   deleteByUuid(uuid: string, client?: BaseProtocol): Promise<Message | null>
 
@@ -27,7 +27,7 @@ export const MessageServiceServer: MessageService = {
   create,
   deleteByUuid,
   getAll,
+  getAllSent,
   getByUuid,
-  getByUserUuid,
   update,
 }
