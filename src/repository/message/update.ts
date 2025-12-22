@@ -18,28 +18,25 @@ export const update = (
   const table = new TableMessage()
   const { status, props } = message
 
-  const updates: string[] = []
   const values: any[] = []
   let paramIndex = 1
 
+  const updateBuilder = new SqlUpdateBuilder().update(table)
+
   if (status !== undefined) {
-    updates.push(`${table.status} = $${paramIndex++}`)
+    updateBuilder.set(table.status, `${paramIndex++}`)
     values.push(status)
   }
-
   if (props !== undefined) {
-    updates.push(`${table.props} = $${paramIndex++}`)
-    values.push(JSON.stringify(props))
+    updateBuilder.set(table.props, `${paramIndex++}`)
+    values.push(props)
   }
-
   // Always update date_modified
-  updates.push(`${table.dateModified} = (now() AT TIME ZONE 'UTC')`)
+  updateBuilder.set(table.dateModified, `(now() AT TIME ZONE 'UTC')`)
 
   values.push(uuid)
 
-  const sql = new SqlUpdateBuilder()
-    .update(table)
-    .set(updates.join(', '))
+  const sql = updateBuilder
     .where(`${table.uuid} = $${paramIndex}`)
     .returning(table.uuid, table.status, table.props, table.createdByUserUuid, table.dateCreated, table.dateModified)
     .build()
