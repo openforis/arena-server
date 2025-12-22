@@ -1,6 +1,7 @@
 export { TableAuthGroup } from './authGroup'
 export { TableAuthGroupUser } from './authGroupUser'
 export { TableInfo } from './info'
+export { TableMessage } from './message'
 export { TableSchemaPublic } from './tableSchemaPublic'
 export { TableSurvey } from './survey'
 export { TableUser } from './user'
