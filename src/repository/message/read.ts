@@ -4,6 +4,19 @@ import { Message } from '../../model/message/types'
 import { transformCallback } from './utils'
 
 /**
+ * Counts all message records.
+ *
+ * @param client - Database client.
+ */
+export const count = (client: BaseProtocol = DB): Promise<number> => {
+  const table = new TableMessage()
+
+  const sql = new SqlSelectBuilder().select(`count(${table.alias}.*)`).from(table).build()
+
+  return client.one<number>(sql, [], (row) => Number(row.count))
+}
+
+/**
  * Returns all message records.
  *
  * @param client - Database client.
