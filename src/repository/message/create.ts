@@ -13,7 +13,7 @@ import { transformCallback } from './utils'
 export const create = (message: Partial<Message>, client: BaseProtocol = DB): Promise<Message> => {
   const table = new TableMessage()
 
-  const { uuid = UUIDs.v4(), status = MessageStatus.draft, props = {}, createdByUserUuid } = message
+  const { uuid = UUIDs.v4(), status = MessageStatus.Draft, props = {}, createdByUserUuid } = message
 
   const sql = new SqlInsertBuilder()
     .insertInto(table)

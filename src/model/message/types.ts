@@ -1,10 +1,28 @@
-/**
- * Represents a message status.
- */
 export enum MessageStatus {
-  draft = 'DRAFT',
-  sent = 'SENT',
-  archived = 'ARCHIVED',
+  Draft = 'draft',
+  Sent = 'sent',
+  Archived = 'archived',
+}
+
+export enum MessageAudience {
+  All = 'all',
+  Partial = 'partial',
+  Individual = 'individual',
+}
+
+export enum MessageNotificationType {
+  Email = 'email',
+  PushNotification = 'push_notification',
+}
+
+export type MessageProps = {
+  subject: string
+  body: string
+  audience: MessageAudience
+  recipientUserUuids?: string[]
+  notificationTypes: MessageNotificationType[]
+  scheduledDate?: Date
+  validUntil?: Date
 }
 
 /**
