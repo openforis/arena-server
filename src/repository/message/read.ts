@@ -1,6 +1,6 @@
 import { BaseProtocol, DB, SqlSelectBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
-import { Message } from '../../model/message/types'
+import { Message, MessageStatus } from '../../model/message/types'
 import { transformCallback } from './utils'
 
 /**
@@ -47,7 +47,7 @@ export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
     .where(`${table.status} = $1`)
     .build()
 
-  return client.map<Message>(sql, ['SENT'], transformCallback)
+  return client.map<Message>(sql, [MessageStatus.Sent], transformCallback)
 }
 
 /**
