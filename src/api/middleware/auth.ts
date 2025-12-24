@@ -34,6 +34,14 @@ const checkPermission = (req: Request, next: NextFunction, permissionFn: Permiss
   }
 }
 
+const requirePermission = (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    checkPermission(req, next, permissionFn)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const requireSurveyPermission =
   (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -84,6 +92,11 @@ export const ApiAuthMiddleware = {
   requireSurveyViewPermission: requireSurveyPermission(Authorizer.canViewSurvey),
   requireSurveyEditPermission: requireSurveyPermission(Authorizer.canEditSurvey),
   requireRecordCleansePermission: requireSurveyPermission(Authorizer.canCleanseRecords),
+
+  requireSurveyConfigEditPermission: requireSurveyPermission(Authorizer.canEditSurveyConfig),
+  requireSurveyOwnerEditPermission: requireSurveyPermission(Authorizer.canEditSurveyOwner),
+  requireSurveyRdbRefreshPermission: requirePermission(Authorizer.canRefreshAllSurveyRdbs),
+  requireCanExportSurveysList: requirePermission(Authorizer.canExportSurveysList),
 
   // Record
   requireRecordListViewPermission: requireSurveyPermission(Authorizer.canViewSurvey),

@@ -7,12 +7,14 @@ import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
 import { MessageService } from '../../service'
 
 import { ApiEndpoint } from '../endpoint'
+import { ApiAuthMiddleware } from '../middleware'
 
 const getService = (): MessageService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.message) as MessageService
 
 export const MessageRead: ExpressInitializer = {
   init: (express: Express): void => {
+    // ==== READ ====
     express.get(ApiEndpoint.message.messagesCount(), async (_req, res, next) => {
       try {
         const service = getService()
@@ -32,6 +34,22 @@ export const MessageRead: ExpressInitializer = {
         const list = await service.getAll()
 
         res.json({ list })
+      } catch (error) {
+        next(error)
+      }
+    })
+
+    // ==== CREATE ====
+
+    express.post(ApiEndpoint.message.message(), ApiAuthMiddleware.requireAdminPermission, async (req, res, next) => {
+      try {
+        const message = req.body
+
+        const service = getService()
+
+        const messagePersisted = await service.create(message)
+
+        res.json({ message: messagePersisted })
       } catch (error) {
         next(error)
       }
