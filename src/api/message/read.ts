@@ -9,13 +9,15 @@ import { MessageService } from '../../service'
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
 
+const { requireAdminPermission } = ApiAuthMiddleware
+
 const getService = (): MessageService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.message) as MessageService
 
 export const MessageRead: ExpressInitializer = {
   init: (express: Express): void => {
     // ==== READ ====
-    express.get(ApiEndpoint.message.messagesCount(), async (_req, res, next) => {
+    express.get(ApiEndpoint.message.messagesCount(), requireAdminPermission, async (_req, res, next) => {
       try {
         const service = getService()
 
@@ -27,7 +29,7 @@ export const MessageRead: ExpressInitializer = {
       }
     })
 
-    express.get(ApiEndpoint.message.messages(), async (_req, res, next) => {
+    express.get(ApiEndpoint.message.messages(), requireAdminPermission, async (_req, res, next) => {
       try {
         const service = getService()
 
@@ -41,7 +43,7 @@ export const MessageRead: ExpressInitializer = {
 
     // ==== CREATE ====
 
-    express.post(ApiEndpoint.message.message(), ApiAuthMiddleware.requireAdminPermission, async (req, res, next) => {
+    express.post(ApiEndpoint.message.message(), requireAdminPermission, async (req, res, next) => {
       try {
         const message = req.body
 

@@ -1195,7 +1195,7 @@ __metadata:
 
 "@openforis/arena-core@file:../arena-core::locator=%40openforis%2Farena-server%40workspace%3A.":
   version: 1.0.66
-  resolution: "@openforis/arena-core@file:../arena-core#../arena-core::hash=84ad35&locator=%40openforis%2Farena-server%40workspace%3A."
+  resolution: "@openforis/arena-core@file:../arena-core#../arena-core::hash=ef2beb&locator=%40openforis%2Farena-server%40workspace%3A."
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
     bignumber.js: "npm:^9.3.1"
@@ -1207,7 +1207,7 @@ __metadata:
     moment: "npm:^2.30.1"
     proj4: "npm:^2.19.10"
     uuid: "npm:^11.0.3"
-  checksum: 10c0/7eb3e81f64e3126bba0cb2ad563edc0d610968e9402098cbe44f1a9fd2747c41334b54b1fe890ce24fff9878f8ca2b3acf2c37a5445240726953d3ec69cd963f
+  checksum: 10c0/b90ad5d53de7017b1ecf1364fe9f29c5acf240045e259c337a6abb821f8a2fe65e1416f5fc571b78502a0f0ca17351320054ea5d6dfcd6f2adb395d76d6e0987
   languageName: node
   linkType: hard
 

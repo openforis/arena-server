@@ -68,6 +68,24 @@ const requireRecordPermission =
     }
   }
 
+const requireRecordsPermission =
+  (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const { surveyId, recordUuids } = Requests.getParams(req)
+      const user = Requests.getUser(req)
+      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
+      const records = await service.getManyByUuids({ surveyId, uuids: recordUuids })
+      const hasPermission = records.every((record) => permissionFn(user, record))
+      if (hasPermission) {
+        next()
+      } else {
+        next(new UnauthorizedError(user.name))
+      }
+    } catch (error) {
+      next(error)
+    }
+  }
+
 const requireUserPermission =
   (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -102,12 +120,27 @@ export const ApiAuthMiddleware = {
   requireRecordListViewPermission: requireSurveyPermission(Authorizer.canViewSurvey),
   requireRecordCreatePermission: requireSurveyPermission(Authorizer.canCreateRecord),
   requireRecordEditPermission: requireRecordPermission(Authorizer.canEditRecord),
+  requireRecordsEditPermission: requireRecordsPermission(Authorizer.canEditRecord),
   requireRecordViewPermission: requireSurveyPermission(Authorizer.canViewRecord),
   requireRecordAnalysisPermission: requireSurveyPermission(Authorizer.canAnalyzeRecords),
+  requireRecordListExportPermission: requireSurveyPermission(Authorizer.canExportRecordsList),
+  requireRecordOwnerChangePermission: requireRecordPermission(Authorizer.canChangeRecordOwner),
+  requireRecordStepEditPermission: requireRecordPermission(Authorizer.canChangeRecordStep),
+  requireRecordsExportPermission: requireSurveyPermission(Authorizer.canExportRecords),
+
+  // Map
+  requireMapUsePermission: requireSurveyPermission(Authorizer.canUseMap),
 
   // User
+  requireUserNameViewPermission: requireUserPermission(Authorizer.canViewOtherUsersNameInSameSurvey),
+  requireUsersAllViewPermission: requirePermission(Authorizer.canViewAllUsers),
+  requireUserCreatePermission: requireUserPermission(Authorizer.canCreateUsers),
   requireUserInvitePermission: requireSurveyPermission(Authorizer.canInviteUsers),
   requireUserViewPermission: requireUserPermission(Authorizer.canViewUser),
   requireUserEditPermission: requireUserPermission(Authorizer.canEditUser),
   requireUserRemovePermission: requireUserPermission(Authorizer.canRemoveUser),
+
+  // User access requests
+  requireCanViewAccessRequestsPermission: requirePermission(Authorizer.canViewUsersAccessRequests),
+  requireCanEditAccessRequestsPermission: requirePermission(Authorizer.canEditUsersAccessRequests),
 }
