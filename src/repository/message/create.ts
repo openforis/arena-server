@@ -15,16 +15,18 @@ export const create = (message: Partial<Message>, client: BaseProtocol = DB): Pr
 
   const { uuid = UUIDs.v4(), status = MessageStatus.Draft, props = {}, createdByUserUuid } = message
 
+  const valuesByColumn = {
+    [table.uuid.columnName]: uuid,
+    [table.status.columnName]: status,
+    [table.props.columnName]: props,
+    [table.createdByUserUuid.columnName]: createdByUserUuid,
+  }
+
   const sql = new SqlInsertBuilder()
     .insertInto(table)
-    .valuesByColumn({
-      [table.uuid.columnName]: uuid,
-      [table.status.columnName]: status,
-      [table.props.columnName]: props,
-      [table.createdByUserUuid.columnName]: createdByUserUuid,
-    })
+    .valuesByColumn(valuesByColumn)
     .returning(table.uuid, table.status, table.props, table.createdByUserUuid, table.dateCreated, table.dateModified)
     .build()
 
-  return client.one<Message>(sql, [], transformCallback)
+  return client.one(sql, valuesByColumn, transformCallback)
 }
