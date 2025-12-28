@@ -1,4 +1,4 @@
-import { Message, MessageStatus } from '../../model/message/types'
+import { Message, MessageStatus } from '@openforis/arena-core'
 
 export const transformCallbackSafe = (row: any): Message | null => {
   if (!row) return null

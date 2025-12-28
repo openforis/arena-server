@@ -1,7 +1,7 @@
-import { ArenaService } from '@openforis/arena-core'
+import { ArenaService, Message } from '@openforis/arena-core'
 
 import { BaseProtocol } from '../../db'
-import { Message, MessageRepository } from '../../repository/message'
+import { MessageRepository } from '../../repository/message'
 
 const { create, count, deleteByUuid, getAll, getAllSent, getByUuid, update } = MessageRepository
 

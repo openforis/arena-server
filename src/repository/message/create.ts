@@ -1,7 +1,7 @@
-import { UUIDs } from '@openforis/arena-core'
+import { Message, MessageStatus, UUIDs } from '@openforis/arena-core'
+
 import { BaseProtocol, DB, SqlInsertBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
-import { Message, MessageStatus } from '../../model/message/types'
 import { transformCallback } from './utils'
 
 /**

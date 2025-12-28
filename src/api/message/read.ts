@@ -2,12 +2,13 @@ import { Express } from 'express'
 
 import { ServiceRegistry } from '@openforis/arena-core'
 
-import { ExpressInitializer } from '../../server'
+import { ExpressInitializer } from '../../server/expressInitializer'
 import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
-import { MessageService } from '../../service'
+import { MessageService } from '../../service/message'
 
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
+import { Requests } from '../../utils'
 
 const { requireAdminPermission } = ApiAuthMiddleware
 
@@ -41,17 +42,15 @@ export const MessageRead: ExpressInitializer = {
       }
     })
 
-    // ==== CREATE ====
-
-    express.post(ApiEndpoint.message.message(), requireAdminPermission, async (req, res, next) => {
+    express.post(ApiEndpoint.message.message(':uuid'), requireAdminPermission, async (req, res, next) => {
       try {
-        const message = req.body
+        const { uuid } = Requests.getParams(req)
 
         const service = getService()
 
-        const messagePersisted = await service.create(message)
+        const message = await service.getByUuid(uuid)
 
-        res.json({ message: messagePersisted })
+        res.json({ message })
       } catch (error) {
         next(error)
       }

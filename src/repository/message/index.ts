@@ -1,5 +1,3 @@
-export type { Message } from '../../model/message/types'
-export { MessageStatus } from '../../model/message/types'
 import { create } from './create'
 import { deleteByUuid } from './delete'
 import { count, getAll, getByUuid, getAllSent } from './read'

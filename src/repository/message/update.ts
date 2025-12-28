@@ -1,6 +1,7 @@
+import { Message } from '@openforis/arena-core'
+
 import { BaseProtocol, DB, SqlUpdateBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
-import { Message } from '../../model/message/types'
 import { transformCallback } from './utils'
 
 /**
