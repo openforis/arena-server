@@ -31,6 +31,10 @@ export type { JobContext, JobMessageIn, JobMessageOut } from './job'
 
 export { Logger } from './log'
 
+export { MessagePropsKey, MessageStatus, MessageTarget, MessageNotificationType } from './model/message/types'
+export type { Message, MessageProps } from './model/message/types'
+export { Messages } from './model/message/messages'
+
 export { ProcessEnv, NodeEnv } from './processEnv'
 
 export { Worker, Thread, WorkerMessageType, WorkerCache } from './thread'
