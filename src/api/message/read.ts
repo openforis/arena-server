@@ -42,7 +42,7 @@ export const MessageRead: ExpressInitializer = {
       }
     })
 
-    express.post(ApiEndpoint.message.message(':uuid'), requireAdminPermission, async (req, res, next) => {
+    express.get(ApiEndpoint.message.message(':uuid'), requireAdminPermission, async (req, res, next) => {
       try {
         const { uuid } = Requests.getParams(req)
 

@@ -1,12 +1,14 @@
 import { Express } from 'express'
 
 import { ExpressInitializer } from '../../server'
-import { MessageRead } from './read'
 import { MessageCreate } from './create'
+import { MessageRead } from './read'
+import { MessageUpdate } from './update'
 
 export const MessageApi: ExpressInitializer = {
   init: (express: Express): void => {
     MessageCreate.init(express)
     MessageRead.init(express)
+    MessageUpdate.init(express)
   },
 }

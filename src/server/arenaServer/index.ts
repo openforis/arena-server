@@ -14,6 +14,8 @@ const init = async (options?: InitAppOptions): Promise<ArenaApp> => {
   return initApp(options)
 }
 
+export { ServerServiceType } from './serverServiceType'
+
 export const ArenaServer = {
   init,
   start,
