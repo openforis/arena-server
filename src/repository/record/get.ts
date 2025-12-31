@@ -9,7 +9,7 @@ const buildRecordFetchSql = (surveyId: number, whereConditionBuilder: (tableReco
   const whereCondition = whereConditionBuilder(tableRecord)
 
   const surveySql = new SqlSelectBuilder()
-    .select(`s.uuid AS survey_uuid`)
+    .select(`${tableSurvey.uuid} AS survey_uuid`)
     .from(tableSurvey)
     .where(`${tableSurvey.id} = $2`)
     .build()

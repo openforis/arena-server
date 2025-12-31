@@ -3,6 +3,7 @@ import {
   DataQueryServiceServer,
   InfoServiceServer,
   MessageServiceServer,
+  RecordServiceServer,
   SurveyServiceServer,
   UserServiceServer,
 } from '../../service'
@@ -13,5 +14,6 @@ export const registerServices = (): ServiceRegistry =>
     .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
     .registerService(ServerServiceType.message, MessageServiceServer)
     .registerService(ServiceType.info, InfoServiceServer)
+    .registerService(ServiceType.record, RecordServiceServer)
     .registerService(ServiceType.survey, SurveyServiceServer)
     .registerService(ServiceType.user, UserServiceServer)
