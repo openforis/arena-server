@@ -13,11 +13,13 @@ import { transformCallback } from './utils'
 export const deleteByUuid = (uuid: string, client: BaseProtocol = DB): Promise<Message | null> => {
   const table = new TableMessage()
 
+  const values = { [table.uuid.columnName]: uuid }
+
   const sql = new SqlDeleteBuilder()
     .deleteFrom(table)
-    .where({ [table.uuid.columnName]: uuid })
+    .where(values)
     .returning(table.uuid, table.status, table.props, table.createdByUserUuid, table.dateCreated, table.dateModified)
     .build()
 
-  return client.oneOrNone<Message>(sql, [], transformCallback)
+  return client.oneOrNone<Message>(sql, values, transformCallback)
 }
