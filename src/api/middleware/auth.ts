@@ -93,7 +93,7 @@ const requireUserPermission =
       const serviceRegistry = ServiceRegistry.getInstance()
       const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
       const userService = serviceRegistry.getService(ServiceType.user) as UserService
-      const survey = await surveyService.get({ surveyId })
+      const survey = surveyId ? await surveyService.get({ surveyId }) : undefined
       const userToEdit = await userService.get({ userUuid })
 
       checkPermission(req, next, permissionFn, survey, userToEdit)
