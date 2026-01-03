@@ -8,6 +8,7 @@ import { transformCallback } from './utils'
  * Counts all message records.
  *
  * @param client - Database client.
+ * @returns Promise that resolves to the count of messages.
  */
 export const count = (client: BaseProtocol = DB): Promise<number> => {
   const table = new TableMessage()
@@ -21,6 +22,7 @@ export const count = (client: BaseProtocol = DB): Promise<number> => {
  * Returns all message records.
  *
  * @param client - Database client.
+ * @returns Promise that resolves to an array of messages.
  */
 export const getAll = (client: BaseProtocol = DB): Promise<Message[]> => {
   const table = new TableMessage()
@@ -37,7 +39,7 @@ export const getAll = (client: BaseProtocol = DB): Promise<Message[]> => {
  * Returns all sent messages.
  *
  * @param client - Database client.
- * @returns
+ * @returns Promise that resolves to an array of sent messages.
  */
 export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
   const table = new TableMessage()
@@ -56,6 +58,7 @@ export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
  *
  * @param uuid - The message UUID.
  * @param client - Database client.
+ * @returns Promise that resolves to a message or null if not found.
  */
 export const getByUuid = async (uuid: string, client: BaseProtocol = DB): Promise<Message | null> => {
   const table = new TableMessage()
