@@ -1,11 +1,19 @@
 import { ServiceRegistry, ServiceType } from '@openforis/arena-core'
-import { DataQueryServiceServer, InfoServiceServer, SurveyServiceServer, UserServiceServer } from '../../service'
+import {
+  DataQueryServiceServer,
+  InfoServiceServer,
+  MessageServiceServer,
+  RecordServiceServer,
+  SurveyServiceServer,
+  UserServiceServer,
+} from '../../service'
 import { ServerServiceType } from './serverServiceType'
 
-export const registerServices = (): void => {
+export const registerServices = (): ServiceRegistry =>
   ServiceRegistry.getInstance()
     .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
+    .registerService(ServerServiceType.message, MessageServiceServer)
     .registerService(ServiceType.info, InfoServiceServer)
+    .registerService(ServiceType.record, RecordServiceServer)
     .registerService(ServiceType.survey, SurveyServiceServer)
     .registerService(ServiceType.user, UserServiceServer)
-}
