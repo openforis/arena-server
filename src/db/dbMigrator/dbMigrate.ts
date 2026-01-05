@@ -16,11 +16,11 @@ const configBase = {
   password: ProcessEnv.pgPassword,
   host: ProcessEnv.pgHost,
   database: ProcessEnv.pgDatabase,
-  ssl: ProcessEnv.pgSslAllowUnauthorized
+  ssl: ProcessEnv.pgSsl
     ? {
-        rejectUnauthorized: false,
+        rejectUnauthorized: !ProcessEnv.pgSslAllowUnauthorized,
       }
-    : ProcessEnv.pgSsl,
+    : false,
   schema: '',
 }
 
