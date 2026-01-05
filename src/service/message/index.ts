@@ -1,4 +1,4 @@
-import { ArenaService, Message } from '@openforis/arena-core'
+import { ArenaService, Message, MessageNotificationType, Messages, User } from '@openforis/arena-core'
 
 import { BaseProtocol } from '../../db'
 import { MessageRepository } from '../../repository/message'
@@ -16,6 +16,8 @@ export interface MessageService extends ArenaService {
 
   getAllSent(client?: BaseProtocol): Promise<Message[]>
 
+  getNotifiedToUser(user: User, client?: BaseProtocol): Promise<Message[]>
+
   getByUuid(uuid: string, client?: BaseProtocol): Promise<Message | null>
 
   update(
@@ -25,12 +27,23 @@ export interface MessageService extends ArenaService {
   ): Promise<Message>
 }
 
+const getNotifiedToUser = async (user: User, client?: BaseProtocol): Promise<Message[]> => {
+  const messages = await MessageRepository.getAllSent(client)
+  const filteredMessages = messages.filter(
+    (message) =>
+      Messages.getNotificationTypes(message).includes(MessageNotificationType.PushNotification) &&
+      Messages.isTargetingUser(user)(message)
+  )
+  return filteredMessages.map(Messages.clearHiddenProps)
+}
+
 export const MessageServiceServer: MessageService = {
   create,
   deleteByUuid,
   count,
   getAll,
   getAllSent,
+  getNotifiedToUser,
   getByUuid,
   update,
 }
