@@ -5,5 +5,5 @@ export const message = {
   messages: (): string => getApiPath('messages'),
   messagesCount: (): string => getApiPath('messages', 'count'),
   messagesNotifiedToUser: (): string => getApiPath('messages', 'notified-to-user'),
-  messagesNotifiedtoUserCount: (): string => getApiPath('messages', 'notified-to-user', 'count'),
+  messagesNotifiedToUserCount: (): string => getApiPath('messages', 'notified-to-user', 'count'),
 }

@@ -56,7 +56,7 @@ export const MessageRead: ExpressInitializer = {
       }
     })
 
-    express.get(ApiEndpoint.message.messagesNotifiedtoUserCount(), requireLoggedInUser, async (req, res, next) => {
+    express.get(ApiEndpoint.message.messagesNotifiedToUserCount(), requireLoggedInUser, async (req, res, next) => {
       try {
         const service = getService()
 
