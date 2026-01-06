@@ -14,13 +14,19 @@ import { Requests } from '../../utils'
 
 type PermissionFn = (user: User, ...args: Array<any>) => boolean
 
+const sendUnauthorizedError = ({ req = null, next }: { req?: Request | null; next: NextFunction }) => {
+  const user = req ? Requests.getUser(req) : null
+  const userName = user?.name ?? 'anonymous'
+  next(new UnauthorizedError(userName))
+}
+
 // Admin
 const requireAdminPermission = async (req: Request, _res: Response, next: NextFunction) => {
   const user = Requests.getUser(req)
   if (Users.isSystemAdmin(user)) {
     next()
   } else {
-    next(new UnauthorizedError(user.name))
+    sendUnauthorizedError({ req, next })
   }
 }
 
@@ -30,7 +36,7 @@ const checkPermission = (req: Request, next: NextFunction, permissionFn: Permiss
   if (permissionFn(user, ...args)) {
     next()
   } else {
-    next(new UnauthorizedError(user.name))
+    sendUnauthorizedError({ req, next })
   }
 }
 
@@ -79,7 +85,7 @@ const requireRecordsPermission =
       if (hasPermission) {
         next()
       } else {
-        next(new UnauthorizedError(user.name))
+        sendUnauthorizedError({ req, next })
       }
     } catch (error) {
       next(error)
@@ -102,7 +108,18 @@ const requireUserPermission =
     }
   }
 
+const requireLoggedInUser = async (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    const user = Requests.getUser(req)
+    return user ? next() : sendUnauthorizedError({ req, next })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const ApiAuthMiddleware = {
+  requireLoggedInUser,
+
   // Admin
   requireAdminPermission,
 

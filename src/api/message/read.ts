@@ -10,7 +10,7 @@ import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
 import { Requests } from '../../utils'
 
-const { requireAdminPermission } = ApiAuthMiddleware
+const { requireAdminPermission, requireLoggedInUser } = ApiAuthMiddleware
 
 const getService = (): MessageService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.message) as MessageService
@@ -51,6 +51,34 @@ export const MessageRead: ExpressInitializer = {
         const message = await service.getByUuid(uuid)
 
         res.json({ message })
+      } catch (error) {
+        next(error)
+      }
+    })
+
+    express.get(ApiEndpoint.message.messagesNotifiedToUserCount(), requireLoggedInUser, async (req, res, next) => {
+      try {
+        const service = getService()
+
+        const user = Requests.getUser(req)
+
+        const list = await service.getNotifiedToUser(user)
+
+        res.json({ count: list.length })
+      } catch (error) {
+        next(error)
+      }
+    })
+
+    express.get(ApiEndpoint.message.messagesNotifiedToUser(), requireLoggedInUser, async (req, res, next) => {
+      try {
+        const service = getService()
+
+        const user = Requests.getUser(req)
+
+        const list = await service.getNotifiedToUser(user)
+
+        res.json({ list })
       } catch (error) {
         next(error)
       }
