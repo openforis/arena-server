@@ -109,8 +109,12 @@ const requireUserPermission =
   }
 
 const requireLoggedInUser = async (req: Request, _res: Response, next: NextFunction) => {
-  const user = Requests.getUser(req)
-  return user ? next() : sendUnauthorizedError({ req, next })
+  try {
+    const user = Requests.getUser(req)
+    return user ? next() : sendUnauthorizedError({ req, next })
+  } catch (error) {
+    next(error)
+  }
 }
 
 export const ApiAuthMiddleware = {
