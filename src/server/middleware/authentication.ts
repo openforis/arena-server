@@ -79,9 +79,6 @@ const jwtStrategy = new JWTStrategy(
     passReqToCallback: true,
   },
   (req, jwtPayload: UserAuthTokenPayload, done) => {
-    if (Date.now() > jwtPayload.exp) {
-      return done('JWT expired')
-    }
     const { userUuid } = jwtPayload
     const service: UserService = ServiceRegistry.getInstance().getService(ServiceType.user)
     service

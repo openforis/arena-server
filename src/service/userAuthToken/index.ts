@@ -18,7 +18,7 @@ import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
 import { jwtExpiresMs, jwtRefresshTokenExpireMs } from './userAuthTokenServiceConstants'
 
-const signToken = (payload: object): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
+const signToken = (payload: UserAuthTokenPayload): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
 
 const createAuthToken = (options: { userUuid: string }) => {
   const { userUuid } = options
