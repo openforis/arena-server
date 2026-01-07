@@ -23,10 +23,10 @@ export const getByUuid = async (
     .from(table)
     .where(
       includeRevoked
-        ? `${table.token} = $1`
-        : `${table.uuid} = $1 AND ${table.revoked} = FALSE AND ${table.expiresAt} > NOW()`
+        ? `${table.uuid} = $/uuid/`
+        : `${table.uuid} = $/uuid/ AND ${table.revoked} = FALSE AND ${table.expiresAt} > NOW()`
     )
     .build()
 
-  return client.oneOrNone<UserAuthRefreshToken>(sql, [uuid], (row) => DBs.transformCallback({ row }))
+  return client.oneOrNone<UserAuthRefreshToken>(sql, { uuid }, (row) => DBs.transformCallback({ row }))
 }
