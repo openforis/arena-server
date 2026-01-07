@@ -34,7 +34,7 @@ export class SqlDeleteBuilder extends SqlBuilder {
   }
 
   build(): string {
-    if (Objects.isEmpty(this._table) || Objects.isEmpty(this._whereValues))
+    if (Objects.isEmpty(this._table) || (Objects.isEmpty(this._whereValues) && Objects.isEmpty(this._whereRaw)))
       throw new Error(`missingParams, ${this._table}, ${this._whereValues}`)
 
     const whereCondition =
