@@ -16,7 +16,7 @@ export interface InitAppOptions {
 }
 
 const defaultOptions: InitAppOptions = {
-  fileSizeLimit: 1024 * 1024 * 1024, // 1GB
+  fileSizeLimit: ProcessEnv.fileUploadLimit,
   bodyParseLimit: '5000kb',
 }
 

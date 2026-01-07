@@ -25,6 +25,12 @@ export const RecordServiceServer: RecordService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getManyByUuids(options: { surveyId: number; uuids: string[] }): Promise<Record[]> {
+    throw new Error('TODO')
+  },
+
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   update(options: { recordUuid: string; step: string; surveyId: number; user: User }): Promise<Record> {
     throw new Error('TODO')
   },

@@ -10,25 +10,17 @@ enum MigrationFolder {
   survey = 'survey',
 }
 
-const determineSslConfig = () => {
-  if (!ProcessEnv.pgSsl) {
-    return false
-  }
-  if (ProcessEnv.pgSslAllowUnauthorized) {
-    return { rejectUnauthorized: false }
-  }
-  return true
-}
-
-const sslConfigBase = determineSslConfig()
-
 const configBase = {
   driver: 'pg',
   user: ProcessEnv.pgUser,
   password: ProcessEnv.pgPassword,
   host: ProcessEnv.pgHost,
   database: ProcessEnv.pgDatabase,
-  ssl: sslConfigBase,
+  ssl: ProcessEnv.pgSsl
+    ? {
+        rejectUnauthorized: !ProcessEnv.pgSslAllowUnauthorized,
+      }
+    : false,
   schema: '',
 }
 

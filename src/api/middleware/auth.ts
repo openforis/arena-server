@@ -14,13 +14,19 @@ import { Requests } from '../../utils'
 
 type PermissionFn = (user: User, ...args: Array<any>) => boolean
 
+const sendUnauthorizedError = ({ req = null, next }: { req?: Request | null; next: NextFunction }) => {
+  const user = req ? Requests.getUser(req) : null
+  const userName = user?.name ?? 'anonymous'
+  next(new UnauthorizedError(userName))
+}
+
 // Admin
 const requireAdminPermission = async (req: Request, _res: Response, next: NextFunction) => {
   const user = Requests.getUser(req)
   if (Users.isSystemAdmin(user)) {
     next()
   } else {
-    next(new UnauthorizedError(user.name))
+    sendUnauthorizedError({ req, next })
   }
 }
 
@@ -30,7 +36,15 @@ const checkPermission = (req: Request, next: NextFunction, permissionFn: Permiss
   if (permissionFn(user, ...args)) {
     next()
   } else {
-    next(new UnauthorizedError(user.name))
+    sendUnauthorizedError({ req, next })
+  }
+}
+
+const requirePermission = (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    checkPermission(req, next, permissionFn)
+  } catch (error) {
+    next(error)
   }
 }
 
@@ -60,6 +74,24 @@ const requireRecordPermission =
     }
   }
 
+const requireRecordsPermission =
+  (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const { surveyId, recordUuids } = Requests.getParams(req)
+      const user = Requests.getUser(req)
+      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
+      const records = await service.getManyByUuids({ surveyId, uuids: recordUuids })
+      const hasPermission = records.every((record) => permissionFn(user, record))
+      if (hasPermission) {
+        next()
+      } else {
+        sendUnauthorizedError({ req, next })
+      }
+    } catch (error) {
+      next(error)
+    }
+  }
+
 const requireUserPermission =
   (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -67,7 +99,7 @@ const requireUserPermission =
       const serviceRegistry = ServiceRegistry.getInstance()
       const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
       const userService = serviceRegistry.getService(ServiceType.user) as UserService
-      const survey = await surveyService.get({ surveyId })
+      const survey = surveyId ? await surveyService.get({ surveyId }) : undefined
       const userToEdit = await userService.get({ userUuid })
 
       checkPermission(req, next, permissionFn, survey, userToEdit)
@@ -76,7 +108,18 @@ const requireUserPermission =
     }
   }
 
+const requireLoggedInUser = async (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    const user = Requests.getUser(req)
+    return user ? next() : sendUnauthorizedError({ req, next })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const ApiAuthMiddleware = {
+  requireLoggedInUser,
+
   // Admin
   requireAdminPermission,
 
@@ -85,16 +128,36 @@ export const ApiAuthMiddleware = {
   requireSurveyEditPermission: requireSurveyPermission(Authorizer.canEditSurvey),
   requireRecordCleansePermission: requireSurveyPermission(Authorizer.canCleanseRecords),
 
+  requireSurveyConfigEditPermission: requireSurveyPermission(Authorizer.canEditSurveyConfig),
+  requireSurveyOwnerEditPermission: requireSurveyPermission(Authorizer.canEditSurveyOwner),
+  requireSurveyRdbRefreshPermission: requirePermission(Authorizer.canRefreshAllSurveyRdbs),
+  requireCanExportSurveysList: requirePermission(Authorizer.canExportSurveysList),
+
   // Record
   requireRecordListViewPermission: requireSurveyPermission(Authorizer.canViewSurvey),
   requireRecordCreatePermission: requireSurveyPermission(Authorizer.canCreateRecord),
   requireRecordEditPermission: requireRecordPermission(Authorizer.canEditRecord),
+  requireRecordsEditPermission: requireRecordsPermission(Authorizer.canEditRecord),
   requireRecordViewPermission: requireSurveyPermission(Authorizer.canViewRecord),
   requireRecordAnalysisPermission: requireSurveyPermission(Authorizer.canAnalyzeRecords),
+  requireRecordListExportPermission: requireSurveyPermission(Authorizer.canExportRecordsList),
+  requireRecordOwnerChangePermission: requireRecordPermission(Authorizer.canChangeRecordOwner),
+  requireRecordStepEditPermission: requireRecordPermission(Authorizer.canChangeRecordStep),
+  requireRecordsExportPermission: requireSurveyPermission(Authorizer.canExportRecords),
+
+  // Map
+  requireMapUsePermission: requireSurveyPermission(Authorizer.canUseMap),
 
   // User
+  requireUserNameViewPermission: requireUserPermission(Authorizer.canViewOtherUsersNameInSameSurvey),
+  requireUsersAllViewPermission: requirePermission(Authorizer.canViewAllUsers),
+  requireUserCreatePermission: requireUserPermission(Authorizer.canCreateUsers),
   requireUserInvitePermission: requireSurveyPermission(Authorizer.canInviteUsers),
   requireUserViewPermission: requireUserPermission(Authorizer.canViewUser),
   requireUserEditPermission: requireUserPermission(Authorizer.canEditUser),
   requireUserRemovePermission: requireUserPermission(Authorizer.canRemoveUser),
+
+  // User access requests
+  requireCanViewAccessRequestsPermission: requirePermission(Authorizer.canViewUsersAccessRequests),
+  requireCanEditAccessRequestsPermission: requirePermission(Authorizer.canEditUsersAccessRequests),
 }
