@@ -20,7 +20,7 @@ export interface InitAppOptions {
 }
 
 const defaultOptions: InitAppOptions = {
-  fileSizeLimit: 1024 * 1024 * 1024, // 1GB
+  fileSizeLimit: ProcessEnv.fileUploadLimit,
   bodyParseLimit: '5000kb',
 }
 
@@ -28,7 +28,9 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   const { bodyParseLimit, fileSizeLimit } = { ...defaultOptions, ...options }
   const app: Express = express()
 
-  if (ProcessEnv.useHttps) HttpsMiddleware.init(app)
+  if (ProcessEnv.useHttps) {
+    HttpsMiddleware.init(app)
+  }
   app.use(express.json({ limit: bodyParseLimit }))
   app.use(
     expressFileUpload({
