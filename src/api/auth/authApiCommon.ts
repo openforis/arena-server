@@ -3,12 +3,20 @@ import { CookieOptions, Request, Response } from 'express'
 import { UserAuthRefreshToken, UserAuthRefreshTokenProps } from '@openforis/arena-core'
 
 import { ApiEndpoint } from '../endpoint'
+import { ProcessEnv } from '../../processEnv'
 
+const arenaAppId = 'arena'
 export const jwtRefreshTokenCookieName = 'refreshToken'
 
 export const extractRefreshTokenProps = (options: { req: Request }): UserAuthRefreshTokenProps => {
   const { req } = options
-  return { userAgent: req.headers['user-agent'] ?? '' }
+  return {
+    appInfo: {
+      appId: arenaAppId,
+      version: ProcessEnv.applicationVersion,
+    },
+    userAgent: req.headers['user-agent'] ?? '',
+  }
 }
 
 export const setRefreshTokenCookie = (options: { res: Response; refreshToken: UserAuthRefreshToken }) => {
