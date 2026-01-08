@@ -14,9 +14,12 @@ import {
 
 import { DB } from '../../db'
 
+import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
 import { jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
+
+const logger = new Logger('UserAuthTokenService')
 
 /**
  * Signs a JWT token with the given payload.
@@ -64,6 +67,32 @@ const createAndStoreRefreshToken = (
   return UserRefreshTokenRepository.insert(refreshToken, client)
 }
 
+const verifyAndFetchRefreshTokenRecord = async ({
+  refreshToken,
+  userAuthTokenService,
+  t,
+}: {
+  refreshToken: string
+  userAuthTokenService: UserAuthTokenService
+  t: pgPromise.IBaseProtocol<any>
+}): Promise<UserAuthRefreshToken | null> => {
+  try {
+    const decodedPayload = userAuthTokenService.verifyAuthToken(refreshToken) as UserAuthRefreshTokenPayload
+    const { uuid } = decodedPayload
+
+    const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid, { includeRevoked: false }, t)
+
+    if (!tokenRecord || tokenRecord.revoked || new Date() > tokenRecord.expiresAt) {
+      // If found but revoked/expired, reject. If not found, it's invalid.
+      return null
+    }
+    return tokenRecord
+  } catch (error) {
+    logger.error(`Error verifying and fetching refresh token record: ${error}`)
+    return null
+  }
+}
+
 export const UserAuthTokenServiceServer: UserAuthTokenService = {
   async createTokens(
     options: { userUuid: string; props: UserAuthRefreshTokenProps },
@@ -97,16 +126,12 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
       return null
     }
     return dbClient.tx(async (t: pgPromise.ITask<any>) => {
-      const decodedPayload = this.verifyAuthToken(refreshToken) as UserAuthRefreshTokenPayload
-      const { uuid } = decodedPayload
-
-      const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid, { includeRevoked: false }, t)
-
-      if (!tokenRecord || tokenRecord.revoked || new Date() > tokenRecord.expiresAt) {
-        // If found but revoked/expired, reject. If not found, it's invalid.
+      const tokenRecord = await verifyAndFetchRefreshTokenRecord({ refreshToken, userAuthTokenService: this, t })
+      if (!tokenRecord) {
         return null
       }
-      const { userUuid } = tokenRecord
+      const { uuid, userUuid } = tokenRecord
+
       const newAuthToken = createAuthToken({ userUuid })
 
       await UserRefreshTokenRepository.revoke(uuid, t)
