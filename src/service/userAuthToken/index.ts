@@ -88,7 +88,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
       const decodedPayload = this.verifyAuthToken(refreshToken) as UserAuthRefreshTokenPayload
       const { uuid } = decodedPayload
 
-      const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid)
+      const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid, { includeRevoked: false }, t)
 
       if (!tokenRecord || tokenRecord.revoked || new Date() > tokenRecord.expiresAt) {
         // If found but revoked/expired, reject. If not found, it's invalid.
