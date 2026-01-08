@@ -28,6 +28,16 @@ const logger = new Logger('UserAuthTokenService')
  */
 const signToken = (payload: UserAuthTokenPayload): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
 
+const createAuthTokenPayload = (options: { userUuid: string; now: Date; expiresAt: Date }): UserAuthTokenPayload => {
+  const { userUuid, now, expiresAt } = options
+  const nowMs = now.getTime()
+  return {
+    userUuid,
+    iat: nowMs / 1000, // JWT 'issued at' is in seconds
+    exp: expiresAt.getTime() / 1000, // JWT 'expiration' is in seconds
+  }
+}
+
 /**
  * Creates a new auth token.
  *
@@ -37,15 +47,11 @@ const signToken = (payload: UserAuthTokenPayload): string => jwt.sign(payload, P
  */
 const createAuthToken = (options: { userUuid: string }): { token: string; dateCreated: Date; expiresAt: Date } => {
   const { userUuid } = options
-  const now = Date.now()
-  const expiresAt = new Date(now + jwtExpiresMs)
-  const payload: UserAuthTokenPayload = {
-    userUuid,
-    iat: now,
-    exp: expiresAt.getTime(),
-  }
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + jwtExpiresMs)
+  const payload: UserAuthTokenPayload = createAuthTokenPayload({ userUuid, now, expiresAt })
   const token = signToken(payload)
-  return { token, dateCreated: new Date(now), expiresAt }
+  return { token, dateCreated: now, expiresAt }
 }
 
 const createAndStoreRefreshToken = (
@@ -54,16 +60,14 @@ const createAndStoreRefreshToken = (
 ): Promise<UserAuthRefreshToken> => {
   const { userUuid, props } = options
   const uuid = UUIDs.v4()
-  const now = Date.now()
-  const expiresAt = new Date(now + jwtRefreshTokenExpireMs)
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + jwtRefreshTokenExpireMs)
   const payload: UserAuthRefreshTokenPayload = {
+    ...createAuthTokenPayload({ userUuid, now, expiresAt }),
     uuid,
-    userUuid,
-    iat: now,
-    exp: expiresAt.getTime(),
   }
   const token = signToken(payload)
-  const refreshToken = { uuid, userUuid, token, dateCreated: new Date(now), expiresAt, props }
+  const refreshToken = { uuid, userUuid, token, dateCreated: now, expiresAt, props }
   return UserRefreshTokenRepository.insert(refreshToken, client)
 }
 
