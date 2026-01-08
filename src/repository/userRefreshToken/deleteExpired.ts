@@ -10,7 +10,7 @@ export const deleteExpired = async (client: BaseProtocol = DB): Promise<number> 
 
   const sql = new SqlDeleteBuilder()
     .deleteFrom(table)
-    .whereRaw(`${table.expiresAt.columnName} < NOW() OR ${table.revoked}`)
+    .whereRaw(`${table.expiresAt} < NOW() OR ${table.revoked}`)
     .build()
 
   const result = await client.result(sql)

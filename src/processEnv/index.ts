@@ -37,7 +37,6 @@ export const ProcessEnv = {
   // Express
   port: Number(process.env.PORT ?? 9090),
   userAuthTokenSecret: process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
-  sessionIdCookieSecret: process.env.SESSION_ID_COOKIE_SECRET || 'session-cookie-secret',
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: isTrue(process.env.USE_HTTPS),
   fileUploadLimit: Number(process.env.FILE_UPLOAD_LIMIT) || 1024 ** 3, // 1GB

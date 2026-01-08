@@ -18,9 +18,21 @@ import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
 import { jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
 
+/**
+ * Signs a JWT token with the given payload.
+ * @param payload - The payload to sign.
+ * @returns The signed JWT token.
+ */
 const signToken = (payload: UserAuthTokenPayload): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
 
-const createAuthToken = (options: { userUuid: string }) => {
+/**
+ * Creates a new auth token.
+ *
+ * @param options
+ * @param options.userUuid - The UUID of the user for whom the auth token is being created.
+ * @returns The created auth token along with its creation and expiration dates.
+ */
+const createAuthToken = (options: { userUuid: string }): { token: string; dateCreated: Date; expiresAt: Date } => {
   const { userUuid } = options
   const now = Date.now()
   const expiresAt = new Date(now + jwtExpiresMs)
@@ -33,10 +45,10 @@ const createAuthToken = (options: { userUuid: string }) => {
   return { token, dateCreated: new Date(now), expiresAt }
 }
 
-function createAndStoreRefreshToken(
+const createAndStoreRefreshToken = (
   options: { userUuid: string; props: UserAuthRefreshTokenProps },
   client: pgPromise.IBaseProtocol<any> = DB
-) {
+): Promise<UserAuthRefreshToken> => {
   const { userUuid, props } = options
   const uuid = UUIDs.v4()
   const now = Date.now()

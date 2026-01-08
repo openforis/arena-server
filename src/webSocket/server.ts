@@ -15,7 +15,7 @@ export class WebSocketServer {
   private static readonly verifyAuthToken = ({ socket }: { socket: Socket }): string | null => {
     const { token } = socket.handshake.auth ?? {}
     if (!token) {
-      WebSocketServer.logger.error(`authentication token not found`)
+      WebSocketServer.logger.error(`authentication token not found in handshake for socket ${socket.id}`)
       socket.disconnect()
       return null
     }
