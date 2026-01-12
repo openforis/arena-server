@@ -11,7 +11,7 @@ export const insert = async (
   options: UserAuthRefreshToken,
   client: BaseProtocol = DB
 ): Promise<UserAuthRefreshToken> => {
-  const { uuid, userUuid, dateCreated, expiresAt, props = {} } = options
+  const { uuid, userUuid, dateCreated, expiresAt, props = {}, token } = options
 
   const table = new TableUserRefreshToken()
 
@@ -29,5 +29,7 @@ export const insert = async (
     .returning(...table.columns)
     .build()
 
-  return client.one<UserAuthRefreshToken>(sql, values, (row) => DBs.transformCallback({ row }))
+  const insertedObject = await client.one<UserAuthRefreshToken>(sql, values, (row) => DBs.transformCallback({ row }))
+  // table does not include token column, so we need to add it manually
+  return { ...insertedObject, token }
 }
