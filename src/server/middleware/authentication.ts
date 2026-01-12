@@ -77,6 +77,7 @@ const jwtStrategy = new JWTStrategy(
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: ProcessEnv.userAuthTokenSecret,
     passReqToCallback: true,
+    algorithms: ['HS256'],
   },
   (req, jwtPayload: UserAuthTokenPayload, done) => {
     const { userUuid } = jwtPayload
