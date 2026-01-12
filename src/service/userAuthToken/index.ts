@@ -17,7 +17,7 @@ import { DB } from '../../db'
 import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-import { jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
+import { jwtAlgorithms, jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
 
 const logger = new Logger('UserAuthTokenService')
 
@@ -149,7 +149,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
     return UserRefreshTokenRepository.deleteExpired()
   },
   verifyAuthToken<P extends UserTokenPayload>(token: string): P {
-    return jwt.verify(token, ProcessEnv.userAuthTokenSecret) as P
+    return jwt.verify(token, ProcessEnv.userAuthTokenSecret, { algorithms: jwtAlgorithms }) as P
   },
 }
 

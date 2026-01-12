@@ -18,6 +18,8 @@ import {
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
 
+import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceConstants'
+
 const allowedPaths = [
   /^\/$/,
   /^\/auth\/login\/?$/,
@@ -77,7 +79,7 @@ const jwtStrategy = new JWTStrategy(
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: ProcessEnv.userAuthTokenSecret,
     passReqToCallback: true,
-    algorithms: ['HS256'],
+    algorithms: jwtAlgorithms,
   },
   (req, jwtPayload: UserAuthTokenPayload, done) => {
     const { userUuid } = jwtPayload
