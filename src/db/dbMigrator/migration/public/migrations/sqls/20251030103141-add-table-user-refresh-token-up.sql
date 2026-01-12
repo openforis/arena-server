@@ -3,7 +3,6 @@ CREATE TABLE
 (
   uuid          uuid        NOT NULL DEFAULT uuid_generate_v4(),
   user_uuid     uuid        NOT NULL,
-  token         VARCHAR     NOT NULL,
   props         jsonb       NOT NULL DEFAULT '{}'::jsonb,
   date_created  TIMESTAMP   NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
   expires_at    TIMESTAMP   NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),

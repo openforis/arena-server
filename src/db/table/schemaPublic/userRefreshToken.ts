@@ -4,7 +4,6 @@ import { TableSchemaPublic } from './tableSchemaPublic'
 export class TableUserRefreshToken extends TableSchemaPublic {
   readonly uuid: Column = new Column(this, 'uuid', ColumnType.uuid)
   readonly userUuid: Column = new Column(this, 'user_uuid', ColumnType.uuid)
-  readonly token: Column = new Column(this, 'token', ColumnType.varchar)
   readonly props: Column = new Column(this, 'props', ColumnType.jsonb)
   readonly dateCreated: Column = new Column(this, 'date_created', ColumnType.timeStamp)
   readonly expiresAt: Column = new Column(this, 'expires_at', ColumnType.timeStamp)
@@ -15,6 +14,6 @@ export class TableUserRefreshToken extends TableSchemaPublic {
   }
 
   get columns() {
-    return [this.uuid, this.userUuid, this.token, this.props, this.dateCreated, this.expiresAt, this.revoked]
+    return [this.uuid, this.userUuid, this.props, this.dateCreated, this.expiresAt, this.revoked]
   }
 }

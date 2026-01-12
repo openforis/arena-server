@@ -11,14 +11,13 @@ export const insert = async (
   options: UserAuthRefreshToken,
   client: BaseProtocol = DB
 ): Promise<UserAuthRefreshToken> => {
-  const { uuid, userUuid, token, dateCreated, expiresAt, props = {} } = options
+  const { uuid, userUuid, dateCreated, expiresAt, props = {} } = options
 
   const table = new TableUserRefreshToken()
 
   const values = {
     [table.uuid.columnName]: uuid,
     [table.userUuid.columnName]: userUuid,
-    [table.token.columnName]: token,
     [table.dateCreated.columnName]: dateCreated,
     [table.expiresAt.columnName]: expiresAt,
     [table.props.columnName]: props,
