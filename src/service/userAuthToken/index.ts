@@ -17,7 +17,7 @@ import { DB } from '../../db'
 import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-import { jwtAlgorithms, jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
+import { jwtAlgorithm, jwtAlgorithms, jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
 
 const logger = new Logger('UserAuthTokenService')
 
@@ -27,7 +27,7 @@ const logger = new Logger('UserAuthTokenService')
  * @returns The signed JWT token.
  */
 const signToken = (payload: UserAuthTokenPayload, expiresInSeconds: number): string =>
-  jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds })
+  jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds, algorithm: jwtAlgorithm })
 
 const createAuthTokenPayload = (options: { userUuid: string }): UserAuthTokenPayload => {
   const { userUuid } = options
