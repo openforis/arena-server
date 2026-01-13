@@ -113,17 +113,16 @@ const isAuthorizedMiddleware: RequestHandler = (req: Request, res, next) => {
   } else {
     passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
       if (user) {
+        // user is authenticated
         next()
-      } else {
+      } else if (isApiRequest(req)) {
         // For API requests, return JSON error
         // For page requests, let them continue to serve the HTML (which will show login form)
-        if (isApiRequest(req)) {
-          const message = err ? String(err) : 'Unauthorized'
-          res.status(401).send({ message })
-        } else {
-          // Let the request continue to static file middleware
-          next()
-        }
+        const message = err ? String(err) : 'Unauthorized'
+        res.status(401).send({ message })
+      } else {
+        // Let the request continue to static file middleware
+        next()
       }
     })(req, res, next)
   }
