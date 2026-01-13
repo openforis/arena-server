@@ -1,4 +1,4 @@
-import { Express, RequestHandler } from 'express'
+import { Express, Request, RequestHandler } from 'express'
 import passport from 'passport'
 import { Strategy as JWTStrategy, ExtractJwt } from 'passport-jwt'
 import { Strategy as LocalStrategy, VerifyFunctionWithRequest } from 'passport-local'
@@ -20,7 +20,7 @@ import { ExpressInitializer } from '../expressInitializer'
 
 import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceConstants'
 
-const allowedPaths = [
+const pathsAllowedWithoutAuthentication = [
   /^\/$/,
   /^\/auth\/login\/?$/,
   /^\/auth\/token\/refresh\/?$/,
@@ -29,6 +29,10 @@ const allowedPaths = [
   /^\/guest\/.*$/,
   /^\/img\/.*$/,
 ]
+
+const apiPaths = ['/api/', '/auth/']
+
+const isApiRequest = (req: Request): boolean => apiPaths.some((path) => req.path.startsWith(path))
 
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
@@ -103,16 +107,23 @@ const jwtStrategy = new JWTStrategy(
 
 const jwtStrategyName = 'jwt'
 
-const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
-  if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
+const isAuthorizedMiddleware: RequestHandler = (req: Request, res, next) => {
+  if (pathsAllowedWithoutAuthentication.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
     passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
       if (user) {
         next()
       } else {
-        const message = err ? String(err) : 'Unauthorized'
-        res.status(401).send({ message })
+        // For API requests, return JSON error
+        // For page requests, let them continue to serve the HTML (which will show login form)
+        if (isApiRequest(req)) {
+          const message = err ? String(err) : 'Unauthorized'
+          res.status(401).send({ message })
+        } else {
+          // Let the request continue to static file middleware
+          next()
+        }
       }
     })(req, res, next)
   }
