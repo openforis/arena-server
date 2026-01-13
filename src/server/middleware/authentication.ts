@@ -1,26 +1,43 @@
+import { Express, RequestHandler } from 'express'
 import passport from 'passport'
-import { VerifyFunctionWithRequest, Strategy as LocalStrategy } from 'passport-local'
-import { Express } from 'express'
+import { Strategy as JWTStrategy, ExtractJwt } from 'passport-jwt'
+import { Strategy as LocalStrategy, VerifyFunctionWithRequest } from 'passport-local'
+
 import {
   FieldValidators,
+  ServiceRegistry,
+  ServiceType,
   User,
+  UserAuthTokenPayload,
+  UserService,
   UserStatus,
   Validator,
   ValidatorErrorKeys,
-  ServiceRegistry,
-  ServiceType,
-  UserService,
 } from '@openforis/arena-core'
 
+import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
+
+import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceConstants'
+
+const allowedPaths = [
+  /^\/$/,
+  /^\/auth\/login\/?$/,
+  /^\/auth\/token\/refresh\/?$/,
+  /^\/api\/public\/.*$/,
+  /^\/api\/surveyTemplates\/?$/,
+  /^\/guest\/.*$/,
+  /^\/img\/.*$/,
+]
+
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
 
   const validator = new Validator()
 
   const { valid: isValidUser } = await validator.validate(
-    { email },
-    { email: [FieldValidators.email('invalid_email')] }
+    { email, password },
+    { email: [FieldValidators.email('invalid_email')], password: [FieldValidators.required('password_required')] }
   )
 
   if (!isValidUser) {
@@ -57,22 +74,57 @@ const localStrategy = new LocalStrategy(
   _verifyCallback
 )
 
+const jwtStrategy = new JWTStrategy(
+  {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: ProcessEnv.userAuthTokenSecret,
+    passReqToCallback: true,
+    algorithms: jwtAlgorithms,
+  },
+  (req, jwtPayload: UserAuthTokenPayload, done) => {
+    const { userUuid } = jwtPayload
+    const service: UserService = ServiceRegistry.getInstance().getService(ServiceType.user)
+    service
+      .get({ userUuid })
+      .then((user) => {
+        if (user) {
+          // attach user to the request for later use
+          req.user = user
+          done(null, user)
+        } else {
+          done(null, false)
+        }
+      })
+      .catch((error) => {
+        done(error, false)
+      })
+  }
+)
+
+const jwtStrategyName = 'jwt'
+
+const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
+  if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
+    next()
+  } else {
+    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
+      if (user) {
+        next()
+      } else {
+        const message = err ? String(err) : 'Unauthorized'
+        res.status(401).send({ message })
+      }
+    })(req, res, next)
+  }
+}
+
 export const AuthenticationMiddleware: ExpressInitializer = {
   init(express: Express): void {
     express.use(passport.initialize())
 
-    express.use(passport.session())
-
     passport.use('local', localStrategy)
+    passport.use(jwtStrategyName, jwtStrategy)
 
-    passport.serializeUser((user, done) => done(null, user?.uuid))
-
-    passport.deserializeUser(async (userUuid: string, done) => {
-      const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
-
-      const user: User | null = await service.get({ userUuid })
-
-      done(null, user)
-    })
+    express.use(isAuthorizedMiddleware)
   },
 }

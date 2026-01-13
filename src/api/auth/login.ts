@@ -1,11 +1,21 @@
-import { Express, Response, Request, NextFunction } from 'express'
+import { Express, NextFunction, Request, Response } from 'express'
 import passport from 'passport'
-import { Authorizer, ServiceRegistry, ServiceType, SurveyService, User, UserService } from '@openforis/arena-core'
 
-import { ExpressInitializer } from '../../server'
-import { ApiEndpoint } from '../endpoint'
+import {
+  Authorizer,
+  ServiceRegistry,
+  ServiceType,
+  SurveyService,
+  User,
+  UserAuthTokenService,
+  UserService,
+} from '@openforis/arena-core'
+
 import { Logger } from '../../log'
+import { ExpressInitializer } from '../../server'
 import { Requests } from '../../utils'
+import { ApiEndpoint } from '../endpoint'
+import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
 
 const logger = new Logger('AuthAPI')
 
@@ -17,53 +27,69 @@ export const deletePrefSurvey = (user: User): User => {
   return _user
 }
 
-const sendUserSurvey = async (options: { res: Response; user: User }) => {
-  const { res, user } = options
+const sendUserSurvey = async (options: { res: Response; user: User; authToken: string }) => {
+  const { res, user, authToken } = options
+  const serviceRegistry = ServiceRegistry.getInstance()
   const surveyId = user.prefs?.surveys?.current
   try {
-    const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+    const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
     let survey = null
     if (surveyId) {
-      survey = await service.get({ surveyId, draft: false, validate: false })
+      survey = await surveyService.get({ surveyId, draft: false, validate: false })
     }
-
     if (survey && surveyId && Authorizer.canEditSurvey(user, survey)) {
-      survey = await service.get({ surveyId, draft: true, validate: true })
+      survey = await surveyService.get({ surveyId, draft: true, validate: true })
     }
-    res.json({ user, survey })
+    res.json({ user, survey, authToken })
   } catch (error: any) {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
     // Survey not found with user pref
     // removing user pref
     const userToUpdate = deletePrefSurvey(user)
-    const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
-
-    res.json({ user: await service.updateUserPrefs({ userToUpdate }) })
+    const userService = serviceRegistry.getService(ServiceType.user) as UserService
+    const userUpdated = await userService.updateUserPrefs({ userToUpdate })
+    res.json({ user: userUpdated, authToken })
   }
 }
 
-const sendUser = async (options: { res: Response; req: Request; user: User }) => {
-  const { res, req, user } = options
+const sendUser = async (options: { res: Response; req: Request; user: User; authToken: string }) => {
+  const { res, req, user, authToken } = options
   const { includeSurvey } = Requests.getParams(req)
   if (includeSurvey) {
-    await sendUserSurvey({ res, user })
+    await sendUserSurvey({ res, user, authToken })
   } else {
-    res.json({ user })
+    res.json({ user, authToken })
   }
 }
 
 const authenticationSuccessful = (req: Request, res: Response, next: NextFunction, user: User) =>
-  req.logIn(user, (err) => {
-    if (err) next(err)
-    else {
-      req.session.save(() => sendUser({ res, req, user }))
+  req.logIn(user, { session: false }, async (err) => {
+    if (err) {
+      next(err)
+    } else {
+      const { uuid: userUuid } = user
+
+      const serviceRegistry = ServiceRegistry.getInstance()
+      const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
+
+      const refreshTokenProps = extractRefreshTokenProps({ req })
+
+      userAuthTokenService
+        .createTokens({ userUuid, props: refreshTokenProps })
+        .then(({ authToken, refreshToken }) => {
+          setRefreshTokenCookie({ res, refreshToken })
+          sendUser({ res, req, user, authToken: authToken.token })
+        })
+        .catch((error) => {
+          next(error)
+        })
     }
   })
 
 export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
-      passport.authenticate('local', (err: any, user: User, info: any) => {
+      passport.authenticate('local', { session: false }, (err: any, user: User, info: any) => {
         if (err) return next(err)
         if (user) return authenticationSuccessful(req, res, next, user)
         return res.status(401).json(info)

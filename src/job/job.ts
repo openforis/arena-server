@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { DebouncedFunc, throttle } from 'lodash'
+import { DebouncedFuncLeading, throttle } from 'lodash'
 import { Job, JobStatus, JobSummary, UUIDs } from '@openforis/arena-core'
 
 import { BaseProtocol, DB } from '../db'
@@ -22,7 +22,7 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
   protected readonly logger = new Logger(`Job ${this.constructor.name}`)
   protected context: C
   protected jobs: Array<JobServer<C, any>>
-  private readonly emitSummaryUpdateEvent: DebouncedFunc<() => void>
+  private readonly emitSummaryUpdateEvent: DebouncedFuncLeading<() => void>
   private jobCurrent: JobServer<C, any> | undefined = undefined
 
   public constructor(context: C, jobs: Array<JobServer<C, any>> = []) {

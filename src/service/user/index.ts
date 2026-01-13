@@ -1,4 +1,4 @@
-import { UserService, User } from '@openforis/arena-core'
+import { User, UserService } from '@openforis/arena-core'
 
 import { get } from './get'
 

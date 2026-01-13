@@ -1,18 +1,14 @@
 import express, { Express } from 'express'
 import expressFileUpload from 'express-fileupload'
 import compression from 'compression'
+import cookieParser from 'cookie-parser'
+
+import { ServiceRegistry } from '@openforis/arena-core'
 
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
-import {
-  AuthenticationMiddleware,
-  ErrorMiddleware,
-  HeaderMiddleware,
-  HttpsMiddleware,
-  SessionMiddleware,
-} from '../middleware'
+import { AuthenticationMiddleware, ErrorMiddleware, HeaderMiddleware, HttpsMiddleware } from '../middleware'
 import { Api } from '../../api'
-import { ServiceRegistry } from '@openforis/arena-core'
 
 export interface InitAppOptions {
   fileSizeLimit?: number
@@ -41,13 +37,14 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
     })
   )
   app.use(compression({ threshold: 512 }))
+  app.use(cookieParser())
   HeaderMiddleware.init(app)
-  const session = SessionMiddleware.init(app)
+
   AuthenticationMiddleware.init(app)
 
   Api.init(app)
 
   ErrorMiddleware.init(app)
 
-  return { express: app, serviceRegistry: ServiceRegistry.getInstance(), session }
+  return { express: app, serviceRegistry: ServiceRegistry.getInstance() }
 }

@@ -1,7 +1,7 @@
-import { Objects } from '@openforis/arena-core'
-import { NextFunction, Request, Response } from 'express'
 import { Server } from 'http'
-import { Server as SocketServer, Socket } from 'socket.io'
+import { Socket, Server as SocketServer } from 'socket.io'
+
+import { ServiceRegistry, ServiceType, UserAuthTokenPayload, UserAuthTokenService } from '@openforis/arena-core'
 
 import { Logger } from '../log'
 import { ArenaApp } from '../server'
@@ -12,26 +12,48 @@ export class WebSocketServer {
   private static socketsById = new Map<string, Socket>()
   private static socketIdsByUserUuid = new Map<string, Set<string>>()
 
-  static init(app: ArenaApp, server: Server): void {
-    new SocketServer(server)
-      .use((socket, next) => {
-        app.session(socket.request as Request, {} as Response, next as NextFunction)
-      })
-      .on(WebSocketEvent.connection, (socket) => {
-        const session = (socket.request as Request).session
-        const userUuid = Objects.path(['passport', 'user'])(session)
-        const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
-        WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
+  private static readonly verifyAuthToken = ({ socket }: { socket: Socket }): string | null => {
+    const { token } = socket.handshake.auth ?? {}
+    if (!token) {
+      WebSocketServer.logger.error(`authentication token not found in handshake for socket ${socket.id}`)
+      socket.disconnect()
+      return null
+    }
+    try {
+      const service: UserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
+      const jwtPayload: UserAuthTokenPayload = service.verifyAuthToken(token)
+      const { userUuid } = jwtPayload
+      return userUuid
+    } catch (error) {
+      WebSocketServer.logger.error(`authentication token validation error: ${error}`)
+      socket.disconnect()
+      return null
+    }
+  }
 
-        if (userUuid) {
-          this.addSocket(userUuid, socket)
+  static init(_app: ArenaApp, server: Server): void {
+    const socketServer = new SocketServer(server)
 
-          socket.on(WebSocketEvent.disconnect, () => {
-            WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
-            WebSocketServer.deleteSocket(userUuid, socket.id)
-          })
-        }
+    socketServer.on(WebSocketEvent.connection, (socket) => {
+      const userUuid = WebSocketServer.verifyAuthToken({ socket })
+
+      const socketDetails = `ID: ${socket.id} - User UUID: ${userUuid}`
+      WebSocketServer.logger.debug(`socket connected (${socketDetails})`)
+
+      if (!userUuid) {
+        return
+      }
+
+      // Attach userUuid to socket data for later use
+      socket.data.userUuid = userUuid
+
+      this.addSocket(userUuid, socket)
+
+      socket.on(WebSocketEvent.disconnect, () => {
+        WebSocketServer.logger.debug(`socket disconnected (${socketDetails})`)
+        WebSocketServer.deleteSocket(userUuid, socket.id)
       })
+    })
   }
 
   static notifySocket(socketId: string, eventType: string, message: any): boolean {

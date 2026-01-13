@@ -1,4 +1,4 @@
-import { Express, RequestHandler } from 'express'
+import { Express } from 'express'
 import { User as ArenaUser, ServiceRegistry } from '@openforis/arena-core'
 
 /**
@@ -7,7 +7,6 @@ import { User as ArenaUser, ServiceRegistry } from '@openforis/arena-core'
 export interface ArenaApp {
   express: Express
   serviceRegistry: ServiceRegistry
-  session: RequestHandler
 }
 
 declare global {
