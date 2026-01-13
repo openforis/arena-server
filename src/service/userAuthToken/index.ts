@@ -26,16 +26,12 @@ const logger = new Logger('UserAuthTokenService')
  * @param payload - The payload to sign.
  * @returns The signed JWT token.
  */
-const signToken = (payload: UserAuthTokenPayload): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
+const signToken = (payload: UserAuthTokenPayload, expiresInSeconds: number): string =>
+  jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds })
 
-const createAuthTokenPayload = (options: { userUuid: string; now: Date; expiresAt: Date }): UserAuthTokenPayload => {
-  const { userUuid, now, expiresAt } = options
-  const nowMs = now.getTime()
-  return {
-    userUuid,
-    iat: nowMs / 1000, // JWT 'issued at' is in seconds
-    exp: expiresAt.getTime() / 1000, // JWT 'expiration' is in seconds
-  }
+const createAuthTokenPayload = (options: { userUuid: string }): UserAuthTokenPayload => {
+  const { userUuid } = options
+  return { userUuid }
 }
 
 /**
@@ -49,8 +45,8 @@ const createAuthToken = (options: { userUuid: string }): { token: string; dateCr
   const { userUuid } = options
   const now = new Date()
   const expiresAt = new Date(now.getTime() + jwtExpiresMs)
-  const payload: UserAuthTokenPayload = createAuthTokenPayload({ userUuid, now, expiresAt })
-  const token = signToken(payload)
+  const payload: UserAuthTokenPayload = createAuthTokenPayload({ userUuid })
+  const token = signToken(payload, jwtExpiresMs / 1000)
   return { token, dateCreated: now, expiresAt }
 }
 
@@ -63,10 +59,10 @@ const createAndStoreRefreshToken = (
   const now = new Date()
   const expiresAt = new Date(now.getTime() + jwtRefreshTokenExpireMs)
   const payload: UserAuthRefreshTokenPayload = {
-    ...createAuthTokenPayload({ userUuid, now, expiresAt }),
+    ...createAuthTokenPayload({ userUuid }),
     uuid,
   }
-  const token = signToken(payload)
+  const token = signToken(payload, jwtRefreshTokenExpireMs / 1000)
   const refreshToken = { uuid, userUuid, token, dateCreated: now, expiresAt, props }
   return UserRefreshTokenRepository.insert(refreshToken, client)
 }
