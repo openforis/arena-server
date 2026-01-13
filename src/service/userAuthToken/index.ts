@@ -24,6 +24,7 @@ const logger = new Logger('UserAuthTokenService')
 /**
  * Signs a JWT token with the given payload.
  * @param payload - The payload to sign.
+ * @param expiresInSeconds - The expiration time in seconds.
  * @returns The signed JWT token.
  */
 const signToken = (payload: UserAuthTokenPayload, expiresInSeconds: number): string =>
