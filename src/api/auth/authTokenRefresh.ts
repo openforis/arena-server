@@ -25,7 +25,7 @@ export const AuthTokenRefresh: ExpressInitializer = {
 
         setRefreshTokenCookie({ res, refreshToken: newRefreshToken })
 
-        res.status(200).json({ authToken: authToken.token, message: 'Token refreshed successfully' })
+        res.json({ authToken: authToken.token, message: 'Token refreshed successfully' })
       } catch (error: any) {
         next(error)
       }

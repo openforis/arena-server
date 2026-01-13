@@ -17,25 +17,22 @@ import { DB } from '../../db'
 import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-import { jwtAlgorithms, jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
+import { jwtAlgorithm, jwtAlgorithms, jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
 
 const logger = new Logger('UserAuthTokenService')
 
 /**
  * Signs a JWT token with the given payload.
  * @param payload - The payload to sign.
+ * @param expiresInSeconds - The expiration time in seconds.
  * @returns The signed JWT token.
  */
-const signToken = (payload: UserAuthTokenPayload): string => jwt.sign(payload, ProcessEnv.userAuthTokenSecret)
+const signToken = (payload: UserAuthTokenPayload, expiresInSeconds: number): string =>
+  jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds, algorithm: jwtAlgorithm })
 
-const createAuthTokenPayload = (options: { userUuid: string; now: Date; expiresAt: Date }): UserAuthTokenPayload => {
-  const { userUuid, now, expiresAt } = options
-  const nowMs = now.getTime()
-  return {
-    userUuid,
-    iat: nowMs / 1000, // JWT 'issued at' is in seconds
-    exp: expiresAt.getTime() / 1000, // JWT 'expiration' is in seconds
-  }
+const createAuthTokenPayload = (options: { userUuid: string }): UserAuthTokenPayload => {
+  const { userUuid } = options
+  return { userUuid }
 }
 
 /**
@@ -49,8 +46,8 @@ const createAuthToken = (options: { userUuid: string }): { token: string; dateCr
   const { userUuid } = options
   const now = new Date()
   const expiresAt = new Date(now.getTime() + jwtExpiresMs)
-  const payload: UserAuthTokenPayload = createAuthTokenPayload({ userUuid, now, expiresAt })
-  const token = signToken(payload)
+  const payload: UserAuthTokenPayload = createAuthTokenPayload({ userUuid })
+  const token = signToken(payload, jwtExpiresMs / 1000)
   return { token, dateCreated: now, expiresAt }
 }
 
@@ -63,10 +60,10 @@ const createAndStoreRefreshToken = (
   const now = new Date()
   const expiresAt = new Date(now.getTime() + jwtRefreshTokenExpireMs)
   const payload: UserAuthRefreshTokenPayload = {
-    ...createAuthTokenPayload({ userUuid, now, expiresAt }),
+    ...createAuthTokenPayload({ userUuid }),
     uuid,
   }
-  const token = signToken(payload)
+  const token = signToken(payload, jwtRefreshTokenExpireMs / 1000)
   const refreshToken = { uuid, userUuid, token, dateCreated: now, expiresAt, props }
   return UserRefreshTokenRepository.insert(refreshToken, client)
 }

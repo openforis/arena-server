@@ -3,7 +3,7 @@ import { UserAuthRefreshToken } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserRefreshToken } from '../../db'
 
 /**
- * Retrieves a refresh token by its token value.
+ * Retrieves a refresh token by its UUID.
  *
  * @param uuid - UUID of the refresh token
  * @param options - Optional search options

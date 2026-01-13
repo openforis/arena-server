@@ -19,11 +19,17 @@ export class SqlDeleteBuilder extends SqlBuilder {
   }
 
   whereRaw(condition: string): this {
+    if (Objects.isNotEmpty(this._whereValues)) {
+      throw new Error(`Where clause has already been set with values`)
+    }
     this._whereRaw = condition
     return this
   }
 
   where(values: ValuesByColumn): this {
+    if (this._whereRaw) {
+      throw new Error(`Where clause has already been set as a raw condition`)
+    }
     this._whereValues = values
     return this
   }
