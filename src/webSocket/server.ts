@@ -25,8 +25,8 @@ export class WebSocketServer {
       const { userUuid } = jwtPayload
       return userUuid
     } catch (error) {
-      socket.disconnect()
       WebSocketServer.logger.error(`authentication token validation error: ${error}`)
+      socket.disconnect()
       return null
     }
   }
