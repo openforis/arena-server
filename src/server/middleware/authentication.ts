@@ -23,15 +23,32 @@ import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceC
 const pathsAllowedWithoutAuthentication = [
   /^\/$/,
   /^\/auth\/login\/?$/,
+  /^\/auth\/reset-password\/?$/,
   /^\/auth\/token\/refresh\/?$/,
   /^\/api\/public\/.*$/,
   /^\/api\/surveyTemplates\/?$/,
+  /^\/api\/user\/request-access\/?$/,
   /^\/guest\/.*$/,
   /^\/img\/.*$/,
 ]
 
+/**
+ * List of API path prefixes used to identify API requests.
+ */
 const apiPaths = ['/api/', '/auth/']
 
+/**
+ * Determines whether the incoming request should be treated as an API request.
+ *
+ * Only requests whose path starts with one of the prefixes in `apiPaths`
+ * (currently `/api/` and `/auth/`) are considered API requests. These routes
+ * are subject to API-specific authentication and may return 401 responses when
+ * the user is not authenticated or authorized.
+ *
+ * All other paths (e.g. front-end pages, static assets, or publicly exposed
+ * routes) are treated as non-API requests and follow their own authentication
+ * and error-handling rules, separate from the API authentication flow.
+ */
 const isApiRequest = (req: Request): boolean => apiPaths.some((path) => req.path.startsWith(path))
 
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
