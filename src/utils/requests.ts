@@ -1,7 +1,6 @@
 import { Request } from 'express'
 import { User } from '@openforis/arena-core'
 
-const getHost = (request: Request): string | undefined => request.header('host')
 const getParams = (req: Request): Record<string, any> => {
   const params = { ...req.query, ...req.params, ...req.body }
   return Object.entries(params).reduce<Record<string, any>>((paramsAcc, [key, value]) => {
@@ -10,17 +9,49 @@ const getParams = (req: Request): Record<string, any> => {
     return paramsAcc
   }, {})
 }
+const getJsonParam =
+  (paramName: string, defaultValue: any | null = null) =>
+  (req: Request): any => {
+    const params = getParams(req)
+    const jsonStr = params[paramName]
+    if (jsonStr && typeof jsonStr === 'string') return JSON.parse(jsonStr)
+    if (jsonStr && typeof jsonStr === 'object') return jsonStr // already parsed to a JSON object
+    return defaultValue
+  }
 
+const getArrayParam =
+  (paramName: string, defaultValue: any[] = []) =>
+  (req: Request): any[] => {
+    const adaptedParamName = paramName.endsWith('[]') ? paramName : `${paramName}[]` // express query params for arrays end with []
+    const param = getParams(req)[adaptedParamName]
+    if (param === null || param === undefined) {
+      return defaultValue
+    }
+    return Array.isArray(param) ? param : [param]
+  }
 const getServerUrl = (request: Request): string => `${request.protocol}://${request.get('host')}`
 const getUrl = (request: Request): string => request.url
 const getUser = (request: Request): User => request.user
 const isHttps = (request: Request): boolean => request.secure || request.header('x-forwarded-proto') === 'https'
 
+const getHeader =
+  (name: string) =>
+  (req: Request): string | string[] | undefined =>
+    req.headers[name]
+
+const getHost = (request: Request): string | undefined => getHeader('host')(request) as string | undefined
+
+const getSocketId = (req: Request): string | undefined => getHeader('socketid')(req) as string | undefined
+
 export const Requests = {
   getHost,
   getParams,
+  getJsonParam,
+  getArrayParam,
   getServerUrl,
   getUrl,
   getUser,
   isHttps,
+  getHeader,
+  getSocketId,
 }

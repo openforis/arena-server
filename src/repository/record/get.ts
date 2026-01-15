@@ -47,14 +47,10 @@ export const get = async (
 }
 
 export const getManyByUuids = async (
-  options: {
-    uuids: string[]
-    surveyId: number
-  },
+  { uuids, surveyId }: { uuids: string[]; surveyId: number },
   client: BaseProtocol = DB
 ): Promise<Record[]> => {
-  if (!('uuids' in options) || !('surveyId' in options)) throw new Error(`missingParams, ${options}`)
-  const { uuids, surveyId } = options
+  if (!uuids || !surveyId) throw new Error(`missingParams, ${uuids}, ${surveyId}`)
   if (uuids.length === 0) return []
   const sql = buildRecordFetchSql(surveyId, (tableRecord: TableRecord) => `${tableRecord.uuid} IN ($/uuids:csv/)`)
   return client.map(sql, { surveyId, uuids }, (row) => dbTransformCallback({ surveyId, row }))
