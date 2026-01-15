@@ -18,10 +18,13 @@ export const extractRefreshTokenProps = ({ req }: { req: Request }): UserAuthRef
 
 export const setRefreshTokenCookie = ({ res, refreshToken }: { res: Response; refreshToken: UserAuthRefreshToken }) => {
   const secure = ProcessEnv.nodeEnv === NodeEnv.production || ProcessEnv.useHttps
+  // Use 'lax' for localhost, 'strict' for production
+  const sameSite = ProcessEnv.nodeEnv === NodeEnv.production ? 'strict' : 'lax'
+
   const cookieOptions: CookieOptions = {
     httpOnly: true,
     secure,
-    sameSite: 'strict',
+    sameSite,
     path: ApiEndpoint.auth.tokenRefresh(),
     expires: refreshToken.expiresAt,
   }
