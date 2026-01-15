@@ -1,4 +1,4 @@
-import { Express, RequestHandler } from 'express'
+import { Express, Request, RequestHandler } from 'express'
 import passport from 'passport'
 import { Strategy as JWTStrategy, ExtractJwt } from 'passport-jwt'
 import { Strategy as LocalStrategy, VerifyFunctionWithRequest } from 'passport-local'
@@ -20,15 +20,36 @@ import { ExpressInitializer } from '../expressInitializer'
 
 import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceConstants'
 
-const allowedPaths = [
+const pathsAllowedWithoutAuthentication = [
   /^\/$/,
   /^\/auth\/login\/?$/,
+  /^\/auth\/reset-password\/?$/,
   /^\/auth\/token\/refresh\/?$/,
   /^\/api\/public\/.*$/,
   /^\/api\/surveyTemplates\/?$/,
+  /^\/api\/user\/request-access\/?$/,
   /^\/guest\/.*$/,
   /^\/img\/.*$/,
 ]
+
+/**
+ * List of API path prefixes used to identify API requests.
+ */
+const apiPaths = ['/api/', '/auth/']
+
+/**
+ * Determines whether the incoming request should be treated as an API request.
+ *
+ * Only requests whose path starts with one of the prefixes in `apiPaths`
+ * (currently `/api/` and `/auth/`) are considered API requests. These routes
+ * are subject to API-specific authentication and may return 401 responses when
+ * the user is not authenticated or authorized.
+ *
+ * All other paths (e.g. front-end pages, static assets, or publicly exposed
+ * routes) are treated as non-API requests and follow their own authentication
+ * and error-handling rules, separate from the API authentication flow.
+ */
+const isApiRequest = (req: Request): boolean => apiPaths.some((path) => req.path.startsWith(path))
 
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
@@ -103,16 +124,22 @@ const jwtStrategy = new JWTStrategy(
 
 const jwtStrategyName = 'jwt'
 
-const isAuthorizedMiddleware: RequestHandler = (req, res, next) => {
-  if (allowedPaths.some((allowedPath) => allowedPath.test(req.path))) {
+const isAuthorizedMiddleware: RequestHandler = (req: Request, res, next) => {
+  if (pathsAllowedWithoutAuthentication.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
     passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
       if (user) {
+        // user is authenticated
         next()
-      } else {
+      } else if (isApiRequest(req)) {
+        // For API requests, return JSON error
+        // For page requests, let them continue to serve the HTML (which will show login form)
         const message = err ? String(err) : 'Unauthorized'
         res.status(401).send({ message })
+      } else {
+        // Let the request continue to static file middleware
+        next()
       }
     })(req, res, next)
   }
