@@ -75,7 +75,7 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
       const refreshTokenProps = extractRefreshTokenProps({ req })
 
       userAuthTokenService
-        .createTokens({ userUuid, props: refreshTokenProps })
+        .createUserAuthTokens({ userUuid, props: refreshTokenProps })
         .then(({ authToken, refreshToken }) => {
           setRefreshTokenCookie({ res, refreshToken })
           sendUser({ res, req, user, authToken: authToken.token })
