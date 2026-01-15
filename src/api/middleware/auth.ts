@@ -78,7 +78,7 @@ const requireRecordsPermission =
   (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const { surveyId } = Requests.getParams(req)
-      const recordUuids: string[] = Requests.getArrayParam('recordUuids')(req)
+      const recordUuids: string[] = Requests.getArrayParam<string>('recordUuids')(req)
       const user = Requests.getUser(req)
       const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
       const records = await service.getManyByUuids({ surveyId, uuids: recordUuids })

@@ -10,8 +10,8 @@ const getParams = (req: Request): Record<string, any> => {
   }, {})
 }
 const getJsonParam =
-  (paramName: string, defaultValue: any | null = null) =>
-  (req: Request): any => {
+  <T = unknown>(paramName: string, defaultValue: T | null = null) =>
+  (req: Request): T | null => {
     const params = getParams(req)
     const jsonStr = params[paramName]
     if (jsonStr && typeof jsonStr === 'string') return JSON.parse(jsonStr)
@@ -20,10 +20,10 @@ const getJsonParam =
   }
 
 const getArrayParam =
-  (paramName: string, defaultValue: any[] = []) =>
-  (req: Request): any[] => {
+  <T = unknown>(paramName: string, defaultValue: T[] = []) =>
+  (req: Request): T[] => {
     const adaptedParamName = paramName.endsWith('[]') ? paramName : `${paramName}[]` // express query params for arrays end with []
-    const param = getParams(req)[adaptedParamName]
+    const param = getParams(req)[adaptedParamName] as T | T[] | null | undefined
     if (param === null || param === undefined) {
       return defaultValue
     }
