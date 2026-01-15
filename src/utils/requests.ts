@@ -14,7 +14,13 @@ const getJsonParam =
   (req: Request): T | null => {
     const params = getParams(req)
     const jsonStr = params[paramName]
-    if (jsonStr && typeof jsonStr === 'string') return JSON.parse(jsonStr)
+    if (jsonStr && typeof jsonStr === 'string') {
+      try {
+        return JSON.parse(jsonStr)
+      } catch {
+        return defaultValue
+      }
+    }
     if (jsonStr && typeof jsonStr === 'object') return jsonStr // already parsed to a JSON object
     return defaultValue
   }
@@ -22,8 +28,9 @@ const getJsonParam =
 const getArrayParam =
   <T = unknown>(paramName: string, defaultValue: T[] = []) =>
   (req: Request): T[] => {
+    const params = getParams(req)
     const adaptedParamName = paramName.endsWith('[]') ? paramName : `${paramName}[]` // express query params for arrays end with []
-    const param = getParams(req)[adaptedParamName] as T | T[] | null | undefined
+    const param = (params[paramName] ?? params[adaptedParamName]) as T | T[] | null | undefined
     if (param === null || param === undefined) {
       return defaultValue
     }
