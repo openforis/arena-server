@@ -1,6 +1,6 @@
 import { Record, RecordService, User } from '@openforis/arena-core'
 
-import { get } from './get'
+import { get, getManyByUuids } from './get'
 
 export const RecordServiceServer: RecordService = {
   // @ts-ignore
@@ -23,11 +23,7 @@ export const RecordServiceServer: RecordService = {
     throw new Error('TODO')
   },
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getManyByUuids(options: { surveyId: number; uuids: string[] }): Promise<Record[]> {
-    throw new Error('TODO')
-  },
+  getManyByUuids,
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

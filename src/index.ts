@@ -37,3 +37,5 @@ export { Worker, Thread, WorkerMessageType, WorkerCache } from './thread'
 export type { WorkerErrorMessage, WorkerMessage } from './thread'
 
 export { WebSocketEvent, WebSocketServer } from './webSocket'
+
+export { Requests, Responses } from './utils'

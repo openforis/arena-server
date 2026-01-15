@@ -40,22 +40,23 @@ export const get = async (
   },
   client: BaseProtocol = DB
 ): Promise<Record> => {
-  if (!('recordUuid' in options) || !('surveyId' in options)) throw new Error(`missingParams, ${options}`)
+  if (!('recordUuid' in options) || !('surveyId' in options))
+    throw new Error(`missingParams: recordUuid or surveyId is missing`)
   const { recordUuid, surveyId } = options
   const sql = buildRecordFetchSql(surveyId, (tableRecord: TableRecord) => `${tableRecord.uuid} = $/recordUuid/`)
   return client.one(sql, { surveyId, recordUuid }, (row) => dbTransformCallback({ surveyId, row }))
 }
 
 export const getManyByUuids = async (
-  options: {
-    uuids: string[]
-    surveyId: number
-  },
+  { surveyId, uuids }: { surveyId: number; uuids: string[] },
   client: BaseProtocol = DB
 ): Promise<Record[]> => {
-  if (!('uuids' in options) || !('surveyId' in options)) throw new Error(`missingParams, ${options}`)
-  const { uuids, surveyId } = options
-  if (uuids.length === 0) return []
+  if (uuids === null || uuids === undefined || !surveyId) {
+    throw new Error(`missingParams: uuids or surveyId is missing`)
+  }
+  if (uuids.length === 0) {
+    return []
+  }
   const sql = buildRecordFetchSql(surveyId, (tableRecord: TableRecord) => `${tableRecord.uuid} IN ($/uuids:csv/)`)
   return client.map(sql, { surveyId, uuids }, (row) => dbTransformCallback({ surveyId, row }))
 }
