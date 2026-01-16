@@ -3,7 +3,7 @@ import pgPromise from 'pg-promise'
 
 import {
   AuthToken,
-  DownalodAuthTokenPayload,
+  DownloadAuthTokenPayload,
   UserAuthRefreshToken,
   UserAuthRefreshTokenPayload,
   UserAuthRefreshTokenProps,
@@ -46,7 +46,7 @@ const createDownloadAuthTokenPayload = ({
 }: {
   userUuid: string
   fileName: string
-}): DownalodAuthTokenPayload => ({
+}): DownloadAuthTokenPayload => ({
   userUuid,
   fileName,
 })
@@ -123,7 +123,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
     const refreshToken = await createAndStoreRefreshToken({ userUuid, props }, dbClient)
     return { authToken, refreshToken }
   },
-  async createDownloadAuthToken({ userUuid, fileName }: { userUuid: string; fileName: string }): Promise<AuthToken> {
+  createDownloadAuthToken({ userUuid, fileName }: { userUuid: string; fileName: string }): AuthToken {
     const payload = createDownloadAuthTokenPayload({ userUuid, fileName })
     return createAuthTokenFromPayload(payload, jwtDownloadTokenExpireMs)
   },

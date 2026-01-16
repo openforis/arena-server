@@ -1,16 +1,19 @@
 import { NextFunction, Request, Response } from 'express'
 import {
   Authorizer,
+  DownloadAuthTokenPayload,
   RecordService,
   ServiceRegistry,
   ServiceType,
   SurveyService,
   User,
+  UserAuthTokenService,
   Users,
   UserService,
 } from '@openforis/arena-core'
 import { UnauthorizedError } from '../../server/error'
 import { Requests } from '../../utils'
+import { jwtDownloadTokenParamName } from '../auth/authApiCommon'
 
 type PermissionFn = (user: User, ...args: Array<any>) => boolean
 
@@ -118,6 +121,38 @@ const requireLoggedInUser = async (req: Request, _res: Response, next: NextFunct
   }
 }
 
+const requireDownloadToken = (req: Request & { downloadFileName?: string }, res: Response, next: NextFunction) => {
+  const params = Requests.getParams(req)
+  const token = params[jwtDownloadTokenParamName]
+
+  if (!token) {
+    res.status(401).json({ error: 'Download token is missing' })
+    return
+  }
+
+  try {
+    // verify token
+    const serviceRegistry = ServiceRegistry.getInstance()
+    const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
+    const payload: DownloadAuthTokenPayload = userAuthTokenService.verifyAuthToken(token)
+
+    const { fileName } = payload
+
+    // Ensure this is a valid download token and not a login token
+    if (!fileName) {
+      res.status(403).json({ error: 'Invalid token: missing fileName in payload' })
+      return
+    }
+
+    // Attach decoded data to request for the next function
+    req['downloadFileName'] = fileName
+    next()
+  } catch {
+    // Handle expired or tampered tokens
+    res.status(403).json({ error: 'Download link expired or invalid' })
+  }
+}
+
 export const ApiAuthMiddleware = {
   requireLoggedInUser,
 
@@ -161,4 +196,6 @@ export const ApiAuthMiddleware = {
   // User access requests
   requireCanViewAccessRequestsPermission: requirePermission(Authorizer.canViewUsersAccessRequests),
   requireCanEditAccessRequestsPermission: requirePermission(Authorizer.canEditUsersAccessRequests),
+
+  requireDownloadToken,
 }
