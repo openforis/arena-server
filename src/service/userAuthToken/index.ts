@@ -2,10 +2,11 @@ import jwt from 'jsonwebtoken'
 import pgPromise from 'pg-promise'
 
 import {
+  AuthToken,
+  DownloadAuthTokenPayload,
   UserAuthRefreshToken,
   UserAuthRefreshTokenPayload,
   UserAuthRefreshTokenProps,
-  UserAuthToken,
   UserAuthTokenPayload,
   UserAuthTokenService,
   UserTokenPayload,
@@ -17,52 +18,70 @@ import { DB } from '../../db'
 import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { UserRefreshTokenRepository } from '../../repository'
-import { jwtAlgorithm, jwtAlgorithms, jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
+import {
+  jwtAlgorithm,
+  jwtAlgorithms,
+  jwtDownloadTokenExpireMs,
+  jwtExpiresMs,
+  jwtRefreshTokenExpireMs,
+} from './userAuthTokenServiceConstants'
 
 const logger = new Logger('UserAuthTokenService')
 
 /**
  * Signs a JWT token with the given payload.
+ *
  * @param payload - The payload to sign.
  * @param expiresInSeconds - The expiration time in seconds.
  * @returns The signed JWT token.
  */
-const signToken = (payload: UserAuthTokenPayload, expiresInSeconds: number): string =>
+const signToken = (payload: UserTokenPayload, expiresInSeconds: number): string =>
   jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds, algorithm: jwtAlgorithm })
 
-const createAuthTokenPayload = (options: { userUuid: string }): UserAuthTokenPayload => {
-  const { userUuid } = options
-  return { userUuid }
+const createUserAuthTokenPayload = ({ userUuid }: { userUuid: string }): UserAuthTokenPayload => ({ userUuid })
+
+const createDownloadAuthTokenPayload = ({
+  userUuid,
+  fileName,
+}: {
+  userUuid: string
+  fileName: string
+}): DownloadAuthTokenPayload => ({
+  userUuid,
+  fileName,
+})
+
+const createAuthTokenFromPayload = (payload: UserTokenPayload, expiresMs: number): AuthToken => {
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + expiresMs)
+  const token = signToken(payload, expiresMs / 1000)
+  return { token, dateCreated: now, expiresAt }
 }
 
 /**
- * Creates a new auth token.
+ * Creates a new user auth token.
  *
  * @param options
  * @param options.userUuid - The UUID of the user for whom the auth token is being created.
  * @returns The created auth token along with its creation and expiration dates.
  */
-const createAuthToken = (options: { userUuid: string }): { token: string; dateCreated: Date; expiresAt: Date } => {
-  const { userUuid } = options
-  const now = new Date()
-  const expiresAt = new Date(now.getTime() + jwtExpiresMs)
-  const payload: UserAuthTokenPayload = createAuthTokenPayload({ userUuid })
-  const token = signToken(payload, jwtExpiresMs / 1000)
-  return { token, dateCreated: now, expiresAt }
+const createUserAuthToken = ({
+  userUuid,
+}: {
+  userUuid: string
+}): { token: string; dateCreated: Date; expiresAt: Date } => {
+  const payload: UserAuthTokenPayload = createUserAuthTokenPayload({ userUuid })
+  return createAuthTokenFromPayload(payload, jwtExpiresMs)
 }
 
 const createAndStoreRefreshToken = (
-  options: { userUuid: string; props: UserAuthRefreshTokenProps },
+  { userUuid, props }: { userUuid: string; props: UserAuthRefreshTokenProps },
   client: pgPromise.IBaseProtocol<any> = DB
 ): Promise<UserAuthRefreshToken> => {
-  const { userUuid, props } = options
   const uuid = UUIDs.v4()
   const now = new Date()
   const expiresAt = new Date(now.getTime() + jwtRefreshTokenExpireMs)
-  const payload: UserAuthRefreshTokenPayload = {
-    ...createAuthTokenPayload({ userUuid }),
-    uuid,
-  }
+  const payload: UserAuthRefreshTokenPayload = { ...createUserAuthTokenPayload({ userUuid }), uuid }
   const token = signToken(payload, jwtRefreshTokenExpireMs / 1000)
   const refreshToken = { uuid, userUuid, token, dateCreated: now, expiresAt, props }
   return UserRefreshTokenRepository.insert(refreshToken, client)
@@ -95,14 +114,18 @@ const verifyAndFetchRefreshTokenRecord = async ({
 }
 
 export const UserAuthTokenServiceServer: UserAuthTokenService = {
-  async createTokens(
+  async createUserAuthTokens(
     options: { userUuid: string; props: UserAuthRefreshTokenProps },
     dbClient?: any
-  ): Promise<{ authToken: UserAuthToken; refreshToken: UserAuthRefreshToken }> {
+  ): Promise<{ authToken: AuthToken; refreshToken: UserAuthRefreshToken }> {
     const { userUuid, props } = options
-    const authToken = createAuthToken({ userUuid })
+    const authToken = createUserAuthToken({ userUuid })
     const refreshToken = await createAndStoreRefreshToken({ userUuid, props }, dbClient)
     return { authToken, refreshToken }
+  },
+  createDownloadAuthToken({ userUuid, fileName }: { userUuid: string; fileName: string }): AuthToken {
+    const payload = createDownloadAuthTokenPayload({ userUuid, fileName })
+    return createAuthTokenFromPayload(payload, jwtDownloadTokenExpireMs)
   },
   async getByUuid(tokenUuid: string): Promise<UserAuthRefreshToken | null> {
     return UserRefreshTokenRepository.getByUuid(tokenUuid)
@@ -121,7 +144,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
       refreshTokenProps: UserAuthRefreshTokenProps
     },
     dbClient: any = DB
-  ): Promise<{ authToken: UserAuthToken; refreshToken: UserAuthRefreshToken } | null> {
+  ): Promise<{ authToken: AuthToken; refreshToken: UserAuthRefreshToken } | null> {
     const { refreshToken, refreshTokenProps } = options
     if (!refreshToken) {
       return null
@@ -133,7 +156,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
       }
       const { uuid, userUuid } = tokenRecord
 
-      const newAuthToken = createAuthToken({ userUuid })
+      const newAuthToken = createUserAuthToken({ userUuid })
 
       await UserRefreshTokenRepository.revoke(uuid, t)
 

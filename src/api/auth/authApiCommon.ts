@@ -7,6 +7,7 @@ import { NodeEnv, ProcessEnv } from '../../processEnv'
 import { Requests } from '../../utils'
 
 export const jwtRefreshTokenCookieName = 'refreshToken'
+export const jwtDownloadTokenParamName = 'downloadToken'
 
 export const extractRefreshTokenProps = ({ req }: { req: Request }): UserAuthRefreshTokenProps => {
   const { appInfo } = Requests.getParams(req)
