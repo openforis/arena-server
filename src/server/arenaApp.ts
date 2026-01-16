@@ -19,6 +19,10 @@ declare global {
     export interface Request {
       // @ts-ignore
       user: ArenaUser
+      /***
+       * Authorized download file name attached by download token middleware
+       */
+      downloadFileName?: string
     }
   }
 }

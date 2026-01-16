@@ -35,7 +35,7 @@ const logger = new Logger('UserAuthTokenService')
  * @param expiresInSeconds - The expiration time in seconds.
  * @returns The signed JWT token.
  */
-const signToken = (payload: UserAuthTokenPayload, expiresInSeconds: number): string =>
+const signToken = (payload: UserTokenPayload, expiresInSeconds: number): string =>
   jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds, algorithm: jwtAlgorithm })
 
 const createUserAuthTokenPayload = ({ userUuid }: { userUuid: string }): UserAuthTokenPayload => ({ userUuid })
@@ -51,7 +51,7 @@ const createDownloadAuthTokenPayload = ({
   fileName,
 })
 
-const createAuthTokenFromPayload = (payload: UserAuthTokenPayload, expiresMs: number): AuthToken => {
+const createAuthTokenFromPayload = (payload: UserTokenPayload, expiresMs: number): AuthToken => {
   const now = new Date()
   const expiresAt = new Date(now.getTime() + expiresMs)
   const token = signToken(payload, expiresMs / 1000)

@@ -104,7 +104,7 @@ const jwtStrategy = new JWTStrategy(
     passReqToCallback: true,
     algorithms: jwtAlgorithms,
   },
-  (req, jwtPayload: UserAuthTokenPayload, done) => {
+  (req: Request, jwtPayload: UserAuthTokenPayload, done) => {
     const { userUuid } = jwtPayload
     const service: UserService = ServiceRegistry.getInstance().getService(ServiceType.user)
     service

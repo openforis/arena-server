@@ -121,7 +121,7 @@ const requireLoggedInUser = async (req: Request, _res: Response, next: NextFunct
   }
 }
 
-const requireDownloadToken = (req: Request & { downloadFileName?: string }, res: Response, next: NextFunction) => {
+const requireDownloadToken = (req: Request, res: Response, next: NextFunction) => {
   const params = Requests.getParams(req)
   const token = params[jwtDownloadTokenParamName]
 
@@ -143,9 +143,8 @@ const requireDownloadToken = (req: Request & { downloadFileName?: string }, res:
       res.status(403).json({ error: 'Invalid token: missing fileName in payload' })
       return
     }
-
     // Attach decoded data to request for the next function
-    req['downloadFileName'] = fileName
+    req.downloadFileName = fileName
     next()
   } catch {
     // Handle expired or tampered tokens
