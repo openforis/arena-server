@@ -6,16 +6,18 @@ import {
   RecordServiceServer,
   SurveyServiceServer,
   UserAuthTokenServiceServer,
+  UserQrCodeAuthService,
   UserServiceServer,
 } from '../../service'
 import { ServerServiceType } from './serverServiceType'
 
 export const registerServices = (): ServiceRegistry =>
   ServiceRegistry.getInstance()
-    .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
-    .registerService(ServerServiceType.message, MessageServiceServer)
     .registerService(ServiceType.info, InfoServiceServer)
     .registerService(ServiceType.record, RecordServiceServer)
     .registerService(ServiceType.survey, SurveyServiceServer)
     .registerService(ServiceType.userAuthToken, UserAuthTokenServiceServer)
     .registerService(ServiceType.user, UserServiceServer)
+    .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
+    .registerService(ServerServiceType.message, MessageServiceServer)
+    .registerService(ServerServiceType.userQrCodeAuth, UserQrCodeAuthService)
