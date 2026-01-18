@@ -4,7 +4,7 @@ import { getByToken } from './getByToken'
 import { getByUserUuid } from './getByUserUuid'
 import { insert } from './insert'
 
-export const UserQrCodeAuthRepository = {
+export const UserTempAuthTokenRepository = {
   insert,
   getByToken,
   getByUserUuid,
@@ -12,4 +12,4 @@ export const UserQrCodeAuthRepository = {
   deleteExpired,
 }
 
-export type { UserQrCodeAuth } from './insert'
+export type { UserTempAuthToken } from './insert'

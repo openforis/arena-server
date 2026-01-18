@@ -1,8 +1,8 @@
-import { UserQrCodeAuth, UserQrCodeAuthRepository } from '../../repository/userQrCodeAuth'
+import { UserTempAuthToken, UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { BaseProtocol, DB } from '../../db'
 
 /**
- * Retrieves all QR code auth tokens for a user.
+ * Retrieves all temporary auth tokens for a user.
  *
  * @param options - Options containing userUuid and whether to include expired tokens
  * @param client - Database client
@@ -10,7 +10,7 @@ import { BaseProtocol, DB } from '../../db'
 export const getByUserUuid = async (
   options: { userUuid: string; includeExpired?: boolean },
   client: BaseProtocol = DB
-): Promise<UserQrCodeAuth[]> => {
+): Promise<UserTempAuthToken[]> => {
   const { userUuid, includeExpired = false } = options
-  return UserQrCodeAuthRepository.getByUserUuid(userUuid, { includeExpired }, client)
+  return UserTempAuthTokenRepository.getByUserUuid(userUuid, { includeExpired }, client)
 }

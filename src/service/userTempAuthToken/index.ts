@@ -4,7 +4,7 @@ import { getByToken } from './getByToken'
 import { getByUserUuid } from './getByUserUuid'
 import { revoke } from './revoke'
 
-export const UserQrCodeAuthService = {
+export const UserTempAuthTokenService = {
   create,
   getByToken,
   getByUserUuid,

@@ -6,7 +6,7 @@ import {
   RecordServiceServer,
   SurveyServiceServer,
   UserAuthTokenServiceServer,
-  UserQrCodeAuthService,
+  UserTempAuthTokenService,
   UserServiceServer,
 } from '../../service'
 import { ServerServiceType } from './serverServiceType'
@@ -20,4 +20,4 @@ export const registerServices = (): ServiceRegistry =>
     .registerService(ServiceType.user, UserServiceServer)
     .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
     .registerService(ServerServiceType.message, MessageServiceServer)
-    .registerService(ServerServiceType.userQrCodeAuth, UserQrCodeAuthService)
+    .registerService(ServerServiceType.userTempAuthToken, UserTempAuthTokenService)

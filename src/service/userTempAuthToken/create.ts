@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 
-import { UserQrCodeAuth, UserQrCodeAuthRepository } from '../../repository/userQrCodeAuth'
+import { UserTempAuthToken, UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { BaseProtocol, DB } from '../../db'
 
 /**
- * Creates a new QR code authentication token for a user.
+ * Creates a new temporary authentication token for a user.
  *
  * @param options - Options containing userUuid and optional expiration time
  * @param options.userUuid - User UUID
@@ -14,18 +14,18 @@ import { BaseProtocol, DB } from '../../db'
 export const create = async (
   options: { userUuid: string; expirationMinutes?: number },
   client: BaseProtocol = DB
-): Promise<UserQrCodeAuth> => {
-  const { userUuid, expirationMinutes = 5 } = options
+): Promise<UserTempAuthToken> => {
+  const { userUuid, expirationMinutes = 1 } = options
 
   const now = new Date()
   const expiresAt = new Date(now.getTime() + expirationMinutes * 60 * 1000)
 
-  const qrCodeAuth: UserQrCodeAuth = {
+  const tempAuthToken: UserTempAuthToken = {
     token: uuidv4(),
     userUuid,
     dateCreated: now,
     dateExpiresAt: expiresAt,
   }
 
-  return UserQrCodeAuthRepository.insert(qrCodeAuth, client)
+  return UserTempAuthTokenRepository.insert(tempAuthToken, client)
 }

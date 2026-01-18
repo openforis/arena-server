@@ -1,13 +1,13 @@
-import { BaseProtocol, DB, SqlDeleteBuilder, TableUserQrCodeAuth } from '../../db'
+import { BaseProtocol, DB, SqlDeleteBuilder, TableUserTempAuthToken } from '../../db'
 
 /**
- * Deletes a QR code auth token by its token UUID.
+ * Deletes a temporary auth token by its token UUID.
  *
  * @param token - Token UUID to delete
  * @param client - Database client
  */
 export const deleteByToken = async (token: string, client: BaseProtocol = DB): Promise<number> => {
-  const table = new TableUserQrCodeAuth()
+  const table = new TableUserTempAuthToken()
 
   const values = { [table.token.columnName]: token }
 

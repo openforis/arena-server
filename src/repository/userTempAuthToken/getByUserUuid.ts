@@ -1,8 +1,8 @@
-import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserQrCodeAuth } from '../../db'
-import { UserQrCodeAuth } from './insert'
+import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserTempAuthToken } from '../../db'
+import { UserTempAuthToken } from './insert'
 
 /**
- * Retrieves QR code auth tokens for a user.
+ * Retrieves temporary auth tokens for a user.
  *
  * @param userUuid - User UUID
  * @param options - Optional search options
@@ -12,10 +12,10 @@ export const getByUserUuid = async (
   userUuid: string,
   options?: { includeExpired?: boolean },
   client: BaseProtocol = DB
-): Promise<UserQrCodeAuth[]> => {
+): Promise<UserTempAuthToken[]> => {
   const { includeExpired = false } = options ?? {}
 
-  const table = new TableUserQrCodeAuth()
+  const table = new TableUserTempAuthToken()
 
   const whereConditions = [`${table.userUuid} = $/userUuid/`]
   if (!includeExpired) {
@@ -28,5 +28,5 @@ export const getByUserUuid = async (
     .where(...whereConditions)
     .build()
 
-  return client.map<UserQrCodeAuth>(sql, { userUuid }, (row) => DBs.transformCallback({ row }))
+  return client.map<UserTempAuthToken>(sql, { userUuid }, (row) => DBs.transformCallback({ row }))
 }

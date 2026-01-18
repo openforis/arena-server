@@ -1,6 +1,6 @@
-import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserQrCodeAuth } from '../../db'
+import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserTempAuthToken } from '../../db'
 
-export interface UserQrCodeAuth {
+export interface UserTempAuthToken {
   token: string
   userUuid: string
   dateCreated: Date
@@ -8,15 +8,15 @@ export interface UserQrCodeAuth {
 }
 
 /**
- * Inserts a new QR code authentication token for a user.
+ * Inserts a new temporary authentication token for a user.
  *
- * @param options - The QR code auth data
+ * @param options - The temp auth token data
  * @param client - Database client
  */
-export const insert = async (options: UserQrCodeAuth, client: BaseProtocol = DB): Promise<UserQrCodeAuth> => {
+export const insert = async (options: UserTempAuthToken, client: BaseProtocol = DB): Promise<UserTempAuthToken> => {
   const { token, userUuid, dateCreated, dateExpiresAt } = options
 
-  const table = new TableUserQrCodeAuth()
+  const table = new TableUserTempAuthToken()
 
   const values = {
     [table.token.columnName]: token,
@@ -31,5 +31,5 @@ export const insert = async (options: UserQrCodeAuth, client: BaseProtocol = DB)
     .returning(...table.columns)
     .build()
 
-  return client.one<UserQrCodeAuth>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<UserTempAuthToken>(sql, values, (row) => DBs.transformCallback({ row }))
 }
