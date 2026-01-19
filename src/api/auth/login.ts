@@ -9,6 +9,7 @@ import {
   User,
   UserAuthTokenService,
   UserService,
+  UserStatus,
 } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
@@ -115,7 +116,7 @@ export const AuthLogin: ExpressInitializer = {
         const { userUuid } = tempAuthTokenFound
         const userService = serviceRegistry.getService(ServiceType.user) as UserService
         const user = await userService.get({ userUuid })
-        if (!user) {
+        if (!user || user.status !== UserStatus.ACCEPTED) {
           res.status(401).json({ message: 'User not found for the provided temporary auth token' })
           return
         }
