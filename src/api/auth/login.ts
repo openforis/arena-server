@@ -12,7 +12,8 @@ import {
 } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
-import { ExpressInitializer } from '../../server'
+import { ExpressInitializer, ServerServiceType } from '../../server'
+import { UserTempAuthTokenService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
@@ -90,10 +91,38 @@ export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
       passport.authenticate('local', { session: false }, (err: any, user: User, info: any) => {
-        if (err) return next(err)
-        if (user) return authenticationSuccessful(req, res, next, user)
+        if (err) {
+          return next(err)
+        }
+        if (user) {
+          return authenticationSuccessful(req, res, next, user)
+        }
         return res.status(401).json(info)
       })(req, res, next)
+    })
+    express.post(ApiEndpoint.auth.loginTempAuthToken(), async (req, res: Response, next) => {
+      try {
+        const { token } = Requests.getParams(req)
+        const serviceRegistry = ServiceRegistry.getInstance()
+        const userTempAuthTokenService: UserTempAuthTokenService = serviceRegistry.getService(
+          ServerServiceType.userTempAuthToken
+        )
+        const tempAuthTokenFound = await userTempAuthTokenService.getByToken(token)
+        if (!tempAuthTokenFound) {
+          res.status(401).json({ message: 'Invalid or expired temporary auth token' })
+          return
+        }
+        const { userUuid } = tempAuthTokenFound
+        const userService = serviceRegistry.getService(ServiceType.user) as UserService
+        const user = await userService.get({ userUuid })
+        if (!user) {
+          res.status(401).json({ message: 'User not found for the provided temporary auth token' })
+          return
+        }
+        authenticationSuccessful(req, res, next, user)
+      } catch (error) {
+        next(error)
+      }
     })
   },
 }
