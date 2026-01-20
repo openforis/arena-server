@@ -18,6 +18,7 @@ import { UserTempAuthTokenService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
+import { WebSocketEvent, WebSocketServer } from '../../webSocket'
 
 const logger = new Logger('AuthAPI')
 
@@ -120,6 +121,8 @@ export const AuthLogin: ExpressInitializer = {
           res.status(401).json({ message: 'User not found for the provided temporary auth token' })
           return
         }
+        WebSocketServer.notifyUser(userUuid, WebSocketEvent.tempLoginSuccessful, { token, userUuid })
+
         authenticationSuccessful(req, res, next, user)
       } catch (error) {
         next(error)
