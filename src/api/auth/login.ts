@@ -65,10 +65,23 @@ const sendUser = async (options: { res: Response; req: Request; user: User; auth
   }
 }
 
-const authenticationSuccessful = (req: Request, res: Response, next: NextFunction, user: User) =>
+const authenticationSuccessful = ({
+  req,
+  res,
+  next,
+  user,
+  callback,
+}: {
+  req: Request
+  res: Response
+  next: NextFunction
+  user: User
+  callback?: () => void
+}) =>
   req.logIn(user, { session: false }, async (err) => {
     if (err) {
       next(err)
+      callback?.()
     } else {
       const { uuid: userUuid } = user
 
@@ -82,9 +95,11 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
         .then(({ authToken, refreshToken }) => {
           setRefreshTokenCookie({ res, refreshToken })
           sendUser({ res, req, user, authToken: authToken.token })
+          callback?.()
         })
         .catch((error) => {
           next(error)
+          callback?.()
         })
     }
   })
@@ -97,7 +112,7 @@ export const AuthLogin: ExpressInitializer = {
           return next(err)
         }
         if (user) {
-          return authenticationSuccessful(req, res, next, user)
+          return authenticationSuccessful({ req, res, next, user })
         }
         return res.status(401).json(info)
       })(req, res, next)
@@ -121,9 +136,15 @@ export const AuthLogin: ExpressInitializer = {
           res.status(401).json({ message: 'User not found or not accepted for the provided temporary auth token' })
           return
         }
-        WebSocketServer.notifyUser(userUuid, WebSocketEvent.tempLoginSuccessful, { token, userUuid })
-
-        authenticationSuccessful(req, res, next, user)
+        authenticationSuccessful({
+          req,
+          res,
+          next,
+          user,
+          callback: () => {
+            WebSocketServer.notifyUser(userUuid, WebSocketEvent.tempLoginSuccessful, { token, userUuid })
+          },
+        })
       } catch (error) {
         next(error)
       }
