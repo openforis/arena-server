@@ -3,19 +3,24 @@ import passport from 'passport'
 
 import {
   Authorizer,
+  Objects,
   ServiceRegistry,
   ServiceType,
   SurveyService,
   User,
   UserAuthTokenService,
   UserService,
+  UserStatus,
+  UUIDs,
 } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
-import { ExpressInitializer } from '../../server'
+import { ExpressInitializer, ServerServiceType } from '../../server'
+import { UserTempAuthTokenService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
+import { WebSocketEvent, WebSocketServer } from '../../webSocket'
 
 const logger = new Logger('AuthAPI')
 
@@ -62,10 +67,23 @@ const sendUser = async (options: { res: Response; req: Request; user: User; auth
   }
 }
 
-const authenticationSuccessful = (req: Request, res: Response, next: NextFunction, user: User) =>
+const authenticationSuccessful = ({
+  req,
+  res,
+  next,
+  user,
+  callback,
+}: {
+  req: Request
+  res: Response
+  next: NextFunction
+  user: User
+  callback?: () => void
+}) =>
   req.logIn(user, { session: false }, async (err) => {
     if (err) {
       next(err)
+      callback?.()
     } else {
       const { uuid: userUuid } = user
 
@@ -79,9 +97,11 @@ const authenticationSuccessful = (req: Request, res: Response, next: NextFunctio
         .then(({ authToken, refreshToken }) => {
           setRefreshTokenCookie({ res, refreshToken })
           sendUser({ res, req, user, authToken: authToken.token })
+          callback?.()
         })
         .catch((error) => {
           next(error)
+          callback?.()
         })
     }
   })
@@ -90,10 +110,54 @@ export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
       passport.authenticate('local', { session: false }, (err: any, user: User, info: any) => {
-        if (err) return next(err)
-        if (user) return authenticationSuccessful(req, res, next, user)
+        if (err) {
+          return next(err)
+        }
+        if (user) {
+          return authenticationSuccessful({ req, res, next, user })
+        }
         return res.status(401).json(info)
       })(req, res, next)
+    })
+    express.post(ApiEndpoint.auth.loginTemp(), async (req, res: Response, next) => {
+      try {
+        const { token } = Requests.getParams(req)
+        if (Objects.isEmpty(token) || !UUIDs.isUuid(token)) {
+          res.status(400).json({ message: 'Temporary auth token is missing or invalid' })
+          return
+        }
+        const serviceRegistry = ServiceRegistry.getInstance()
+        const userTempAuthTokenService: UserTempAuthTokenService = serviceRegistry.getService(
+          ServerServiceType.userTempAuthToken
+        )
+        const tempAuthTokenFound = await userTempAuthTokenService.getByToken(token)
+        if (!tempAuthTokenFound) {
+          res.status(401).json({ message: 'Invalid or expired temporary auth token' })
+          return
+        }
+        const { userUuid } = tempAuthTokenFound
+        const userService = serviceRegistry.getService(ServiceType.user) as UserService
+        const user = await userService.get({ userUuid })
+        if (!user || user.status !== UserStatus.ACCEPTED) {
+          res.status(401).json({ message: 'User not found or not accepted for the provided temporary auth token' })
+          return
+        }
+        // Revoke temp auth token after successful use
+        await userTempAuthTokenService.revoke(token)
+
+        authenticationSuccessful({
+          req,
+          res,
+          next,
+          user,
+          callback: () => {
+            // notify via WebSocket that temp login was successful
+            WebSocketServer.notifyUser(userUuid, WebSocketEvent.tempLoginSuccessful, { token, userUuid })
+          },
+        })
+      } catch (error) {
+        next(error)
+      }
     })
   },
 }

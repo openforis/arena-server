@@ -5,6 +5,7 @@ export {
   TableInfo,
   TableSurvey,
   TableUser,
+  TableUserTempAuthToken,
   TableUserRefreshToken,
   TableUserResetPassword,
   TableAuthGroup,

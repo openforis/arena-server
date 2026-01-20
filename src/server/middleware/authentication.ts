@@ -23,6 +23,7 @@ import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceC
 const pathsAllowedWithoutAuthentication = [
   /^\/$/,
   /^\/auth\/login\/?$/,
+  /^\/auth\/login\/temp\/?$/,
   /^\/auth\/reset-password\/?$/,
   /^\/auth\/token\/refresh\/?$/,
   /^\/api\/public\/.*$/,
