@@ -8,7 +8,7 @@ import { BaseProtocol, DB } from '../../db'
  *
  * @param options - Options containing userUuid and optional expiration time
  * @param options.userUuid - User UUID
- * @param options.expirationMinutes - Expiration time in minutes (default: 5)
+ * @param options.expirationMinutes - Expiration time in minutes (default: 1 minute)
  * @param client - Database client
  */
 export const create = async (
