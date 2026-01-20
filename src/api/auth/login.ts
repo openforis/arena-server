@@ -3,6 +3,7 @@ import passport from 'passport'
 
 import {
   Authorizer,
+  Objects,
   ServiceRegistry,
   ServiceType,
   SurveyService,
@@ -10,6 +11,7 @@ import {
   UserAuthTokenService,
   UserService,
   UserStatus,
+  UUIDs,
 } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
@@ -120,6 +122,10 @@ export const AuthLogin: ExpressInitializer = {
     express.post(ApiEndpoint.auth.loginTemp(), async (req, res: Response, next) => {
       try {
         const { token } = Requests.getParams(req)
+        if (Objects.isEmpty(token) || !UUIDs.isUuid(token)) {
+          res.status(400).json({ message: 'Temporary auth token is missing or invalid' })
+          return
+        }
         const serviceRegistry = ServiceRegistry.getInstance()
         const userTempAuthTokenService: UserTempAuthTokenService = serviceRegistry.getService(
           ServerServiceType.userTempAuthToken
