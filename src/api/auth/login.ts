@@ -118,7 +118,7 @@ export const AuthLogin: ExpressInitializer = {
         const userService = serviceRegistry.getService(ServiceType.user) as UserService
         const user = await userService.get({ userUuid })
         if (!user || user.status !== UserStatus.ACCEPTED) {
-          res.status(401).json({ message: 'User not found for the provided temporary auth token' })
+          res.status(401).json({ message: 'User not found or not accepted for the provided temporary auth token' })
           return
         }
         WebSocketServer.notifyUser(userUuid, WebSocketEvent.tempLoginSuccessful, { token, userUuid })
