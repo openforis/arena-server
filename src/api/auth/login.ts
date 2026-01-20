@@ -101,7 +101,7 @@ export const AuthLogin: ExpressInitializer = {
         return res.status(401).json(info)
       })(req, res, next)
     })
-    express.post(ApiEndpoint.auth.loginTempAuthToken(), async (req, res: Response, next) => {
+    express.post(ApiEndpoint.auth.loginTemp(), async (req, res: Response, next) => {
       try {
         const { token } = Requests.getParams(req)
         const serviceRegistry = ServiceRegistry.getInstance()
