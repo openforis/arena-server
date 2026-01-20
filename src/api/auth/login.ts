@@ -142,12 +142,16 @@ export const AuthLogin: ExpressInitializer = {
           res.status(401).json({ message: 'User not found or not accepted for the provided temporary auth token' })
           return
         }
+        // Revoke temp auth token after successful use
+        await userTempAuthTokenService.revoke(token)
+
         authenticationSuccessful({
           req,
           res,
           next,
           user,
           callback: () => {
+            // notify via WebSocket that temp login was successful
             WebSocketServer.notifyUser(userUuid, WebSocketEvent.tempLoginSuccessful, { token, userUuid })
           },
         })
