@@ -1,3 +1,6 @@
+-- Clear existing temp auth tokens
+DELETE FROM user_temp_auth_token WHERE TRUE;
+
 -- Add new token_hash column
 ALTER TABLE user_temp_auth_token 
     ADD COLUMN token_hash varchar(64) NULL;
