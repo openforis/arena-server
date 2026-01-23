@@ -1,5 +1,5 @@
 import { BaseProtocol, DB } from '../../db'
-import { UserTempAuthToken } from '../../model'
+import { UserTempAuthTokenStored } from '../../model'
 import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { hashToken } from './utils'
 
@@ -10,7 +10,7 @@ import { hashToken } from './utils'
  * @param token - Token UUID
  * @param client - Database client
  */
-export const getByToken = async (token: string, client: BaseProtocol = DB): Promise<UserTempAuthToken | null> => {
+export const getByToken = async (token: string, client: BaseProtocol = DB): Promise<UserTempAuthTokenStored | null> => {
   const tokenHash = hashToken(token)
   return UserTempAuthTokenRepository.getByTokenHash(tokenHash, client)
 }

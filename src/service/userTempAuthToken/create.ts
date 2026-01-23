@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { BaseProtocol, DB } from '../../db'
 import { UserTempAuthTokenForClient, UserTempAuthTokenStored } from '../../model'
 import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
-import { hashToken } from './utils'
+import { hashToken, toUserTempAuthTokenForClient } from './utils'
 
 /**
  * Creates a new temporary authentication token for a user.
@@ -36,8 +36,5 @@ export const create = async (
 
   const inserted = await UserTempAuthTokenRepository.insert(tempAuthToken, client)
 
-  // Remove the tokenHash before returning
-  const { tokenHash: _, ...rest } = inserted
-  // Return the plain token to the client (only time it's available)
-  return { ...rest, token }
+  return toUserTempAuthTokenForClient(inserted, token)
 }

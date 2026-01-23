@@ -6,7 +6,7 @@ import { UserTempAuthTokenStored } from '../../model'
  *
  * @param tokenHash - Hashed token value used to look up the temporary auth token
  * @param client - Database client
- * @returns The UserTempAuthToken if found and not expired, null otherwise
+ * @returns The UserTempAuthTokenStored if found and not expired, null otherwise
  */
 export const getByTokenHash = async (
   tokenHash: string,
