@@ -1,11 +1,5 @@
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserTempAuthToken } from '../../db'
-
-export interface UserTempAuthToken {
-  token: string
-  userUuid: string
-  dateCreated: Date
-  dateExpiresAt: Date
-}
+import { UserTempAuthTokenStored } from '../../model'
 
 /**
  * Inserts a new temporary authentication token for a user.
@@ -13,13 +7,16 @@ export interface UserTempAuthToken {
  * @param options - The temp auth token data
  * @param client - Database client
  */
-export const insert = async (options: UserTempAuthToken, client: BaseProtocol = DB): Promise<UserTempAuthToken> => {
-  const { token, userUuid, dateCreated, dateExpiresAt } = options
+export const insert = async (
+  options: UserTempAuthTokenStored,
+  client: BaseProtocol = DB
+): Promise<UserTempAuthTokenStored> => {
+  const { tokenHash, userUuid, dateCreated, dateExpiresAt } = options
 
   const table = new TableUserTempAuthToken()
 
   const values = {
-    [table.token.columnName]: token,
+    [table.tokenHash.columnName]: tokenHash,
     [table.userUuid.columnName]: userUuid,
     [table.dateCreated.columnName]: dateCreated,
     [table.dateExpiresAt.columnName]: dateExpiresAt,
@@ -31,5 +28,5 @@ export const insert = async (options: UserTempAuthToken, client: BaseProtocol = 
     .returning(...table.columns)
     .build()
 
-  return client.one<UserTempAuthToken>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<UserTempAuthTokenStored>(sql, values, (row) => DBs.transformCallback({ row }))
 }

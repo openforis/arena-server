@@ -49,6 +49,11 @@ export class SqlDeleteBuilder extends SqlBuilder {
         .map((columnName) => `${columnName} = $/${columnName}/`)
         .join(' AND ')
 
-    return `DELETE FROM ${this._table} WHERE ${whereCondition}`
+    let sql = `DELETE FROM ${this._table} WHERE ${whereCondition}`
+    if (Objects.isNotEmpty(this._returning)) {
+      const returningFields = this._returning.map((col) => col.columnName).join(', ')
+      sql += ` RETURNING ${returningFields}`
+    }
+    return sql
   }
 }

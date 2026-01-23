@@ -130,7 +130,7 @@ export const AuthLogin: ExpressInitializer = {
         const userTempAuthTokenService: UserTempAuthTokenService = serviceRegistry.getService(
           ServerServiceType.userTempAuthToken
         )
-        const tempAuthTokenFound = await userTempAuthTokenService.getByToken(token)
+        const tempAuthTokenFound = await userTempAuthTokenService.revoke(token)
         if (!tempAuthTokenFound) {
           res.status(401).json({ message: 'Invalid or expired temporary auth token' })
           return
@@ -142,8 +142,6 @@ export const AuthLogin: ExpressInitializer = {
           res.status(401).json({ message: 'User not found or not accepted for the provided temporary auth token' })
           return
         }
-        // Revoke temp auth token after successful use
-        await userTempAuthTokenService.revoke(token)
 
         authenticationSuccessful({
           req,

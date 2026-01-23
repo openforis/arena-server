@@ -1,5 +1,6 @@
-import { UserTempAuthToken, UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { BaseProtocol, DB } from '../../db'
+import { UserTempAuthTokenStored } from '../../model'
+import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 
 /**
  * Retrieves all temporary auth tokens for a user.
@@ -10,7 +11,7 @@ import { BaseProtocol, DB } from '../../db'
 export const getByUserUuid = async (
   options: { userUuid: string; includeExpired?: boolean },
   client: BaseProtocol = DB
-): Promise<UserTempAuthToken[]> => {
+): Promise<UserTempAuthTokenStored[]> => {
   const { userUuid, includeExpired = false } = options
   return UserTempAuthTokenRepository.getByUserUuid(userUuid, { includeExpired }, client)
 }

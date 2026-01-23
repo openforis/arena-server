@@ -1,6 +1,6 @@
 import { cleanupExpired } from './cleanupExpired'
 import { create } from './create'
-import { getByToken } from './getByToken'
+import { getByToken } from './getByTokenHash'
 import { getByUserUuid } from './getByUserUuid'
 import { revoke } from './revoke'
 
@@ -14,7 +14,7 @@ export type UserTempAuthTokenService = {
 
 export const UserTempAuthTokenServiceServer: UserTempAuthTokenService = {
   create,
-  getByToken,
+  getByToken: getByToken,
   getByUserUuid,
   revoke,
   cleanupExpired,
