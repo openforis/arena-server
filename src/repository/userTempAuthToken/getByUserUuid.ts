@@ -1,5 +1,5 @@
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserTempAuthToken } from '../../db'
-import { UserTempAuthToken } from '../../model'
+import { UserTempAuthTokenStored } from '../../model'
 
 /**
  * Retrieves temporary auth tokens for a user.
@@ -12,7 +12,7 @@ export const getByUserUuid = async (
   userUuid: string,
   options?: { includeExpired?: boolean },
   client: BaseProtocol = DB
-): Promise<UserTempAuthToken[]> => {
+): Promise<UserTempAuthTokenStored[]> => {
   const { includeExpired = false } = options ?? {}
 
   const table = new TableUserTempAuthToken()
@@ -28,5 +28,5 @@ export const getByUserUuid = async (
     .where(...whereConditions)
     .build()
 
-  return client.map<UserTempAuthToken>(sql, { userUuid }, (row) => DBs.transformCallback({ row }))
+  return client.map(sql, { userUuid }, (row) => DBs.transformCallback({ row }))
 }

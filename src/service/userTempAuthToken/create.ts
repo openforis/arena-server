@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 
-import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { BaseProtocol, DB } from '../../db'
+import { UserTempAuthTokenForClient, UserTempAuthTokenStored } from '../../model'
+import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { hashToken } from './utils'
-import { UserTempAuthToken, CreatedTempAuthToken } from '../../model'
 
 /**
  * Creates a new temporary authentication token for a user.
@@ -18,7 +18,7 @@ import { UserTempAuthToken, CreatedTempAuthToken } from '../../model'
 export const create = async (
   options: { userUuid: string; expirationMinutes?: number },
   client: BaseProtocol = DB
-): Promise<CreatedTempAuthToken> => {
+): Promise<UserTempAuthTokenForClient> => {
   const { userUuid, expirationMinutes = 1 } = options
 
   const now = new Date()
@@ -27,7 +27,7 @@ export const create = async (
   const token = uuidv4()
   const tokenHash = hashToken(token)
 
-  const tempAuthToken: UserTempAuthToken = {
+  const tempAuthToken: UserTempAuthTokenStored = {
     tokenHash,
     userUuid,
     dateCreated: now,
@@ -36,6 +36,8 @@ export const create = async (
 
   const inserted = await UserTempAuthTokenRepository.insert(tempAuthToken, client)
 
+  // Remove the tokenHash before returning
+  const { tokenHash: _, ...rest } = inserted
   // Return the plain token to the client (only time it's available)
-  return { ...inserted, token }
+  return { ...rest, token }
 }

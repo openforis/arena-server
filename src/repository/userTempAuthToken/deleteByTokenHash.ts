@@ -1,17 +1,17 @@
 import { BaseProtocol, DB, DBs, SqlDeleteBuilder, TableUserTempAuthToken } from '../../db'
-import { UserTempAuthToken } from '../../model'
+import { UserTempAuthTokenStored } from '../../model'
 
 /**
- * Deletes a temporary auth token by hashing the provided token and deleting the hash.
+ * Deletes a temporary auth token by its hash.
  *
- * @param tokenHash - Token UUID hash to delete
+ * @param tokenHash - Hash of the token to delete
  * @param client - Database client
- * @return The deleted UserTempAuthToken or null if not found
+ * @return The deleted UserTempAuthTokenStored or null if not found
  */
 export const deleteByTokenHash = async (
   tokenHash: string,
   client: BaseProtocol = DB
-): Promise<UserTempAuthToken | null> => {
+): Promise<UserTempAuthTokenStored | null> => {
   const table = new TableUserTempAuthToken()
 
   const values = { [table.tokenHash.columnName]: tokenHash }

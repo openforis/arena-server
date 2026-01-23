@@ -1,1 +1,1 @@
-export type { UserTempAuthToken, CreatedTempAuthToken } from './userTempAuthToken'
+export type { UserTempAuthToken, UserTempAuthTokenStored, UserTempAuthTokenForClient } from './userTempAuthToken'
