@@ -16,7 +16,11 @@ export const deleteByTokenHash = async (
 
   const values = { [table.tokenHash.columnName]: tokenHash }
 
-  const sql = new SqlDeleteBuilder().deleteFrom(table).where(values).build()
+  const sql = new SqlDeleteBuilder()
+    .deleteFrom(table)
+    .where(values)
+    .returning(...table.columns)
+    .build()
 
   return client.oneOrNone(sql, values, (row) => DBs.transformCallback({ row }))
 }
