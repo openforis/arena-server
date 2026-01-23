@@ -1,5 +1,5 @@
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserTempAuthToken } from '../../db'
-import { UserTempAuthToken } from './insert'
+import { UserTempAuthToken } from '../../model'
 
 /**
  * Retrieves temporary auth tokens for a user.

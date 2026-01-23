@@ -1,15 +1,13 @@
-import { deleteByToken } from './deleteByToken'
+import { deleteByTokenHash } from './deleteByTokenHash'
 import { deleteExpired } from './deleteExpired'
-import { getByToken } from './getByToken'
+import { getByTokenHash } from './getByTokenHash'
 import { getByUserUuid } from './getByUserUuid'
 import { insert } from './insert'
 
 export const UserTempAuthTokenRepository = {
   insert,
-  getByToken,
+  getByTokenHash,
   getByUserUuid,
-  deleteByToken,
+  deleteByTokenHash,
   deleteExpired,
 }
-
-export type { UserTempAuthToken } from './insert'

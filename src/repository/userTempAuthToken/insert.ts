@@ -1,11 +1,5 @@
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserTempAuthToken } from '../../db'
-
-export interface UserTempAuthToken {
-  token: string
-  userUuid: string
-  dateCreated: Date
-  dateExpiresAt: Date
-}
+import { UserTempAuthToken } from '../../model'
 
 /**
  * Inserts a new temporary authentication token for a user.
@@ -14,12 +8,12 @@ export interface UserTempAuthToken {
  * @param client - Database client
  */
 export const insert = async (options: UserTempAuthToken, client: BaseProtocol = DB): Promise<UserTempAuthToken> => {
-  const { token, userUuid, dateCreated, dateExpiresAt } = options
+  const { tokenHash, userUuid, dateCreated, dateExpiresAt } = options
 
   const table = new TableUserTempAuthToken()
 
   const values = {
-    [table.token.columnName]: token,
+    [table.tokenHash.columnName]: tokenHash,
     [table.userUuid.columnName]: userUuid,
     [table.dateCreated.columnName]: dateCreated,
     [table.dateExpiresAt.columnName]: dateExpiresAt,

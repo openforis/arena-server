@@ -1,5 +1,7 @@
-import { UserTempAuthToken, UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { BaseProtocol, DB } from '../../db'
+import { UserTempAuthToken } from '../../model'
+import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
+import { hashToken } from './utils'
 
 /**
  * Retrieves and validates a temporary auth token.
@@ -9,5 +11,6 @@ import { BaseProtocol, DB } from '../../db'
  * @param client - Database client
  */
 export const getByToken = async (token: string, client: BaseProtocol = DB): Promise<UserTempAuthToken | null> => {
-  return UserTempAuthTokenRepository.getByToken(token, client)
+  const tokenHash = hashToken(token)
+  return UserTempAuthTokenRepository.getByTokenHash(tokenHash, client)
 }

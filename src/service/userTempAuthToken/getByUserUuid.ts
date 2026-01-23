@@ -1,5 +1,6 @@
-import { UserTempAuthToken, UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
+import { UserTempAuthTokenRepository } from '../../repository/userTempAuthToken'
 import { BaseProtocol, DB } from '../../db'
+import { UserTempAuthToken } from '../../model'
 
 /**
  * Retrieves all temporary auth tokens for a user.
