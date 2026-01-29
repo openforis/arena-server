@@ -34,6 +34,7 @@ const pathsAllowedWithoutAuthentication = [
   // paths using download token
   /^\/api\/download\/?$/,
   /^\/api\/survey\/\d+\/export\/download\/?$/,
+  /^\/api\/surveyRdb\/\d+\/[\w-]{36}\/export\/download\/?$/,
 ]
 
 /**
