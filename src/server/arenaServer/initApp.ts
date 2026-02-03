@@ -33,7 +33,11 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   if (ProcessEnv.useHttps) {
     HttpsMiddleware.init(app)
   }
+
+  RateLimitMiddleware.init(app)
+
   app.use(express.json({ limit: bodyParseLimit }))
+
   app.use(
     expressFileUpload({
       limits: { fileSize: fileSizeLimit },
@@ -43,12 +47,12 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
     })
   )
   app.use(compression({ threshold: 512 }))
+
   app.use(cookieParser())
+
   HeaderMiddleware.init(app)
 
   AuthenticationMiddleware.init(app)
-
-  RateLimitMiddleware.init(app)
 
   Api.init(app)
 

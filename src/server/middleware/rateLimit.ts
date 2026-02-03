@@ -11,7 +11,10 @@ export const RateLimitMiddleware: ExpressInitializer = {
     const limiter = rateLimit({
       windowMs: rateLimitWindowMs,
       max: maxRequestsPerWindow,
-      message: 'Too many requests, please try again later.',
+      message: {
+        status: 429,
+        message: 'Too many requests, please try again later.',
+      },
     })
     express.use(limiter)
   },
