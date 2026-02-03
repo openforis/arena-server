@@ -1,5 +1,7 @@
-export type UserTwoFactor = {
+export type UserTwoFactorDevice = {
+  uuid: string
   userUuid: string
+  deviceName: string
   secret: string
   enabled: boolean
   backupCodes: string[]
@@ -7,9 +9,9 @@ export type UserTwoFactor = {
   dateUpdated: Date
 }
 
-export type UserTwoFactorStored = UserTwoFactor
+export type UserTwoFactorDeviceStored = UserTwoFactorDevice
 
-export type UserTwoFactorForClient = Omit<UserTwoFactor, 'secret' | 'backupCodes'> & {
-  qrCodeUrl?: string // Only returned when enabling 2FA
-  backupCodes?: string[] // Only returned when enabling 2FA or regenerating backup codes
+export type UserTwoFactorDeviceForClient = Omit<UserTwoFactorDevice, 'secret' | 'backupCodes'> & {
+  qrCodeUrl?: string // Only returned when setting up a new device
+  backupCodes?: string[] // Only returned when setting up a new device or regenerating backup codes
 }

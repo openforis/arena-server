@@ -1,24 +1,28 @@
-import { BaseProtocol, DB, DBs, SqlUpdateBuilder, TableUserTwoFactor } from '../../db'
-import { UserTwoFactorStored } from '../../model'
+import { BaseProtocol, DB, DBs, SqlUpdateBuilder, TableUserTwoFactorDevice } from '../../db'
+import { UserTwoFactorDeviceStored } from '../../model'
 
 /**
- * Updates the 2FA configuration for a user.
+ * Updates a 2FA device.
  *
- * @param options - The 2FA data to update
+ * @param options - The 2FA device data to update
  * @param client - Database client
  */
 export const update = async (
-  options: Partial<UserTwoFactorStored> & { userUuid: string },
+  options: Partial<UserTwoFactorDeviceStored> & { uuid: string },
   client: BaseProtocol = DB
-): Promise<UserTwoFactorStored> => {
-  const { userUuid, secret, enabled, backupCodes } = options
+): Promise<UserTwoFactorDeviceStored> => {
+  const { uuid, deviceName, secret, enabled, backupCodes } = options
 
-  const table = new TableUserTwoFactor()
+  const table = new TableUserTwoFactorDevice()
 
   let updateBuilder = new SqlUpdateBuilder().update(table)
   let paramIndex = 1
   const values: any[] = []
 
+  if (deviceName !== undefined) {
+    updateBuilder = updateBuilder.set(table.deviceName, `$${paramIndex++}`)
+    values.push(deviceName)
+  }
   if (secret !== undefined) {
     updateBuilder = updateBuilder.set(table.secret, `$${paramIndex++}`)
     values.push(secret)
@@ -36,10 +40,10 @@ export const update = async (
   updateBuilder = updateBuilder.set(table.dateUpdated, 'NOW()')
 
   const sql = updateBuilder
-    .where(`${table.userUuid} = $${paramIndex}`)
+    .where(`${table.uuid} = $${paramIndex}`)
     .returning(...table.columns)
     .build()
-  values.push(userUuid)
+  values.push(uuid)
 
-  return client.one<UserTwoFactorStored>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<UserTwoFactorDeviceStored>(sql, values, (row) => DBs.transformCallback({ row }))
 }

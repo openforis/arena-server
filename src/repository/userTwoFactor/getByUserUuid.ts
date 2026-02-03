@@ -1,8 +1,8 @@
-import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserTwoFactor } from '../../db'
-import { UserTwoFactorStored } from '../../model'
+import { BaseProtocol, DB, SqlSelectBuilder, TableUserTwoFactorDevice } from '../../db'
+import { UserTwoFactorDeviceStored } from '../../model'
 
 /**
- * Gets the 2FA configuration for a user.
+ * Gets all 2FA devices for a user.
  *
  * @param userUuid - The user UUID
  * @param client - Database client
@@ -10,8 +10,8 @@ import { UserTwoFactorStored } from '../../model'
 export const getByUserUuid = async (
   userUuid: string,
   client: BaseProtocol = DB
-): Promise<UserTwoFactorStored | null> => {
-  const table = new TableUserTwoFactor()
+): Promise<UserTwoFactorDeviceStored[]> => {
+  const table = new TableUserTwoFactorDevice()
 
   const sql = new SqlSelectBuilder()
     .select(...table.columns)
@@ -19,5 +19,6 @@ export const getByUserUuid = async (
     .where(`${table.userUuid} = $/userUuid/`)
     .build()
 
-  return client.oneOrNone<UserTwoFactorStored>(sql, { userUuid }, (row) => DBs.transformCallback({ row }))
+  const results = await client.manyOrNone<UserTwoFactorDeviceStored>(sql, { userUuid })
+  return results || []
 }

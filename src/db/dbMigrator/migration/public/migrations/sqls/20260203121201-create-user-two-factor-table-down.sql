@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS user_two_factor;
+DROP TABLE IF EXISTS user_two_factor_device;

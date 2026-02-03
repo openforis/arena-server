@@ -9,84 +9,133 @@ import { ApiEndpoint } from '../endpoint'
 
 export const TwoFactorApi: ExpressInitializer = {
   init: (express: Express): void => {
-    // GET /api/2fa/status - Get 2FA status for the current user
-    express.get(ApiEndpoint.twoFactor.status(), async (req: Request, res: Response) => {
+    // GET /api/2fa/devices - Get all 2FA devices for the current user
+    express.get(ApiEndpoint.twoFactor.devices(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user as User
         if (!user) {
           return res.status(401).json({ message: 'Unauthorized' })
         }
 
-        const status = await UserTwoFactorService.getStatus({ userUuid: user.uuid })
-        return res.json(status)
+        const devices = await UserTwoFactorService.getDevices({ userUuid: user.uuid })
+        return res.json(devices)
       } catch (error: any) {
         return Responses.sendError(res, error)
       }
     })
 
-    // POST /api/2fa/initiate - Start 2FA setup (generates secret and QR code)
-    express.post(ApiEndpoint.twoFactor.initiate(), async (req: Request, res: Response) => {
+    // POST /api/2fa/device/add - Add a new 2FA device
+    express.post(ApiEndpoint.twoFactor.addDevice(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user as User
         if (!user) {
           return res.status(401).json({ message: 'Unauthorized' })
         }
 
-        const twoFactor = await UserTwoFactorService.initiate({
+        const { deviceName } = Requests.getParams(req)
+
+        if (!deviceName) {
+          return res.status(400).json({ message: 'Device name is required' })
+        }
+
+        const device = await UserTwoFactorService.addDevice({
           userUuid: user.uuid,
           userEmail: user.email,
+          deviceName,
         })
 
-        return res.json(twoFactor)
+        return res.json(device)
       } catch (error: any) {
         return Responses.sendError(res, error)
       }
     })
 
-    // POST /api/2fa/verify - Verify and enable 2FA
-    express.post(ApiEndpoint.twoFactor.verify(), async (req: Request, res: Response) => {
+    // POST /api/2fa/device/verify - Verify and enable a 2FA device
+    express.post(ApiEndpoint.twoFactor.verifyDevice(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user as User
         if (!user) {
           return res.status(401).json({ message: 'Unauthorized' })
         }
 
-        const { token } = Requests.getParams(req)
+        const { deviceUuid, token } = Requests.getParams(req)
 
-        if (!token) {
-          return res.status(400).json({ message: 'Token is required' })
+        if (!deviceUuid || !token) {
+          return res.status(400).json({ message: 'Device UUID and token are required' })
         }
 
-        const twoFactor = await UserTwoFactorService.verify({
-          userUuid: user.uuid,
+        const device = await UserTwoFactorService.verifyDevice({
+          deviceUuid,
           token,
         })
 
-        return res.json(twoFactor)
+        return res.json(device)
       } catch (error: any) {
-        if (error.message === 'Invalid verification code' || error.message === '2FA not initialized for this user') {
+        if (error.message === 'Invalid verification code' || error.message === 'Device not found') {
           return res.status(400).json({ message: error.message })
         }
         return Responses.sendError(res, error)
       }
     })
 
-    // POST /api/2fa/disable - Disable 2FA
-    express.post(ApiEndpoint.twoFactor.disable(), async (req: Request, res: Response) => {
+    // POST /api/2fa/device/remove - Remove a 2FA device
+    express.post(ApiEndpoint.twoFactor.removeDevice(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user as User
         if (!user) {
           return res.status(401).json({ message: 'Unauthorized' })
         }
 
-        await UserTwoFactorService.disable({ userUuid: user.uuid })
+        const { deviceUuid } = Requests.getParams(req)
+
+        if (!deviceUuid) {
+          return res.status(400).json({ message: 'Device UUID is required' })
+        }
+
+        await UserTwoFactorService.removeDevice({ deviceUuid })
         return res.json({ success: true })
       } catch (error: any) {
         return Responses.sendError(res, error)
       }
     })
 
-    // POST /api/2fa/regenerate-backup-codes - Regenerate backup codes
+    // POST /api/2fa/device/rename - Rename a 2FA device
+    express.post(ApiEndpoint.twoFactor.renameDevice(), async (req: Request, res: Response) => {
+      try {
+        const user: User = req.user as User
+        if (!user) {
+          return res.status(401).json({ message: 'Unauthorized' })
+        }
+
+        const { deviceUuid, deviceName } = Requests.getParams(req)
+
+        if (!deviceUuid || !deviceName) {
+          return res.status(400).json({ message: 'Device UUID and device name are required' })
+        }
+
+        const device = await UserTwoFactorService.updateDeviceName({ deviceUuid, deviceName })
+        return res.json(device)
+      } catch (error: any) {
+        return Responses.sendError(res, error)
+      }
+    })
+
+    // POST /api/2fa/disable-all - Disable all 2FA devices
+    express.post(ApiEndpoint.twoFactor.disableAll(), async (req: Request, res: Response) => {
+      try {
+        const user: User = req.user as User
+        if (!user) {
+          return res.status(401).json({ message: 'Unauthorized' })
+        }
+
+        await UserTwoFactorService.disableAll({ userUuid: user.uuid })
+        return res.json({ success: true })
+      } catch (error: any) {
+        return Responses.sendError(res, error)
+      }
+    })
+
+    // POST /api/2fa/device/regenerate-backup-codes - Regenerate backup codes for a device
     express.post(ApiEndpoint.twoFactor.regenerateBackupCodes(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user as User
@@ -94,17 +143,23 @@ export const TwoFactorApi: ExpressInitializer = {
           return res.status(401).json({ message: 'Unauthorized' })
         }
 
-        const backupCodes = await UserTwoFactorService.regenerateBackupCodes({ userUuid: user.uuid })
+        const { deviceUuid } = Requests.getParams(req)
+
+        if (!deviceUuid) {
+          return res.status(400).json({ message: 'Device UUID is required' })
+        }
+
+        const backupCodes = await UserTwoFactorService.regenerateBackupCodes({ deviceUuid })
         return res.json({ backupCodes })
       } catch (error: any) {
-        if (error.message === '2FA not configured for this user') {
+        if (error.message === 'Device not found') {
           return res.status(400).json({ message: error.message })
         }
         return Responses.sendError(res, error)
       }
     })
 
-    // POST /api/2fa/verify-login - Verify 2FA token during login
+    // POST /api/2fa/verify-login - Verify 2FA token during login (checks all enabled devices)
     express.post(ApiEndpoint.twoFactor.verifyLogin(), async (req: Request, res: Response) => {
       try {
         const { userUuid, token } = Requests.getParams(req)

@@ -2,20 +2,23 @@ import * as speakeasy from 'speakeasy'
 import * as QRCode from 'qrcode'
 import * as crypto from 'crypto'
 
-import { UserTwoFactorStored, UserTwoFactorForClient } from '../../model'
+import { UserTwoFactorDeviceForClient } from '../../model'
 import { UserTwoFactorRepository } from '../../repository'
 import { BaseProtocol, DB } from '../../db'
 
 const APP_NAME = 'Arena'
 
 /**
- * Generates a new 2FA secret and QR code URL for a user.
+ * Generates a new 2FA secret and QR code URL for a device.
  */
-const generateSecret = async (options: { userEmail: string }): Promise<{ secret: string; qrCodeUrl: string }> => {
-  const { userEmail } = options
+const generateSecret = async (options: {
+  userEmail: string
+  deviceName: string
+}): Promise<{ secret: string; qrCodeUrl: string }> => {
+  const { userEmail, deviceName } = options
 
   const secretData = speakeasy.generateSecret({
-    name: `${APP_NAME} (${userEmail})`,
+    name: `${APP_NAME} (${userEmail}) - ${deviceName}`,
     issuer: APP_NAME,
     length: 32,
   })
@@ -55,93 +58,80 @@ const verifyToken = (options: { secret: string; token: string }): boolean => {
 }
 
 /**
- * Initiates 2FA setup for a user (generates secret and QR code but doesn't enable it yet).
+ * Initiates 2FA setup for a new device (generates secret and QR code but doesn't enable it yet).
  */
-export const initiate = async (options: {
+export const addDevice = async (options: {
   userUuid: string
   userEmail: string
+  deviceName: string
   client?: BaseProtocol
-}): Promise<UserTwoFactorForClient> => {
-  const { userUuid, userEmail, client = DB } = options
+}): Promise<UserTwoFactorDeviceForClient> => {
+  const { userUuid, userEmail, deviceName, client = DB } = options
 
-  // Check if user already has 2FA configured
-  const existing = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
-
-  const { secret, qrCodeUrl } = await generateSecret({ userEmail })
+  const { secret, qrCodeUrl } = await generateSecret({ userEmail, deviceName })
   const backupCodes = generateBackupCodes()
   const now = new Date()
 
-  let twoFactor: UserTwoFactorStored
-
-  if (existing) {
-    // Update existing record with new secret (not enabled yet)
-    twoFactor = await UserTwoFactorRepository.update(
-      {
-        userUuid,
-        secret,
-        enabled: false,
-        backupCodes,
-      },
-      client
-    )
-  } else {
-    // Create new record
-    twoFactor = await UserTwoFactorRepository.insert(
-      {
-        userUuid,
-        secret,
-        enabled: false,
-        backupCodes,
-        dateCreated: now,
-        dateUpdated: now,
-      },
-      client
-    )
-  }
+  const device = await UserTwoFactorRepository.insert(
+    {
+      userUuid,
+      deviceName,
+      secret,
+      enabled: false,
+      backupCodes,
+      dateCreated: now,
+      dateUpdated: now,
+    },
+    client
+  )
 
   return {
-    userUuid: twoFactor.userUuid,
-    enabled: twoFactor.enabled,
-    dateCreated: twoFactor.dateCreated,
-    dateUpdated: twoFactor.dateUpdated,
+    uuid: device.uuid,
+    userUuid: device.userUuid,
+    deviceName: device.deviceName,
+    enabled: device.enabled,
+    dateCreated: device.dateCreated,
+    dateUpdated: device.dateUpdated,
     qrCodeUrl,
     backupCodes,
   }
 }
 
 /**
- * Verifies and enables 2FA for a user.
+ * Verifies and enables a 2FA device.
  */
-export const verify = async (options: {
-  userUuid: string
+export const verifyDevice = async (options: {
+  deviceUuid: string
   token: string
   client?: BaseProtocol
-}): Promise<UserTwoFactorForClient> => {
-  const { userUuid, token, client = DB } = options
+}): Promise<UserTwoFactorDeviceForClient> => {
+  const { deviceUuid, token, client = DB } = options
 
-  const twoFactor = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
 
-  if (!twoFactor) {
-    throw new Error('2FA not initialized for this user')
+  if (!device) {
+    throw new Error('Device not found')
   }
 
-  const isValid = verifyToken({ secret: twoFactor.secret, token })
+  const isValid = verifyToken({ secret: device.secret, token })
 
   if (!isValid) {
     throw new Error('Invalid verification code')
   }
 
-  // Enable 2FA
+  // Enable the device
   const updated = await UserTwoFactorRepository.update(
     {
-      userUuid,
+      uuid: deviceUuid,
       enabled: true,
     },
     client
   )
 
   return {
+    uuid: updated.uuid,
     userUuid: updated.userUuid,
+    deviceName: updated.deviceName,
     enabled: updated.enabled,
     dateCreated: updated.dateCreated,
     dateUpdated: updated.dateUpdated,
@@ -149,39 +139,57 @@ export const verify = async (options: {
 }
 
 /**
- * Disables 2FA for a user.
+ * Removes a 2FA device.
  */
-export const disable = async (options: { userUuid: string; client?: BaseProtocol }): Promise<void> => {
+export const removeDevice = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<void> => {
+  const { deviceUuid, client = DB } = options
+
+  await UserTwoFactorRepository.deleteByDeviceUuid(deviceUuid, client)
+}
+
+/**
+ * Disables all 2FA devices for a user.
+ */
+export const disableAll = async (options: { userUuid: string; client?: BaseProtocol }): Promise<void> => {
   const { userUuid, client = DB } = options
 
   await UserTwoFactorRepository.deleteByUserUuid(userUuid, client)
 }
 
 /**
- * Gets the 2FA status for a user.
+ * Gets all 2FA devices for a user.
  */
-export const getStatus = async (options: {
+export const getDevices = async (options: {
   userUuid: string
   client?: BaseProtocol
-}): Promise<UserTwoFactorForClient | null> => {
+}): Promise<UserTwoFactorDeviceForClient[]> => {
   const { userUuid, client = DB } = options
 
-  const twoFactor = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
 
-  if (!twoFactor) {
-    return null
-  }
-
-  return {
-    userUuid: twoFactor.userUuid,
-    enabled: twoFactor.enabled,
-    dateCreated: twoFactor.dateCreated,
-    dateUpdated: twoFactor.dateUpdated,
-  }
+  return devices.map((device) => ({
+    uuid: device.uuid,
+    userUuid: device.userUuid,
+    deviceName: device.deviceName,
+    enabled: device.enabled,
+    dateCreated: device.dateCreated,
+    dateUpdated: device.dateUpdated,
+  }))
 }
 
 /**
- * Verifies a login attempt with 2FA.
+ * Checks if user has any enabled 2FA devices.
+ */
+export const hasEnabledDevices = async (options: { userUuid: string; client?: BaseProtocol }): Promise<boolean> => {
+  const { userUuid, client = DB } = options
+
+  const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+
+  return devices.some((device) => device.enabled)
+}
+
+/**
+ * Verifies a login attempt with 2FA against any enabled device.
  */
 export const verifyLogin = async (options: {
   userUuid: string
@@ -190,50 +198,58 @@ export const verifyLogin = async (options: {
 }): Promise<boolean> => {
   const { userUuid, token, client = DB } = options
 
-  const twoFactor = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const enabledDevices = devices.filter((device) => device.enabled)
 
-  if (!twoFactor || !twoFactor.enabled) {
+  if (enabledDevices.length === 0) {
     return false
   }
 
-  // Check if it's a backup code
-  if (twoFactor.backupCodes && twoFactor.backupCodes.includes(token)) {
-    // Remove used backup code
-    const updatedCodes = twoFactor.backupCodes.filter((code) => code !== token)
-    await UserTwoFactorRepository.update(
-      {
-        userUuid,
-        backupCodes: updatedCodes,
-      },
-      client
-    )
-    return true
+  // Check if token matches any enabled device
+  for (const device of enabledDevices) {
+    // Check if it's a backup code
+    if (device.backupCodes && device.backupCodes.includes(token)) {
+      // Remove used backup code
+      const updatedCodes = device.backupCodes.filter((code) => code !== token)
+      await UserTwoFactorRepository.update(
+        {
+          uuid: device.uuid,
+          backupCodes: updatedCodes,
+        },
+        client
+      )
+      return true
+    }
+
+    // Verify TOTP token
+    if (verifyToken({ secret: device.secret, token })) {
+      return true
+    }
   }
 
-  // Verify TOTP token
-  return verifyToken({ secret: twoFactor.secret, token })
+  return false
 }
 
 /**
- * Regenerates backup codes for a user.
+ * Regenerates backup codes for a specific device.
  */
 export const regenerateBackupCodes = async (options: {
-  userUuid: string
+  deviceUuid: string
   client?: BaseProtocol
 }): Promise<string[]> => {
-  const { userUuid, client = DB } = options
+  const { deviceUuid, client = DB } = options
 
-  const twoFactor = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
 
-  if (!twoFactor) {
-    throw new Error('2FA not configured for this user')
+  if (!device) {
+    throw new Error('Device not found')
   }
 
   const backupCodes = generateBackupCodes()
 
   await UserTwoFactorRepository.update(
     {
-      userUuid,
+      uuid: deviceUuid,
       backupCodes,
     },
     client
@@ -242,11 +258,42 @@ export const regenerateBackupCodes = async (options: {
   return backupCodes
 }
 
+/**
+ * Updates a device name.
+ */
+export const updateDeviceName = async (options: {
+  deviceUuid: string
+  deviceName: string
+  client?: BaseProtocol
+}): Promise<UserTwoFactorDeviceForClient> => {
+  const { deviceUuid, deviceName, client = DB } = options
+
+  const updated = await UserTwoFactorRepository.update(
+    {
+      uuid: deviceUuid,
+      deviceName,
+    },
+    client
+  )
+
+  return {
+    uuid: updated.uuid,
+    userUuid: updated.userUuid,
+    deviceName: updated.deviceName,
+    enabled: updated.enabled,
+    dateCreated: updated.dateCreated,
+    dateUpdated: updated.dateUpdated,
+  }
+}
+
 export const UserTwoFactorService = {
-  initiate,
-  verify,
-  disable,
-  getStatus,
+  addDevice,
+  verifyDevice,
+  removeDevice,
+  disableAll,
+  getDevices,
+  hasEnabledDevices,
   verifyLogin,
   regenerateBackupCodes,
+  updateDeviceName,
 }

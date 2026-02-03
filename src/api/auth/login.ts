@@ -114,11 +114,11 @@ export const AuthLogin: ExpressInitializer = {
           return next(err)
         }
         if (user) {
-          // Check if user has 2FA enabled
+          // Check if user has any enabled 2FA devices
           try {
-            const twoFactorStatus = await UserTwoFactorService.getStatus({ userUuid: user.uuid })
+            const hasEnabled = await UserTwoFactorService.hasEnabledDevices({ userUuid: user.uuid })
 
-            if (twoFactorStatus && twoFactorStatus.enabled) {
+            if (hasEnabled) {
               // 2FA is enabled - require verification
               const { twoFactorToken } = Requests.getParams(req)
 
@@ -131,7 +131,7 @@ export const AuthLogin: ExpressInitializer = {
                 })
               }
 
-              // Verify 2FA token
+              // Verify 2FA token against all enabled devices
               const isValid = await UserTwoFactorService.verifyLogin({
                 userUuid: user.uuid,
                 token: twoFactorToken,

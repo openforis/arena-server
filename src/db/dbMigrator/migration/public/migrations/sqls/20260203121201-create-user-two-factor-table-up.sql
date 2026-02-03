@@ -1,13 +1,16 @@
 CREATE TABLE
-  user_two_factor
+  user_two_factor_device
 (
+  uuid           uuid         NOT NULL DEFAULT uuid_generate_v4(),
   user_uuid      uuid         NOT NULL REFERENCES "user" (uuid) ON DELETE CASCADE,
+  device_name    VARCHAR(255) NOT NULL,
   secret         VARCHAR(255) NOT NULL,
   enabled        boolean      NOT NULL DEFAULT false,
   backup_codes   jsonb        NOT NULL DEFAULT '[]'::jsonb,
   date_created   timestamptz  NOT NULL DEFAULT now(),
   date_updated   timestamptz  NOT NULL DEFAULT now(),
-  PRIMARY KEY (user_uuid)
+  PRIMARY KEY (uuid)
 );
 
-CREATE INDEX idx_user_two_factor_enabled ON user_two_factor (user_uuid, enabled) WHERE enabled = true;
+CREATE INDEX idx_user_two_factor_device_user_uuid ON user_two_factor_device (user_uuid);
+CREATE INDEX idx_user_two_factor_device_enabled ON user_two_factor_device (user_uuid, enabled) WHERE enabled = true;

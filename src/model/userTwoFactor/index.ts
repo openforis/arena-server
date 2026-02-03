@@ -1,1 +1,1 @@
-export type { UserTwoFactor, UserTwoFactorStored, UserTwoFactorForClient } from './userTwoFactor'
+export type { UserTwoFactorDevice, UserTwoFactorDeviceStored, UserTwoFactorDeviceForClient } from './userTwoFactor'
