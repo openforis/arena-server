@@ -7,7 +7,13 @@ import { ServiceRegistry } from '@openforis/arena-core'
 
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
-import { AuthenticationMiddleware, ErrorMiddleware, HeaderMiddleware, HttpsMiddleware } from '../middleware'
+import {
+  AuthenticationMiddleware,
+  ErrorMiddleware,
+  HeaderMiddleware,
+  HttpsMiddleware,
+  RateLimitMiddleware,
+} from '../middleware'
 import { Api } from '../../api'
 
 export interface InitAppOptions {
@@ -41,6 +47,8 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   HeaderMiddleware.init(app)
 
   AuthenticationMiddleware.init(app)
+
+  RateLimitMiddleware.init(app)
 
   Api.init(app)
 
