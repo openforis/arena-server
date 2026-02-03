@@ -6,6 +6,7 @@ import { ProcessEnv } from '../../processEnv'
 
 const rateLimitWindowMs = 15 * 60 * 1000 // 15 minutes
 const maxRequestsPerWindow = 100 // limit each IP to 100 requests per windowMs
+const rateLimitedPaths = ['/auth']
 
 export const RateLimitMiddleware: ExpressInitializer = {
   init(express: Express): void {
@@ -17,7 +18,10 @@ export const RateLimitMiddleware: ExpressInitializer = {
         message: 'Too many requests, please try again later.',
       },
     })
-    express.use(limiter)
+
+    for (const rateLimitedPath of rateLimitedPaths) {
+      express.use(rateLimitedPath, limiter)
+    }
 
     if (ProcessEnv.useHttps) {
       // running behind a proxy (e.g. Heroku, AWS ELB, Nginx) - trust the X-Forwarded-* headers
