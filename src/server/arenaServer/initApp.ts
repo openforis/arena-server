@@ -7,7 +7,13 @@ import { ServiceRegistry } from '@openforis/arena-core'
 
 import { ProcessEnv } from '../../processEnv'
 import { ArenaApp } from '../arenaApp'
-import { AuthenticationMiddleware, ErrorMiddleware, HeaderMiddleware, HttpsMiddleware } from '../middleware'
+import {
+  AuthenticationMiddleware,
+  ErrorMiddleware,
+  HeaderMiddleware,
+  HttpsMiddleware,
+  RateLimitMiddleware,
+} from '../middleware'
 import { Api } from '../../api'
 
 export interface InitAppOptions {
@@ -27,7 +33,11 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
   if (ProcessEnv.useHttps) {
     HttpsMiddleware.init(app)
   }
+
+  RateLimitMiddleware.init(app)
+
   app.use(express.json({ limit: bodyParseLimit }))
+
   app.use(
     expressFileUpload({
       limits: { fileSize: fileSizeLimit },
@@ -37,7 +47,9 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
     })
   )
   app.use(compression({ threshold: 512 }))
+
   app.use(cookieParser())
+
   HeaderMiddleware.init(app)
 
   AuthenticationMiddleware.init(app)
