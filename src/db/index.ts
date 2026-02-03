@@ -26,6 +26,7 @@ export {
   TableUserTempAuthToken,
   TableUserRefreshToken,
   TableUserResetPassword,
+  TableUserTwoFactor,
   TableAuthGroup,
   TableAuthGroupUser,
 } from './table'

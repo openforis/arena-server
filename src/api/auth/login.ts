@@ -16,7 +16,7 @@ import {
 
 import { Logger } from '../../log'
 import { ExpressInitializer, ServerServiceType } from '../../server'
-import { UserTempAuthTokenService } from '../../service'
+import { UserTempAuthTokenService, UserTwoFactorService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
@@ -109,12 +109,44 @@ const authenticationSuccessful = ({
 export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
     express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
-      passport.authenticate('local', { session: false }, (err: any, user: User, info: any) => {
+      passport.authenticate('local', { session: false }, async (err: any, user: User, info: any) => {
         if (err) {
           return next(err)
         }
         if (user) {
-          return authenticationSuccessful({ req, res, next, user })
+          // Check if user has 2FA enabled
+          try {
+            const twoFactorStatus = await UserTwoFactorService.getStatus({ userUuid: user.uuid })
+
+            if (twoFactorStatus && twoFactorStatus.enabled) {
+              // 2FA is enabled - require verification
+              const { twoFactorToken } = Requests.getParams(req)
+
+              if (!twoFactorToken) {
+                // No 2FA token provided - send response indicating 2FA is required
+                return res.status(200).json({
+                  twoFactorRequired: true,
+                  userUuid: user.uuid,
+                  message: '2FA verification required',
+                })
+              }
+
+              // Verify 2FA token
+              const isValid = await UserTwoFactorService.verifyLogin({
+                userUuid: user.uuid,
+                token: twoFactorToken,
+              })
+
+              if (!isValid) {
+                return res.status(401).json({ message: 'Invalid 2FA code' })
+              }
+            }
+
+            // Either 2FA is not enabled or verification was successful
+            return authenticationSuccessful({ req, res, next, user })
+          } catch (error) {
+            return next(error)
+          }
         }
         return res.status(401).json(info)
       })(req, res, next)

@@ -22,6 +22,8 @@
     "@types/passport": "^1.0.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
+    "@types/qrcode": "^1.5.6",
+    "@types/speakeasy": "^2.0.10",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
@@ -57,7 +59,9 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg-promise": "^12.3.0",
-    "socket.io": "^4.8.3"
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.3",
+    "speakeasy": "^2.0.0"
   },
   "scripts": {
     "build": "run-s tsc copy-assets",
