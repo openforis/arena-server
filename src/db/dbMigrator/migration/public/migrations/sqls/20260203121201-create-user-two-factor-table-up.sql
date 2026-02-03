@@ -7,10 +7,10 @@ CREATE TABLE
   secret         VARCHAR(255) NOT NULL,
   enabled        boolean      NOT NULL DEFAULT false,
   backup_codes   jsonb        NOT NULL DEFAULT '[]'::jsonb,
-  date_created   timestamptz  NOT NULL DEFAULT now(),
-  date_updated   timestamptz  NOT NULL DEFAULT now(),
+  date_created   timestamp    NOT NULL DEFAULT now(),
+  date_updated   timestamp    NOT NULL DEFAULT now(),
   PRIMARY KEY (uuid)
 );
 
-CREATE INDEX idx_user_two_factor_device_user_uuid ON user_two_factor_device (user_uuid);
-CREATE INDEX idx_user_two_factor_device_enabled ON user_two_factor_device (user_uuid, enabled) WHERE enabled = true;
+CREATE INDEX user_two_factor_device_user_uuid_idx ON user_two_factor_device (user_uuid);
+CREATE INDEX user_two_factor_device_enabled_idx ON user_two_factor_device (user_uuid, enabled) WHERE enabled = true;

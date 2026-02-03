@@ -1,4 +1,4 @@
-import { deleteByDeviceUuid, deleteByUserUuid } from './deleteByUserUuid'
+import { deleteByDeviceUuid, deleteByUserUuid } from './delete'
 import { getByDeviceUuid } from './getByDeviceUuid'
 import { getByUserUuid } from './getByUserUuid'
 import { insert } from './insert'

@@ -1,5 +1,11 @@
 import { BaseProtocol, DB, SqlDeleteBuilder, TableUserTwoFactorDevice } from '../../db'
 
+const deleteWhereCondition = async (values: Record<string, any>, client: BaseProtocol = DB): Promise<void> => {
+  const table = new TableUserTwoFactorDevice()
+  const sql = new SqlDeleteBuilder().deleteFrom(table).where(values).build()
+  await client.none(sql, values)
+}
+
 /**
  * Deletes a 2FA device by its UUID.
  *
@@ -8,12 +14,8 @@ import { BaseProtocol, DB, SqlDeleteBuilder, TableUserTwoFactorDevice } from '..
  */
 export const deleteByDeviceUuid = async (deviceUuid: string, client: BaseProtocol = DB): Promise<void> => {
   const table = new TableUserTwoFactorDevice()
-
   const values = { [table.uuid.columnName]: deviceUuid }
-
-  const sql = new SqlDeleteBuilder().deleteFrom(table).where(values).build()
-
-  await client.none(sql, values)
+  await deleteWhereCondition(values, client)
 }
 
 /**
@@ -24,10 +26,6 @@ export const deleteByDeviceUuid = async (deviceUuid: string, client: BaseProtoco
  */
 export const deleteByUserUuid = async (userUuid: string, client: BaseProtocol = DB): Promise<void> => {
   const table = new TableUserTwoFactorDevice()
-
   const values = { [table.userUuid.columnName]: userUuid }
-
-  const sql = new SqlDeleteBuilder().deleteFrom(table).where(values).build()
-
-  await client.none(sql, values)
+  await deleteWhereCondition(values, client)
 }

@@ -15,35 +15,32 @@ export const update = async (
 
   const table = new TableUserTwoFactorDevice()
 
-  let updateBuilder = new SqlUpdateBuilder().update(table)
-  let paramIndex = 1
-  const values: any[] = []
+  const updateBuilder = new SqlUpdateBuilder().update(table)
+  const valuesByColumn: Record<string, any> = {}
 
   if (deviceName !== undefined) {
-    updateBuilder = updateBuilder.set(table.deviceName, `$${paramIndex++}`)
-    values.push(deviceName)
+    valuesByColumn[table.deviceName.columnName] = deviceName
   }
   if (secret !== undefined) {
-    updateBuilder = updateBuilder.set(table.secret, `$${paramIndex++}`)
-    values.push(secret)
+    valuesByColumn[table.secret.columnName] = secret
   }
   if (enabled !== undefined) {
-    updateBuilder = updateBuilder.set(table.enabled, `$${paramIndex++}`)
-    values.push(enabled)
+    valuesByColumn[table.enabled.columnName] = enabled
   }
   if (backupCodes !== undefined) {
-    updateBuilder = updateBuilder.set(table.backupCodes, `$${paramIndex++}::jsonb`)
-    values.push(JSON.stringify(backupCodes))
+    valuesByColumn[table.backupCodes.columnName] = JSON.stringify(backupCodes)
   }
-
   // Always update dateUpdated
-  updateBuilder = updateBuilder.set(table.dateUpdated, 'NOW()')
+  valuesByColumn[table.dateUpdated.columnName] = new Date()
+
+  // UUID is used in WHERE clause
+  valuesByColumn[table.uuid.columnName] = uuid
 
   const sql = updateBuilder
-    .where(`${table.uuid} = $${paramIndex}`)
+    .setByColumnValues(valuesByColumn)
+    .where(`${table.uuid} = $/uuid/`)
     .returning(...table.columns)
     .build()
-  values.push(uuid)
 
-  return client.one<UserTwoFactorDeviceStored>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<UserTwoFactorDeviceStored>(sql, valuesByColumn, (row) => DBs.transformCallback({ row }))
 }
