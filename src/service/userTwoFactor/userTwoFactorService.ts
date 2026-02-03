@@ -26,7 +26,7 @@ const generateSecret = async (options: {
   const qrCodeUrl = await QRCode.toDataURL(secretData.otpauth_url || '')
 
   return {
-    secret: secretData.base32 || '',
+    secret: secretData.base32,
     qrCodeUrl,
   }
 }
@@ -57,6 +57,11 @@ const verifyToken = (options: { secret: string; token: string }): boolean => {
   })
 }
 
+const toTwoFactorDeviceForClient = (device: UserTwoFactorDeviceForClient): UserTwoFactorDeviceForClient => {
+  const { uuid, userUuid, deviceName, enabled, dateCreated, dateUpdated } = device
+  return { uuid, userUuid, deviceName, enabled, dateCreated, dateUpdated }
+}
+
 /**
  * Initiates 2FA setup for a new device (generates secret and QR code but doesn't enable it yet).
  */
@@ -70,31 +75,19 @@ export const addDevice = async (options: {
 
   const { secret, qrCodeUrl } = await generateSecret({ userEmail, deviceName })
   const backupCodes = generateBackupCodes()
-  const now = new Date()
 
-  const device = await UserTwoFactorRepository.insert(
+  const enabled = false
+  const twoFactorDevice = await UserTwoFactorRepository.insert(
     {
       userUuid,
       deviceName,
       secret,
-      enabled: false,
+      enabled,
       backupCodes,
-      dateCreated: now,
-      dateUpdated: now,
     },
     client
   )
-
-  return {
-    uuid: device.uuid,
-    userUuid: device.userUuid,
-    deviceName: device.deviceName,
-    enabled: device.enabled,
-    dateCreated: device.dateCreated,
-    dateUpdated: device.dateUpdated,
-    qrCodeUrl,
-    backupCodes,
-  }
+  return { ...toTwoFactorDeviceForClient(twoFactorDevice), qrCodeUrl, backupCodes }
 }
 
 /**
@@ -120,22 +113,9 @@ export const verifyDevice = async (options: {
   }
 
   // Enable the device
-  const updated = await UserTwoFactorRepository.update(
-    {
-      uuid: deviceUuid,
-      enabled: true,
-    },
-    client
-  )
-
-  return {
-    uuid: updated.uuid,
-    userUuid: updated.userUuid,
-    deviceName: updated.deviceName,
-    enabled: updated.enabled,
-    dateCreated: updated.dateCreated,
-    dateUpdated: updated.dateUpdated,
-  }
+  const enabled = true
+  const updated = await UserTwoFactorRepository.update({ uuid: deviceUuid, enabled }, client)
+  return toTwoFactorDeviceForClient(updated)
 }
 
 /**
@@ -167,14 +147,7 @@ export const getDevices = async (options: {
 
   const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
 
-  return devices.map((device) => ({
-    uuid: device.uuid,
-    userUuid: device.userUuid,
-    deviceName: device.deviceName,
-    enabled: device.enabled,
-    dateCreated: device.dateCreated,
-    dateUpdated: device.dateUpdated,
-  }))
+  return devices.map(toTwoFactorDeviceForClient)
 }
 
 /**
@@ -208,7 +181,7 @@ export const verifyLogin = async (options: {
   // Check if token matches any enabled device
   for (const device of enabledDevices) {
     // Check if it's a backup code
-    if (device.backupCodes && device.backupCodes.includes(token)) {
+    if (device.backupCodes?.includes(token)) {
       // Remove used backup code
       const updatedCodes = device.backupCodes.filter((code) => code !== token)
       await UserTwoFactorRepository.update(
@@ -275,15 +248,7 @@ export const updateDeviceName = async (options: {
     },
     client
   )
-
-  return {
-    uuid: updated.uuid,
-    userUuid: updated.userUuid,
-    deviceName: updated.deviceName,
-    enabled: updated.enabled,
-    dateCreated: updated.dateCreated,
-    dateUpdated: updated.dateUpdated,
-  }
+  return toTwoFactorDeviceForClient(updated)
 }
 
 export const UserTwoFactorService = {

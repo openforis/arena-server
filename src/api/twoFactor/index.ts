@@ -7,16 +7,17 @@ import { Requests, Responses } from '../../utils'
 import { UserTwoFactorService } from '../../service'
 import { ApiEndpoint } from '../endpoint'
 
+const sendUnauthorizedResponse = (res: Response): unknown => res.status(401).json({ message: 'Unauthorized' })
+
 export const TwoFactorApi: ExpressInitializer = {
   init: (express: Express): void => {
     // GET /api/2fa/devices - Get all 2FA devices for the current user
     express.get(ApiEndpoint.twoFactor.devices(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
-
         const devices = await UserTwoFactorService.getDevices({ userUuid: user.uuid })
         return res.json(devices)
       } catch (error: any) {
@@ -27,9 +28,9 @@ export const TwoFactorApi: ExpressInitializer = {
     // POST /api/2fa/device/add - Add a new 2FA device
     express.post(ApiEndpoint.twoFactor.addDevice(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
 
         const { deviceName } = Requests.getParams(req)
@@ -53,9 +54,9 @@ export const TwoFactorApi: ExpressInitializer = {
     // POST /api/2fa/device/verify - Verify and enable a 2FA device
     express.post(ApiEndpoint.twoFactor.verifyDevice(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
 
         const { deviceUuid, token } = Requests.getParams(req)
@@ -64,10 +65,7 @@ export const TwoFactorApi: ExpressInitializer = {
           return res.status(400).json({ message: 'Device UUID and token are required' })
         }
 
-        const device = await UserTwoFactorService.verifyDevice({
-          deviceUuid,
-          token,
-        })
+        const device = await UserTwoFactorService.verifyDevice({ deviceUuid, token })
 
         return res.json(device)
       } catch (error: any) {
@@ -81,9 +79,9 @@ export const TwoFactorApi: ExpressInitializer = {
     // POST /api/2fa/device/remove - Remove a 2FA device
     express.post(ApiEndpoint.twoFactor.removeDevice(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
 
         const { deviceUuid } = Requests.getParams(req)
@@ -102,9 +100,9 @@ export const TwoFactorApi: ExpressInitializer = {
     // POST /api/2fa/device/rename - Rename a 2FA device
     express.post(ApiEndpoint.twoFactor.renameDevice(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
 
         const { deviceUuid, deviceName } = Requests.getParams(req)
@@ -123,9 +121,9 @@ export const TwoFactorApi: ExpressInitializer = {
     // POST /api/2fa/disable-all - Disable all 2FA devices
     express.post(ApiEndpoint.twoFactor.disableAll(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
 
         await UserTwoFactorService.disableAll({ userUuid: user.uuid })
@@ -138,9 +136,9 @@ export const TwoFactorApi: ExpressInitializer = {
     // POST /api/2fa/device/regenerate-backup-codes - Regenerate backup codes for a device
     express.post(ApiEndpoint.twoFactor.regenerateBackupCodes(), async (req: Request, res: Response) => {
       try {
-        const user: User = req.user as User
+        const user: User = req.user
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return sendUnauthorizedResponse(res)
         }
 
         const { deviceUuid } = Requests.getParams(req)
