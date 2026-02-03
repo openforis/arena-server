@@ -1,18 +1,19 @@
 import { Express } from 'express'
-
 import rateLimit from 'express-rate-limit'
+
 import { ExpressInitializer } from '../expressInitializer'
 import { ProcessEnv } from '../../processEnv'
 
-const rateLimitWindowMs = 15 * 60 * 1000 // 15 minutes
-const maxRequestsPerWindow = 100 // limit each IP to 100 requests per windowMs
 const rateLimitedPaths = ['/auth']
 
 export const RateLimitMiddleware: ExpressInitializer = {
   init(express: Express): void {
+    if (!ProcessEnv.rateLimitEnabled) {
+      return
+    }
     const limiter = rateLimit({
-      windowMs: rateLimitWindowMs,
-      max: maxRequestsPerWindow,
+      windowMs: ProcessEnv.rateLimitWindowMs,
+      max: ProcessEnv.rateLimitRequestsPerWindow,
       message: {
         status: 429,
         message: 'Too many requests, please try again later.',

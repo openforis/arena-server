@@ -40,6 +40,10 @@ export const ProcessEnv = {
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: isTrue(process.env.USE_HTTPS),
   fileUploadLimit: Number(process.env.FILE_UPLOAD_LIMIT) || 1024 ** 3, // 1GB
+  // Rate limiting
+  rateLimitEnabled: isTrue(process.env.RATE_LIMIT_ENABLED),
+  rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  rateLimitRequestsPerWindow: Number(process.env.RATE_LIMIT_REQUESTS_PER_WINDOW) || 100, // limit each IP to 100 requests per windowMs
 
   // Logging
   disableLogging: process.env.NODE_ENV === 'test' && isTrue(process.env.DISABLE_LOGS),
