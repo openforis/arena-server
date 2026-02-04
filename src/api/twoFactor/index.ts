@@ -18,8 +18,22 @@ export const TwoFactorApi: ExpressInitializer = {
         if (!user) {
           return sendUnauthorizedResponse(res)
         }
-        const devices = await UserTwoFactorService.getDevices({ userUuid: user.uuid })
-        return res.json(devices)
+        const list = await UserTwoFactorService.getDevices({ userUuid: user.uuid })
+        return res.json({ list })
+      } catch (error: any) {
+        return Responses.sendError(res, error)
+      }
+    })
+
+    // GET /api/2fa/devices/count - Get count of 2FA devices for the current user
+    express.get(ApiEndpoint.twoFactor.devicesCount(), async (req: Request, res: Response) => {
+      try {
+        const user: User = req.user
+        if (!user) {
+          return sendUnauthorizedResponse(res)
+        }
+        const count = await UserTwoFactorService.countDevices({ userUuid: user.uuid })
+        return res.json({ count })
       } catch (error: any) {
         return Responses.sendError(res, error)
       }
