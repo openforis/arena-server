@@ -88,6 +88,24 @@ const addDevice = async (options: {
 }
 
 /**
+ * Gets a specific 2FA device by its UUID.
+ */
+const getDevice = async (options: {
+  deviceUuid: string
+  client?: BaseProtocol
+}): Promise<UserTwoFactorDeviceForClient> => {
+  const { deviceUuid, client = DB } = options
+
+  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
+
+  if (!device) {
+    throw new Error(deviceNotFoundErrorMessageKey)
+  }
+
+  return toTwoFactorDeviceForClient(device)
+}
+
+/**
  * Verifies and enables a 2FA device.
  */
 const verifyDevice = async (options: {
@@ -258,6 +276,7 @@ export const UserTwoFactorService = {
   disableAll,
   countDevices,
   getDevices,
+  getDevice,
   hasEnabledDevices,
   verifyLogin,
   regenerateBackupCodes,
