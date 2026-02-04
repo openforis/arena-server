@@ -1,4 +1,4 @@
-import * as speakeasy from 'speakeasy'
+import { authenticator } from 'otplib'
 import * as QRCode from 'qrcode'
 import * as crypto from 'crypto'
 
@@ -17,16 +17,13 @@ const generateSecret = async (options: {
 }): Promise<{ secret: string; qrCodeUrl: string }> => {
   const { userEmail, deviceName } = options
 
-  const secretData = speakeasy.generateSecret({
-    name: `${APP_NAME} (${userEmail}) - ${deviceName}`,
-    issuer: APP_NAME,
-    length: 32,
-  })
+  const secret = authenticator.generateSecret()
+  const otpauthUrl = authenticator.keyuri(`${userEmail} - ${deviceName}`, APP_NAME, secret)
 
-  const qrCodeUrl = await QRCode.toDataURL(secretData.otpauth_url || '')
+  const qrCodeUrl = await QRCode.toDataURL(otpauthUrl)
 
   return {
-    secret: secretData.base32,
+    secret,
     qrCodeUrl,
   }
 }
@@ -49,12 +46,10 @@ const generateBackupCodes = (): string[] => {
 const verifyToken = (options: { secret: string; token: string }): boolean => {
   const { secret, token } = options
 
-  return speakeasy.totp.verify({
-    secret,
-    encoding: 'base32',
-    token,
-    window: 2, // Allow 2 time steps before and after for clock skew
-  })
+  // Set window to allow for clock skew (2 time steps before and after)
+  authenticator.options = { window: 2 }
+
+  return authenticator.verify({ token, secret })
 }
 
 const toTwoFactorDeviceForClient = (device: UserTwoFactorDeviceForClient): UserTwoFactorDeviceForClient => {
