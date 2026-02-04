@@ -8,6 +8,8 @@ import { BaseProtocol, DB } from '../../db'
 
 const APP_NAME = 'Arena'
 
+const deviceNotFoundErrorMessageKey = 'Device not found'
+
 /**
  * Generates a new 2FA secret and QR code URL for a device.
  */
@@ -98,7 +100,7 @@ const verifyDevice = async (options: {
   const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
 
   if (!device) {
-    throw new Error('Device not found')
+    throw new Error(deviceNotFoundErrorMessageKey)
   }
 
   const isValid = verifyToken({ secret: device.secret, token })
@@ -212,7 +214,7 @@ const regenerateBackupCodes = async (options: { deviceUuid: string; client?: Bas
   const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
 
   if (!device) {
-    throw new Error('Device not found')
+    throw new Error(deviceNotFoundErrorMessageKey)
   }
 
   const backupCodes = generateBackupCodes()
@@ -249,6 +251,7 @@ const updateDeviceName = async (options: {
 }
 
 export const UserTwoFactorService = {
+  deviceNotFoundErrorMessageKey,
   addDevice,
   verifyDevice,
   removeDevice,

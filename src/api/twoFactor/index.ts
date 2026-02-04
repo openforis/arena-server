@@ -53,11 +53,9 @@ export const TwoFactorApi: ExpressInitializer = {
           return res.status(400).json({ message: 'Device name is required' })
         }
 
-        const device = await UserTwoFactorService.addDevice({
-          userUuid: user.uuid,
-          userEmail: user.email,
-          deviceName,
-        })
+        const { uuid: userUuid, email: userEmail } = user
+
+        const device = await UserTwoFactorService.addDevice({ userUuid, userEmail, deviceName })
 
         return res.json(device)
       } catch (error: any) {
@@ -83,7 +81,10 @@ export const TwoFactorApi: ExpressInitializer = {
 
         return res.json(device)
       } catch (error: any) {
-        if (error.message === 'Invalid verification code' || error.message === 'Device not found') {
+        if (
+          error.message === 'Invalid verification code' ||
+          error.message === UserTwoFactorService.deviceNotFoundErrorMessageKey
+        ) {
           return res.status(400).json({ message: error.message })
         }
         return Responses.sendError(res, error)
@@ -164,8 +165,9 @@ export const TwoFactorApi: ExpressInitializer = {
         const backupCodes = await UserTwoFactorService.regenerateBackupCodes({ deviceUuid })
         return res.json({ backupCodes })
       } catch (error: any) {
-        if (error.message === 'Device not found') {
-          return res.status(400).json({ message: error.message })
+        const { message } = error
+        if (message === UserTwoFactorService.deviceNotFoundErrorMessageKey) {
+          return res.status(400).json({ message })
         }
         return Responses.sendError(res, error)
       }
