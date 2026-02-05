@@ -1,5 +1,4 @@
 import { authenticator } from 'otplib'
-import * as QRCode from 'qrcode'
 import * as crypto from 'crypto'
 
 import { UserTwoFactorDevice, UserTwoFactorDeviceForClient } from '../../model'
@@ -16,18 +15,13 @@ const deviceNotFoundErrorMessageKey = 'Device not found'
 const generateSecret = async (options: {
   userEmail: string
   deviceName: string
-}): Promise<{ secret: string; qrCodeUrl: string }> => {
+}): Promise<{ secret: string; otpAuthUrl: string }> => {
   const { userEmail, deviceName } = options
 
   const secret = authenticator.generateSecret()
-  const otpauthUrl = authenticator.keyuri(`${userEmail} - ${deviceName}`, APP_NAME, secret)
+  const otpAuthUrl = authenticator.keyuri(`${userEmail} - ${deviceName}`, APP_NAME, secret)
 
-  const qrCodeUrl = await QRCode.toDataURL(otpauthUrl)
-
-  return {
-    secret,
-    qrCodeUrl,
-  }
+  return { secret, otpAuthUrl }
 }
 
 /**
@@ -70,7 +64,7 @@ const addDevice = async (options: {
 }): Promise<UserTwoFactorDeviceForClient> => {
   const { userUuid, userEmail, deviceName, client = DB } = options
 
-  const { secret, qrCodeUrl } = await generateSecret({ userEmail, deviceName })
+  const { secret, otpAuthUrl } = await generateSecret({ userEmail, deviceName })
   const backupCodes = generateBackupCodes()
 
   const enabled = false
@@ -84,7 +78,7 @@ const addDevice = async (options: {
     },
     client
   )
-  return { ...toTwoFactorDeviceForClient(twoFactorDevice), qrCodeUrl, backupCodes }
+  return { ...toTwoFactorDeviceForClient(twoFactorDevice), otpAuthUrl, backupCodes }
 }
 
 /**

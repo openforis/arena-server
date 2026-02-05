@@ -12,6 +12,6 @@ export type UserTwoFactorDevice = {
 export type UserTwoFactorDeviceStored = UserTwoFactorDevice
 
 export type UserTwoFactorDeviceForClient = Omit<UserTwoFactorDevice, 'secret' | 'backupCodes'> & {
-  qrCodeUrl?: string // Only returned when setting up a new device
+  otpAuthUrl?: string // Only returned when setting up a new device
   backupCodes?: string[] // Only returned when setting up a new device or regenerating backup codes
 }
