@@ -7,10 +7,10 @@ import { Requests, Responses } from '../../utils'
 import { UserTwoFactorService } from '../../service'
 import { ApiEndpoint } from '../endpoint'
 
-export const TwoFactorApi: ExpressInitializer = {
+export const UserTwoFactorAuthApi: ExpressInitializer = {
   init: (express: Express): void => {
     // GET /api/2fa/devices - Get all 2FA devices for the current user
-    express.get(ApiEndpoint.twoFactor.devices(), async (req: Request, res: Response) => {
+    express.get(ApiEndpoint.userTwoFactorAuth.devices(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user
         const list = await UserTwoFactorService.getDevices({ userUuid: user.uuid })
@@ -21,7 +21,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // GET /api/2fa/devices/count - Get count of 2FA devices for the current user
-    express.get(ApiEndpoint.twoFactor.devicesCount(), async (req: Request, res: Response) => {
+    express.get(ApiEndpoint.userTwoFactorAuth.devicesCount(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user
         const count = await UserTwoFactorService.countDevices({ userUuid: user.uuid })
@@ -32,7 +32,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // GET /api/2fa/device/:uuid - Get a specific 2FA device by its UUID
-    express.get(ApiEndpoint.twoFactor.device(), async (req: Request, res: Response) => {
+    express.get(ApiEndpoint.userTwoFactorAuth.device(), async (req: Request, res: Response) => {
       try {
         const { deviceUuid } = Requests.getParams(req)
 
@@ -49,7 +49,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/device/add - Add a new 2FA device
-    express.post(ApiEndpoint.twoFactor.addDevice(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.addDevice(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user
         const { deviceName } = Requests.getParams(req)
@@ -69,7 +69,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/device/verify - Verify and enable a 2FA device
-    express.post(ApiEndpoint.twoFactor.verifyDevice(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.verifyDevice(), async (req: Request, res: Response) => {
       try {
         const { deviceUuid, token } = Requests.getParams(req)
 
@@ -92,7 +92,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/device/remove - Remove a 2FA device
-    express.post(ApiEndpoint.twoFactor.removeDevice(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.removeDevice(), async (req: Request, res: Response) => {
       try {
         const { deviceUuid } = Requests.getParams(req)
 
@@ -108,7 +108,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/device/rename - Rename a 2FA device
-    express.post(ApiEndpoint.twoFactor.renameDevice(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.renameDevice(), async (req: Request, res: Response) => {
       try {
         const { deviceUuid, deviceName } = Requests.getParams(req)
 
@@ -124,7 +124,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/disable-all - Disable all 2FA devices
-    express.post(ApiEndpoint.twoFactor.disableAll(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.disableAll(), async (req: Request, res: Response) => {
       try {
         const user: User = req.user
         await UserTwoFactorService.disableAll({ userUuid: user.uuid })
@@ -135,7 +135,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/device/regenerate-backup-codes - Regenerate backup codes for a device
-    express.post(ApiEndpoint.twoFactor.regenerateBackupCodes(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.regenerateBackupCodes(), async (req: Request, res: Response) => {
       try {
         const { deviceUuid } = Requests.getParams(req)
 
@@ -155,7 +155,7 @@ export const TwoFactorApi: ExpressInitializer = {
     })
 
     // POST /api/2fa/verify-login - Verify 2FA token during login (checks all enabled devices)
-    express.post(ApiEndpoint.twoFactor.verifyLogin(), async (req: Request, res: Response) => {
+    express.post(ApiEndpoint.userTwoFactorAuth.verifyLogin(), async (req: Request, res: Response) => {
       try {
         const { userUuid, token } = Requests.getParams(req)
 

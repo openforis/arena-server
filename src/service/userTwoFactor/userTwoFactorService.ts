@@ -78,7 +78,21 @@ const addDevice = async (options: {
     },
     client
   )
-  return { ...toTwoFactorDeviceForClient(twoFactorDevice), otpAuthUrl, backupCodes }
+  return {
+    ...toTwoFactorDeviceForClient(twoFactorDevice),
+    backupCodes,
+    otpAuthUrl,
+    secret,
+  }
+}
+
+const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol) => {
+  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
+
+  if (!device) {
+    throw new Error(deviceNotFoundErrorMessageKey)
+  }
+  return device
 }
 
 /**
@@ -90,11 +104,7 @@ const getDevice = async (options: {
 }): Promise<UserTwoFactorDeviceForClient> => {
   const { deviceUuid, client = DB } = options
 
-  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
-
-  if (!device) {
-    throw new Error(deviceNotFoundErrorMessageKey)
-  }
+  const device = await getDeviceSafe(deviceUuid, client)
 
   return toTwoFactorDeviceForClient(device)
 }
@@ -109,11 +119,7 @@ const verifyDevice = async (options: {
 }): Promise<UserTwoFactorDeviceForClient> => {
   const { deviceUuid, token, client = DB } = options
 
-  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
-
-  if (!device) {
-    throw new Error(deviceNotFoundErrorMessageKey)
-  }
+  const device = await getDeviceSafe(deviceUuid, client)
 
   const isValid = verifyToken({ secret: device.secret, token })
 
@@ -223,11 +229,7 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
 const regenerateBackupCodes = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<string[]> => {
   const { deviceUuid, client = DB } = options
 
-  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
-
-  if (!device) {
-    throw new Error(deviceNotFoundErrorMessageKey)
-  }
+  await getDeviceSafe(deviceUuid, client)
 
   const backupCodes = generateBackupCodes()
 

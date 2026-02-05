@@ -1,2 +1,2 @@
 export type { UserTempAuthToken, UserTempAuthTokenStored, UserTempAuthTokenForClient } from './userTempAuthToken'
-export type { UserTwoFactorDevice, UserTwoFactorDeviceStored, UserTwoFactorDeviceForClient } from './userTwoFactor'
+export type { UserTwoFactorDevice, UserTwoFactorDeviceStored, UserTwoFactorDeviceForClient } from './userTwoFactorAuth'
