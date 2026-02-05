@@ -2,7 +2,7 @@ import { authenticator } from 'otplib'
 import * as QRCode from 'qrcode'
 import * as crypto from 'crypto'
 
-import { UserTwoFactorDeviceForClient } from '../../model'
+import { UserTwoFactorDevice, UserTwoFactorDeviceForClient } from '../../model'
 import { UserTwoFactorRepository } from '../../repository'
 import { BaseProtocol, DB } from '../../db'
 
@@ -54,9 +54,9 @@ const verifyToken = (options: { secret: string; token: string }): boolean => {
   return authenticator.verify({ token, secret })
 }
 
-const toTwoFactorDeviceForClient = (device: UserTwoFactorDeviceForClient): UserTwoFactorDeviceForClient => {
-  const { uuid, userUuid, deviceName, enabled, dateCreated, dateUpdated } = device
-  return { uuid, userUuid, deviceName, enabled, dateCreated, dateUpdated }
+const toTwoFactorDeviceForClient = (device: UserTwoFactorDevice): UserTwoFactorDeviceForClient => {
+  const { uuid, userUuid, deviceName, enabled, dateCreated, dateModified } = device
+  return { uuid, userUuid, deviceName, enabled, dateCreated, dateModified }
 }
 
 /**

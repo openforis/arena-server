@@ -6,7 +6,7 @@ export type UserTwoFactorDevice = {
   enabled: boolean
   backupCodes: string[]
   dateCreated: Date
-  dateUpdated: Date
+  dateModified: Date
 }
 
 export type UserTwoFactorDeviceStored = UserTwoFactorDevice

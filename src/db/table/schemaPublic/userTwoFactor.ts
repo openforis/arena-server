@@ -9,7 +9,7 @@ export class TableUserTwoFactorDevice extends TableSchemaPublic {
   readonly enabled: Column = new Column(this, 'enabled', ColumnType.boolean)
   readonly backupCodes: Column = new Column(this, 'backup_codes', ColumnType.jsonb)
   readonly dateCreated: Column = new Column(this, 'date_created', ColumnType.timeStamp)
-  readonly dateUpdated: Column = new Column(this, 'date_updated', ColumnType.timeStamp)
+  readonly dateModified: Column = new Column(this, 'date_modified', ColumnType.timeStamp)
 
   constructor() {
     super('user_two_factor_device')
@@ -24,7 +24,7 @@ export class TableUserTwoFactorDevice extends TableSchemaPublic {
       this.enabled,
       this.backupCodes,
       this.dateCreated,
-      this.dateUpdated,
+      this.dateModified,
     ]
   }
 }

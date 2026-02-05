@@ -30,8 +30,8 @@ export const update = async (
   if (backupCodes !== undefined) {
     valuesByColumn[table.backupCodes.columnName] = JSON.stringify(backupCodes)
   }
-  // Always update dateUpdated
-  valuesByColumn[table.dateUpdated.columnName] = new Date()
+  // Always update dateModified
+  valuesByColumn[table.dateModified.columnName] = new Date()
 
   // UUID is used in WHERE clause
   valuesByColumn[table.uuid.columnName] = uuid

@@ -8,7 +8,7 @@ CREATE TABLE
   enabled        boolean      NOT NULL DEFAULT false,
   backup_codes   jsonb        NOT NULL DEFAULT '[]'::jsonb,
   date_created   timestamp    NOT NULL DEFAULT now(),
-  date_updated   timestamp    NOT NULL DEFAULT now(),
+  date_modified  timestamp    NOT NULL DEFAULT now(),
   PRIMARY KEY (uuid)
 );
 

@@ -8,7 +8,7 @@ import { UserTwoFactorDeviceStored } from '../../model'
  * @param client - Database client
  */
 export const insert = async (
-  options: Omit<UserTwoFactorDeviceStored, 'uuid' | 'dateCreated' | 'dateUpdated'> & { uuid?: string },
+  options: Omit<UserTwoFactorDeviceStored, 'uuid' | 'dateCreated' | 'dateModified'> & { uuid?: string },
   client: BaseProtocol = DB
 ): Promise<UserTwoFactorDeviceStored> => {
   const { uuid, userUuid, deviceName, secret, enabled, backupCodes } = options
@@ -22,7 +22,7 @@ export const insert = async (
     [table.enabled.columnName]: enabled,
     [table.backupCodes.columnName]: JSON.stringify(backupCodes),
     [table.dateCreated.columnName]: now,
-    [table.dateUpdated.columnName]: now,
+    [table.dateModified.columnName]: now,
   }
 
   if (uuid) {
