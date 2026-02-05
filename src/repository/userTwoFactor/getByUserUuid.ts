@@ -1,4 +1,4 @@
-import { BaseProtocol, DB, SqlSelectBuilder, TableUserTwoFactorDevice } from '../../db'
+import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserTwoFactorDevice } from '../../db'
 import { UserTwoFactorDeviceStored } from '../../model'
 
 /**
@@ -19,6 +19,5 @@ export const getByUserUuid = async (
     .where(`${table.userUuid} = $/userUuid/`)
     .build()
 
-  const results = await client.manyOrNone<UserTwoFactorDeviceStored>(sql, { userUuid })
-  return results || []
+  return client.map(sql, { userUuid }, (row) => DBs.transformCallback({ row }))
 }
