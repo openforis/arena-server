@@ -71,13 +71,13 @@ export const UserTwoFactorAuthApi: ExpressInitializer = {
     // POST /api/2fa/device/verify - Verify and enable a 2FA device
     express.post(ApiEndpoint.userTwoFactorAuth.verifyDevice(), async (req: Request, res: Response) => {
       try {
-        const { deviceUuid, token } = Requests.getParams(req)
+        const { deviceUuid, token1, token2 } = Requests.getParams(req)
 
-        if (!deviceUuid || !token) {
-          return res.status(400).json({ message: 'Device UUID and token are required' })
+        if (!deviceUuid || !token1 || !token2) {
+          return res.status(400).json({ message: 'Device UUID and tokens are required' })
         }
 
-        const device = await UserTwoFactorService.verifyDevice({ deviceUuid, token })
+        const device = await UserTwoFactorService.verifyDevice({ deviceUuid, token1, token2 })
 
         return res.json(device)
       } catch (error: any) {

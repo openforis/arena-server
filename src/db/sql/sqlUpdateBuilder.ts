@@ -23,7 +23,7 @@ export class SqlUpdateBuilder extends SqlBuilder {
 
   setByColumnValues(values: Record<string, string>): this {
     for (const columnName of Object.keys(values)) {
-      this.set(columnName, `${columnName}`)
+      this.set(columnName, `$/${columnName}/`)
     }
     return this
   }

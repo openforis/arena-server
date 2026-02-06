@@ -19,7 +19,8 @@ const generateSecret = async (options: {
   const { userEmail, deviceName } = options
 
   const secret = authenticator.generateSecret()
-  const otpAuthUrl = authenticator.keyuri(`${userEmail} - ${deviceName}`, APP_NAME, secret)
+  const accountName = `${deviceName} - ${userEmail}`
+  const otpAuthUrl = authenticator.keyuri(accountName, APP_NAME, secret)
 
   return { secret, otpAuthUrl }
 }
@@ -86,7 +87,7 @@ const addDevice = async (options: {
   }
 }
 
-const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol) => {
+const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol): Promise<UserTwoFactorDevice> => {
   const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
 
   if (!device) {
@@ -114,19 +115,20 @@ const getDevice = async (options: {
  */
 const verifyDevice = async (options: {
   deviceUuid: string
-  token: string
+  token1: string
+  token2: string
   client?: BaseProtocol
 }): Promise<UserTwoFactorDeviceForClient> => {
-  const { deviceUuid, token, client = DB } = options
+  const { deviceUuid, token1, token2, client = DB } = options
 
   const device = await getDeviceSafe(deviceUuid, client)
+  const { secret } = device
 
-  const isValid = verifyToken({ secret: device.secret, token })
-
+  // Verify the provided tokens against the secret
+  const isValid = [token1, token2].some((token) => verifyToken({ secret, token }))
   if (!isValid) {
     throw new Error('Invalid verification code')
   }
-
   // Enable the device
   const enabled = true
   const updated = await UserTwoFactorRepository.update({ uuid: deviceUuid, enabled }, client)
