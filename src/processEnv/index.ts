@@ -36,8 +36,6 @@ export const ProcessEnv = {
 
   // Express
   port: Number(process.env.PORT ?? 9090),
-  userAuthTokenSecret: process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
-  user2FASecret: process.env.USER_2FA_SECRET || process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
   tempFolder: process.env.TEMP_FOLDER || '/tmp/arena_upload',
   useHttps: isTrue(process.env.USE_HTTPS),
   fileUploadLimit: Number(process.env.FILE_UPLOAD_LIMIT) || 1024 ** 3, // 1GB
@@ -48,4 +46,8 @@ export const ProcessEnv = {
 
   // Logging
   disableLogging: process.env.NODE_ENV === 'test' && isTrue(process.env.DISABLE_LOGS),
+
+  // Security
+  userAuthTokenSecret: process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
+  user2FASecret: process.env.USER_2FA_SECRET || process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
 }
