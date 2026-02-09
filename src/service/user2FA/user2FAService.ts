@@ -1,13 +1,84 @@
 import { authenticator } from 'otplib'
 import * as crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 
-import { User2FADevice, User2FADeviceForClient } from '../../model'
+import { User2FADevice, User2FADeviceForClient, User2FADeviceForClientFirstTimeSetup } from '../../model'
 import { User2FADeviceRepository } from '../../repository'
 import { BaseProtocol, DB } from '../../db'
+import { ProcessEnv } from '../../processEnv'
 
 const APP_NAME = 'Arena'
+const ENCRYPTION_VERSION = 'v1'
+const backupCodeHashRounds = 10
 
 const deviceNotFoundErrorMessageKey = 'Device not found'
+
+const buildSecretKey = (): Buffer => crypto.createHash('sha256').update(ProcessEnv.user2FASecret).digest()
+
+const encryptSecret = (secret: string): string => {
+  const iv = crypto.randomBytes(12)
+  const key = buildSecretKey()
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
+  const ciphertext = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()])
+  const tag = cipher.getAuthTag()
+
+  return [ENCRYPTION_VERSION, iv.toString('base64'), tag.toString('base64'), ciphertext.toString('base64')].join('.')
+}
+
+const decryptSecret = (secret: string): string => {
+  if (!secret.startsWith(`${ENCRYPTION_VERSION}.`)) {
+    return secret
+  }
+
+  const [version, ivBase64, tagBase64, ciphertextBase64] = secret.split('.')
+  if (version !== ENCRYPTION_VERSION || !ivBase64 || !tagBase64 || !ciphertextBase64) {
+    throw new Error('Invalid encrypted 2FA secret')
+  }
+
+  const key = buildSecretKey()
+  const iv = Buffer.from(ivBase64, 'base64')
+  const tag = Buffer.from(tagBase64, 'base64')
+  const ciphertext = Buffer.from(ciphertextBase64, 'base64')
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
+  decipher.setAuthTag(tag)
+
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8')
+}
+
+const isBcryptHash = (value: string): boolean => value.startsWith('$2')
+
+const hashBackupCodes = (codes: string[]): string[] => codes.map((code) => bcrypt.hashSync(code, backupCodeHashRounds))
+
+const normalizeBackupCodesAfterPlainMatch = (codes: string[], usedToken: string): string[] => {
+  const remainingPlain = codes.filter((code) => !isBcryptHash(code) && code !== usedToken)
+  const remainingHashed = codes.filter((code) => isBcryptHash(code))
+  return [...remainingHashed, ...hashBackupCodes(remainingPlain)]
+}
+
+const findAndConsumeBackupCode = (
+  codes: string[] | undefined,
+  token: string
+): { matched: boolean; updatedCodes?: string[] } => {
+  if (!codes || codes.length === 0) {
+    return { matched: false }
+  }
+
+  for (const code of codes) {
+    if (isBcryptHash(code)) {
+      if (bcrypt.compareSync(token, code)) {
+        return { matched: true, updatedCodes: codes.filter((entry) => entry !== code) }
+      }
+      continue
+    }
+
+    if (code === token) {
+      return { matched: true, updatedCodes: normalizeBackupCodesAfterPlainMatch(codes, token) }
+    }
+  }
+
+  return { matched: false }
+}
 
 /**
  * Generates a new 2FA secret and QR code URL for a device.
@@ -62,28 +133,30 @@ const addDevice = async (options: {
   userEmail: string
   deviceName: string
   client?: BaseProtocol
-}): Promise<User2FADeviceForClient> => {
+}): Promise<User2FADeviceForClientFirstTimeSetup> => {
   const { userUuid, userEmail, deviceName, client = DB } = options
 
   const { secret, otpAuthUrl } = await generateSecret({ userEmail, deviceName })
   const backupCodes = generateBackupCodes()
+  const backupCodesHashed = hashBackupCodes(backupCodes)
+  const encryptedSecret = encryptSecret(secret)
 
   const enabled = false
   const device = await User2FADeviceRepository.insert(
     {
       userUuid,
       deviceName,
-      secret,
+      secret: encryptedSecret,
       enabled,
-      backupCodes,
+      backupCodes: backupCodesHashed,
     },
     client
   )
   return {
     ...to2FADeviceForClient(device),
-    backupCodes,
-    otpAuthUrl,
-    secret,
+    backupCodes, // Return plain backup codes only at setup time
+    otpAuthUrl, // Return OTP auth URL only at setup time (for QR code generation)
+    secret, // Return plain secret only at setup time (for users who want to enter it manually instead of using QR code)
   }
 }
 
@@ -119,7 +192,7 @@ const verifyDevice = async (options: {
   const { deviceUuid, token1, token2, client = DB } = options
 
   const device = await getDeviceSafe(deviceUuid, client)
-  const { secret } = device
+  const secret = decryptSecret(device.secret)
 
   // Verify the provided tokens against the secret
   const isValid = [token1, token2].every((token) => verifyToken({ secret, token }))
@@ -197,13 +270,12 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
   // Check if token matches any enabled device
   for (const device of enabledDevices) {
     // Check if it's a backup code
-    if (device.backupCodes?.includes(token)) {
-      // Remove used backup code
-      const updatedCodes = device.backupCodes.filter((code) => code !== token)
+    const { matched, updatedCodes } = findAndConsumeBackupCode(device.backupCodes, token)
+    if (matched) {
       await User2FADeviceRepository.update(
         {
           uuid: device.uuid,
-          backupCodes: updatedCodes,
+          backupCodes: updatedCodes ?? [],
         },
         client
       )
@@ -211,7 +283,8 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
     }
 
     // Verify TOTP token
-    if (verifyToken({ secret: device.secret, token })) {
+    const secret = decryptSecret(device.secret)
+    if (verifyToken({ secret, token })) {
       return true
     }
   }
@@ -228,11 +301,12 @@ const regenerateBackupCodes = async (options: { deviceUuid: string; client?: Bas
   await getDeviceSafe(deviceUuid, client)
 
   const backupCodes = generateBackupCodes()
+  const backupCodesHashed = hashBackupCodes(backupCodes)
 
   await User2FADeviceRepository.update(
     {
       uuid: deviceUuid,
-      backupCodes,
+      backupCodes: backupCodesHashed,
     },
     client
   )

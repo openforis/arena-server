@@ -11,8 +11,10 @@ export type User2FADevice = {
 
 export type User2FADeviceStored = User2FADevice
 
-export type User2FADeviceForClient = Omit<User2FADevice, 'secret' | 'backupCodes'> & {
-  backupCodes?: string[] // Only returned when setting up a new device or regenerating backup codes
-  otpAuthUrl?: string // Only returned when setting up a new device
-  secret?: string // Only returned when setting up a new device
+export type User2FADeviceForClient = Omit<User2FADevice, 'secret' | 'backupCodes'>
+
+export type User2FADeviceForClientFirstTimeSetup = User2FADeviceForClient & {
+  backupCodes: string[] // Plain backup codes are only returned at setup time (not stored in DB in plain form)
+  otpAuthUrl: string // OTP auth URL is only returned at setup time (for QR code generation)
+  secret: string // Plain secret is only returned at setup time (for users who want to enter it manually instead of using QR code)
 }
