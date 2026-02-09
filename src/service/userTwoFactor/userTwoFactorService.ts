@@ -125,7 +125,7 @@ const verifyDevice = async (options: {
   const { secret } = device
 
   // Verify the provided tokens against the secret
-  const isValid = [token1, token2].some((token) => verifyToken({ secret, token }))
+  const isValid = [token1, token2].every((token) => verifyToken({ secret, token }))
   if (!isValid) {
     throw new Error('Invalid verification code')
   }
