@@ -6,7 +6,7 @@ import { AuthApi } from './auth'
 import { ChainApi } from './chain'
 import { DataQueryApi } from './dataQuery'
 import { MessageApi } from './message'
-import { UserTwoFactorAuthApi } from './userTwoFactorAuth'
+import { User2FAAuthApi } from './user2FAAuth'
 
 export const Api: ExpressInitializer = {
   init: (express: Express): void => {
@@ -14,6 +14,6 @@ export const Api: ExpressInitializer = {
     ChainApi.init(express)
     DataQueryApi.init(express)
     MessageApi.init(express)
-    UserTwoFactorAuthApi.init(express)
+    User2FAAuthApi.init(express)
   },
 }
