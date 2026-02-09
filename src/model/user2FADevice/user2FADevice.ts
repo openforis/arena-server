@@ -9,8 +9,6 @@ export type User2FADevice = {
   dateModified: Date
 }
 
-export type User2FADeviceStored = User2FADevice
-
 export type User2FADeviceForClient = Omit<User2FADevice, 'secret' | 'backupCodes'>
 
 export type User2FADeviceForClientFirstTimeSetup = User2FADeviceForClient & {

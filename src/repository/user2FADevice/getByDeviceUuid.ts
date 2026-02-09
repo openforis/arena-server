@@ -1,5 +1,5 @@
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUser2FADevice } from '../../db'
-import { User2FADeviceStored } from '../../model'
+import { User2FADevice } from '../../model'
 
 /**
  * Gets a 2FA device by its UUID.
@@ -7,10 +7,7 @@ import { User2FADeviceStored } from '../../model'
  * @param deviceUuid - The device UUID
  * @param client - Database client
  */
-export const getByDeviceUuid = async (
-  deviceUuid: string,
-  client: BaseProtocol = DB
-): Promise<User2FADeviceStored | null> => {
+export const getByDeviceUuid = async (deviceUuid: string, client: BaseProtocol = DB): Promise<User2FADevice | null> => {
   const table = new TableUser2FADevice()
 
   const sql = new SqlSelectBuilder()
@@ -19,5 +16,5 @@ export const getByDeviceUuid = async (
     .where(`${table.uuid} = $/deviceUuid/`)
     .build()
 
-  return client.oneOrNone<User2FADeviceStored>(sql, { deviceUuid }, (row) => DBs.transformCallback({ row }))
+  return client.oneOrNone<User2FADevice>(sql, { deviceUuid }, (row) => DBs.transformCallback({ row }))
 }
