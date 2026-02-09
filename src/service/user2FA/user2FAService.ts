@@ -1,5 +1,5 @@
 import { authenticator } from 'otplib'
-import * as crypto from 'crypto'
+import * as crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 
 import { User2FADevice, User2FADeviceForClient, User2FADeviceForClientFirstTimeSetup } from '../../model'
