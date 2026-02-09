@@ -1,5 +1,5 @@
 CREATE TABLE
-  user_two_factor_device
+  user_2fa_device
 (
   uuid           uuid         NOT NULL DEFAULT uuid_generate_v4(),
   user_uuid      uuid         NOT NULL REFERENCES "user" (uuid) ON DELETE CASCADE,
@@ -12,5 +12,5 @@ CREATE TABLE
   PRIMARY KEY (uuid)
 );
 
-CREATE INDEX user_two_factor_device_user_uuid_idx ON user_two_factor_device (user_uuid);
-CREATE INDEX user_two_factor_device_enabled_idx ON user_two_factor_device (user_uuid, enabled) WHERE enabled = true;
+CREATE INDEX user_2fa_device_user_uuid_idx ON user_2fa_device (user_uuid);
+CREATE INDEX user_2fa_device_enabled_idx ON user_2fa_device (user_uuid, enabled) WHERE enabled = true;

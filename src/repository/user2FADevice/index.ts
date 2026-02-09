@@ -5,7 +5,7 @@ import { countByUserUuid } from './countByUserUuid'
 import { insert } from './insert'
 import { update } from './update'
 
-export const UserTwoFactorRepository = {
+export const User2FADeviceRepository = {
   insert,
   getByUserUuid,
   getByDeviceUuid,

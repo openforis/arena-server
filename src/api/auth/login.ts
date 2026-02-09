@@ -16,7 +16,7 @@ import {
 
 import { Logger } from '../../log'
 import { ExpressInitializer, ServerServiceType } from '../../server'
-import { UserTempAuthTokenService, UserTwoFactorService } from '../../service'
+import { UserTempAuthTokenService, User2FAService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
@@ -106,7 +106,7 @@ const authenticationSuccessful = ({
     }
   })
 
-const handleTwoFactorRequired = async ({
+const handle2FARequired = async ({
   req,
   res,
   userUuid,
@@ -128,7 +128,7 @@ const handleTwoFactorRequired = async ({
     return false
   }
   // Verify 2FA token against all enabled devices
-  const isValid = await UserTwoFactorService.verifyLogin({
+  const isValid = await User2FAService.verifyLogin({
     userUuid,
     token: twoFactorToken,
   })
@@ -150,9 +150,9 @@ export const AuthLogin: ExpressInitializer = {
           // Check if user has any enabled 2FA devices
           const userUuid = user.uuid
           try {
-            const hasEnabled = await UserTwoFactorService.hasEnabledDevices({ userUuid })
+            const hasEnabled = await User2FAService.hasEnabledDevices({ userUuid })
             if (hasEnabled) {
-              const twoFactorPassed = await handleTwoFactorRequired({ req, res, userUuid })
+              const twoFactorPassed = await handle2FARequired({ req, res, userUuid })
               if (!twoFactorPassed) {
                 return
               }

@@ -1,5 +1,5 @@
-import { BaseProtocol, DB, DBs, SqlUpdateBuilder, TableUserTwoFactorDevice } from '../../db'
-import { UserTwoFactorDeviceStored } from '../../model'
+import { BaseProtocol, DB, DBs, SqlUpdateBuilder, TableUser2FADevice } from '../../db'
+import { User2FADeviceStored } from '../../model'
 
 /**
  * Updates a 2FA device.
@@ -8,12 +8,12 @@ import { UserTwoFactorDeviceStored } from '../../model'
  * @param client - Database client
  */
 export const update = async (
-  options: Partial<UserTwoFactorDeviceStored> & { uuid: string },
+  options: Partial<User2FADeviceStored> & { uuid: string },
   client: BaseProtocol = DB
-): Promise<UserTwoFactorDeviceStored> => {
+): Promise<User2FADeviceStored> => {
   const { uuid, deviceName, secret, enabled, backupCodes } = options
 
-  const table = new TableUserTwoFactorDevice()
+  const table = new TableUser2FADevice()
 
   const updateBuilder = new SqlUpdateBuilder().update(table)
   const valuesByColumn: Record<string, any> = {}
@@ -42,5 +42,5 @@ export const update = async (
     .returning(...table.columns)
     .build()
 
-  return client.one<UserTwoFactorDeviceStored>(sql, valuesByColumn, (row) => DBs.transformCallback({ row }))
+  return client.one<User2FADeviceStored>(sql, valuesByColumn, (row) => DBs.transformCallback({ row }))
 }

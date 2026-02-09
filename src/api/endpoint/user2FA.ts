@@ -1,6 +1,6 @@
 import { getApiPath } from './common'
 
-export const userTwoFactorAuth = {
+export const user2FAAuth = {
   devices: (): string => getApiPath('2fa', 'devices'),
   devicesCount: (): string => getApiPath('2fa', 'devices', 'count'),
   device: (): string => getApiPath('2fa', 'device', ':deviceUuid'),

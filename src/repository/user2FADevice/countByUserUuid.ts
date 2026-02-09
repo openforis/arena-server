@@ -1,4 +1,4 @@
-import { BaseProtocol, DB, SqlSelectBuilder, TableUserTwoFactorDevice } from '../../db'
+import { BaseProtocol, DB, SqlSelectBuilder, TableUser2FADevice } from '../../db'
 
 /**
  * Counts the number of 2FA devices for a specific user.
@@ -8,7 +8,7 @@ import { BaseProtocol, DB, SqlSelectBuilder, TableUserTwoFactorDevice } from '..
  * @returns The count of 2FA devices for the user
  */
 export const countByUserUuid = async (userUuid: string, client: BaseProtocol = DB): Promise<number> => {
-  const table = new TableUserTwoFactorDevice()
+  const table = new TableUser2FADevice()
 
   const sql = new SqlSelectBuilder()
     .select(`COUNT(*) AS count`)

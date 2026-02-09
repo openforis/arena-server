@@ -1,5 +1,5 @@
-import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserTwoFactorDevice } from '../../db'
-import { UserTwoFactorDeviceStored } from '../../model'
+import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUser2FADevice } from '../../db'
+import { User2FADeviceStored } from '../../model'
 
 /**
  * Inserts a new 2FA device for a user.
@@ -8,12 +8,12 @@ import { UserTwoFactorDeviceStored } from '../../model'
  * @param client - Database client
  */
 export const insert = async (
-  options: Omit<UserTwoFactorDeviceStored, 'uuid' | 'dateCreated' | 'dateModified'> & { uuid?: string },
+  options: Omit<User2FADeviceStored, 'uuid' | 'dateCreated' | 'dateModified'> & { uuid?: string },
   client: BaseProtocol = DB
-): Promise<UserTwoFactorDeviceStored> => {
+): Promise<User2FADeviceStored> => {
   const { uuid, userUuid, deviceName, secret, enabled, backupCodes } = options
 
-  const table = new TableUserTwoFactorDevice()
+  const table = new TableUser2FADevice()
   const now = new Date()
   const values: Record<string, any> = {
     [table.userUuid.columnName]: userUuid,
@@ -35,5 +35,5 @@ export const insert = async (
     .returning(...table.columns)
     .build()
 
-  return client.one<UserTwoFactorDeviceStored>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<User2FADeviceStored>(sql, values, (row) => DBs.transformCallback({ row }))
 }

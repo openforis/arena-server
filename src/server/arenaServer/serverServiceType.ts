@@ -2,5 +2,5 @@ export enum ServerServiceType {
   dataQuery = 'dataQuery',
   message = 'message',
   userTempAuthToken = 'userTempAuthToken',
-  userTwoFactor = 'userTwoFactor',
+  user2FA = 'user2FA',
 }

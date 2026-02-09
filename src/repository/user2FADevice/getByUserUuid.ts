@@ -1,5 +1,5 @@
-import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserTwoFactorDevice } from '../../db'
-import { UserTwoFactorDeviceStored } from '../../model'
+import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUser2FADevice } from '../../db'
+import { User2FADeviceStored } from '../../model'
 
 /**
  * Gets all 2FA devices for a user.
@@ -7,11 +7,8 @@ import { UserTwoFactorDeviceStored } from '../../model'
  * @param userUuid - The user UUID
  * @param client - Database client
  */
-export const getByUserUuid = async (
-  userUuid: string,
-  client: BaseProtocol = DB
-): Promise<UserTwoFactorDeviceStored[]> => {
-  const table = new TableUserTwoFactorDevice()
+export const getByUserUuid = async (userUuid: string, client: BaseProtocol = DB): Promise<User2FADeviceStored[]> => {
+  const table = new TableUser2FADevice()
 
   const sql = new SqlSelectBuilder()
     .select(...table.columns)

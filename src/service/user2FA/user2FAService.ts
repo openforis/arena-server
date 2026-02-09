@@ -1,8 +1,8 @@
 import { authenticator } from 'otplib'
 import * as crypto from 'crypto'
 
-import { UserTwoFactorDevice, UserTwoFactorDeviceForClient } from '../../model'
-import { UserTwoFactorRepository } from '../../repository'
+import { User2FADevice, User2FADeviceForClient } from '../../model'
+import { User2FADeviceRepository } from '../../repository'
 import { BaseProtocol, DB } from '../../db'
 
 const APP_NAME = 'Arena'
@@ -49,7 +49,7 @@ const verifyToken = (options: { secret: string; token: string }): boolean => {
   return authenticator.verify({ token, secret })
 }
 
-const toTwoFactorDeviceForClient = (device: UserTwoFactorDevice): UserTwoFactorDeviceForClient => {
+const to2FADeviceForClient = (device: User2FADevice): User2FADeviceForClient => {
   const { uuid, userUuid, deviceName, enabled, dateCreated, dateModified } = device
   return { uuid, userUuid, deviceName, enabled, dateCreated, dateModified }
 }
@@ -62,14 +62,14 @@ const addDevice = async (options: {
   userEmail: string
   deviceName: string
   client?: BaseProtocol
-}): Promise<UserTwoFactorDeviceForClient> => {
+}): Promise<User2FADeviceForClient> => {
   const { userUuid, userEmail, deviceName, client = DB } = options
 
   const { secret, otpAuthUrl } = await generateSecret({ userEmail, deviceName })
   const backupCodes = generateBackupCodes()
 
   const enabled = false
-  const twoFactorDevice = await UserTwoFactorRepository.insert(
+  const device = await User2FADeviceRepository.insert(
     {
       userUuid,
       deviceName,
@@ -80,15 +80,15 @@ const addDevice = async (options: {
     client
   )
   return {
-    ...toTwoFactorDeviceForClient(twoFactorDevice),
+    ...to2FADeviceForClient(device),
     backupCodes,
     otpAuthUrl,
     secret,
   }
 }
 
-const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol): Promise<UserTwoFactorDevice> => {
-  const device = await UserTwoFactorRepository.getByDeviceUuid(deviceUuid, client)
+const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol): Promise<User2FADevice> => {
+  const device = await User2FADeviceRepository.getByDeviceUuid(deviceUuid, client)
 
   if (!device) {
     throw new Error(deviceNotFoundErrorMessageKey)
@@ -99,15 +99,12 @@ const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol): Promise<
 /**
  * Gets a specific 2FA device by its UUID.
  */
-const getDevice = async (options: {
-  deviceUuid: string
-  client?: BaseProtocol
-}): Promise<UserTwoFactorDeviceForClient> => {
+const getDevice = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<User2FADeviceForClient> => {
   const { deviceUuid, client = DB } = options
 
   const device = await getDeviceSafe(deviceUuid, client)
 
-  return toTwoFactorDeviceForClient(device)
+  return to2FADeviceForClient(device)
 }
 
 /**
@@ -118,7 +115,7 @@ const verifyDevice = async (options: {
   token1: string
   token2: string
   client?: BaseProtocol
-}): Promise<UserTwoFactorDeviceForClient> => {
+}): Promise<User2FADeviceForClient> => {
   const { deviceUuid, token1, token2, client = DB } = options
 
   const device = await getDeviceSafe(deviceUuid, client)
@@ -131,8 +128,8 @@ const verifyDevice = async (options: {
   }
   // Enable the device
   const enabled = true
-  const updated = await UserTwoFactorRepository.update({ uuid: deviceUuid, enabled }, client)
-  return toTwoFactorDeviceForClient(updated)
+  const updated = await User2FADeviceRepository.update({ uuid: deviceUuid, enabled }, client)
+  return to2FADeviceForClient(updated)
 }
 
 /**
@@ -141,7 +138,7 @@ const verifyDevice = async (options: {
 const removeDevice = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<void> => {
   const { deviceUuid, client = DB } = options
 
-  await UserTwoFactorRepository.deleteByDeviceUuid(deviceUuid, client)
+  await User2FADeviceRepository.deleteByDeviceUuid(deviceUuid, client)
 }
 
 /**
@@ -150,7 +147,7 @@ const removeDevice = async (options: { deviceUuid: string; client?: BaseProtocol
 const disableAll = async (options: { userUuid: string; client?: BaseProtocol }): Promise<void> => {
   const { userUuid, client = DB } = options
 
-  await UserTwoFactorRepository.deleteByUserUuid(userUuid, client)
+  await User2FADeviceRepository.deleteByUserUuid(userUuid, client)
 }
 
 /**
@@ -159,21 +156,18 @@ const disableAll = async (options: { userUuid: string; client?: BaseProtocol }):
 const countDevices = async (options: { userUuid: string; client?: BaseProtocol }): Promise<number> => {
   const { userUuid, client = DB } = options
 
-  return UserTwoFactorRepository.countByUserUuid(userUuid, client)
+  return User2FADeviceRepository.countByUserUuid(userUuid, client)
 }
 
 /**
  * Gets all 2FA devices for a user.
  */
-const getDevices = async (options: {
-  userUuid: string
-  client?: BaseProtocol
-}): Promise<UserTwoFactorDeviceForClient[]> => {
+const getDevices = async (options: { userUuid: string; client?: BaseProtocol }): Promise<User2FADeviceForClient[]> => {
   const { userUuid, client = DB } = options
 
-  const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const devices = await User2FADeviceRepository.getByUserUuid(userUuid, client)
 
-  return devices.map(toTwoFactorDeviceForClient)
+  return devices.map(to2FADeviceForClient)
 }
 
 /**
@@ -182,7 +176,7 @@ const getDevices = async (options: {
 const hasEnabledDevices = async (options: { userUuid: string; client?: BaseProtocol }): Promise<boolean> => {
   const { userUuid, client = DB } = options
 
-  const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const devices = await User2FADeviceRepository.getByUserUuid(userUuid, client)
 
   return devices.some((device) => device.enabled)
 }
@@ -193,7 +187,7 @@ const hasEnabledDevices = async (options: { userUuid: string; client?: BaseProto
 const verifyLogin = async (options: { userUuid: string; token: string; client?: BaseProtocol }): Promise<boolean> => {
   const { userUuid, token, client = DB } = options
 
-  const devices = await UserTwoFactorRepository.getByUserUuid(userUuid, client)
+  const devices = await User2FADeviceRepository.getByUserUuid(userUuid, client)
   const enabledDevices = devices.filter((device) => device.enabled)
 
   if (enabledDevices.length === 0) {
@@ -206,7 +200,7 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
     if (device.backupCodes?.includes(token)) {
       // Remove used backup code
       const updatedCodes = device.backupCodes.filter((code) => code !== token)
-      await UserTwoFactorRepository.update(
+      await User2FADeviceRepository.update(
         {
           uuid: device.uuid,
           backupCodes: updatedCodes,
@@ -235,7 +229,7 @@ const regenerateBackupCodes = async (options: { deviceUuid: string; client?: Bas
 
   const backupCodes = generateBackupCodes()
 
-  await UserTwoFactorRepository.update(
+  await User2FADeviceRepository.update(
     {
       uuid: deviceUuid,
       backupCodes,
@@ -253,20 +247,20 @@ const updateDeviceName = async (options: {
   deviceUuid: string
   deviceName: string
   client?: BaseProtocol
-}): Promise<UserTwoFactorDeviceForClient> => {
+}): Promise<User2FADeviceForClient> => {
   const { deviceUuid, deviceName, client = DB } = options
 
-  const updated = await UserTwoFactorRepository.update(
+  const updated = await User2FADeviceRepository.update(
     {
       uuid: deviceUuid,
       deviceName,
     },
     client
   )
-  return toTwoFactorDeviceForClient(updated)
+  return to2FADeviceForClient(updated)
 }
 
-export const UserTwoFactorService = {
+export const User2FAService = {
   deviceNotFoundErrorMessageKey,
   addDevice,
   verifyDevice,

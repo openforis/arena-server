@@ -1,4 +1,4 @@
-export type UserTwoFactorDevice = {
+export type User2FADevice = {
   uuid: string
   userUuid: string
   deviceName: string
@@ -9,9 +9,9 @@ export type UserTwoFactorDevice = {
   dateModified: Date
 }
 
-export type UserTwoFactorDeviceStored = UserTwoFactorDevice
+export type User2FADeviceStored = User2FADevice
 
-export type UserTwoFactorDeviceForClient = Omit<UserTwoFactorDevice, 'secret' | 'backupCodes'> & {
+export type User2FADeviceForClient = Omit<User2FADevice, 'secret' | 'backupCodes'> & {
   backupCodes?: string[] // Only returned when setting up a new device or regenerating backup codes
   otpAuthUrl?: string // Only returned when setting up a new device
   secret?: string // Only returned when setting up a new device
