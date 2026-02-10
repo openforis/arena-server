@@ -34,13 +34,17 @@ export const update = async (
   valuesByColumn[table.dateModified.columnName] = new Date()
 
   // UUID is used in WHERE clause
-  valuesByColumn[table.uuid.columnName] = uuid
+  const whereClauseValuesByColumnName: Record<string, any> = {
+    [table.uuid.columnName]: uuid,
+  }
 
   const sql = updateBuilder
-    .setByColumnValues(valuesByColumn)
+    .setColumnNames(Object.keys(valuesByColumn))
     .where(`${table.uuid} = $/uuid/`)
     .returning(...table.columns)
     .build()
 
-  return client.one<User2FADevice>(sql, valuesByColumn, (row) => DBs.transformCallback({ row }))
+  return client.one<User2FADevice>(sql, { ...valuesByColumn, ...whereClauseValuesByColumnName }, (row) =>
+    DBs.transformCallback({ row })
+  )
 }
