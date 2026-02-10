@@ -211,7 +211,7 @@ const verifyDevice = async (
   const secret = decryptSecret(device.secret)
 
   // Verify the provided tokens against the secret
-  const isValid = [token1, token2].every((token) => verifyToken({ secret, token }))
+  const isValid = token1 !== token2 && [token1, token2].every((token) => verifyToken({ secret, token }))
   if (!isValid) {
     throw new Error(User2FAServiceErrorMessageKeys.invalidVerificationCode)
   }
