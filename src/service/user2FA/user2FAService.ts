@@ -11,7 +11,10 @@ const APP_NAME = 'Arena'
 const ENCRYPTION_VERSION = 'v1'
 const backupCodeHashRounds = 10
 
-const deviceNotFoundErrorMessageKey = 'Device not found'
+export const User2FAServiceErrorMessageKeys = {
+  deviceNotFound: 'appErrors.user2FA.deviceNotFound',
+  invalidVerificationCode: 'appErrors.user2FA.invalidVerificationCode',
+}
 
 const buildSecretKey = (): Buffer => crypto.createHash('sha256').update(ProcessEnv.user2FASecret).digest()
 
@@ -21,7 +24,6 @@ const encryptSecret = (secret: string): string => {
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
   const ciphertext = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()])
   const tag = cipher.getAuthTag()
-
   return [ENCRYPTION_VERSION, iv.toString('base64'), tag.toString('base64'), ciphertext.toString('base64')].join('.')
 }
 
@@ -160,16 +162,18 @@ const addDevice = async (options: {
   }
 }
 
-const getDeviceSafe = async (options: {
-  deviceUuid: string
-  userUuid: string
+const getDeviceSafe = async (
+  options: {
+    deviceUuid: string
+    userUuid: string
+  },
   client: BaseProtocol
-}): Promise<User2FADevice> => {
-  const { deviceUuid, userUuid, client } = options
+): Promise<User2FADevice> => {
+  const { deviceUuid, userUuid } = options
   const device = await User2FADeviceRepository.getByDeviceUuid({ deviceUuid, userUuid }, client)
 
   if (!device) {
-    throw new Error(deviceNotFoundErrorMessageKey)
+    throw new Error(User2FAServiceErrorMessageKeys.deviceNotFound)
   }
   return device
 }
@@ -177,37 +181,39 @@ const getDeviceSafe = async (options: {
 /**
  * Gets a specific 2FA device by its UUID.
  */
-const getDevice = async (options: {
-  deviceUuid: string
-  userUuid: string
-  client?: BaseProtocol
-}): Promise<User2FADeviceForClient> => {
-  const { deviceUuid, userUuid, client = DB } = options
-
-  const device = await getDeviceSafe({ deviceUuid, userUuid, client })
-
+const getDevice = async (
+  options: {
+    deviceUuid: string
+    userUuid: string
+  },
+  client: BaseProtocol = DB
+): Promise<User2FADeviceForClient> => {
+  const { deviceUuid, userUuid } = options
+  const device = await getDeviceSafe({ deviceUuid, userUuid }, client)
   return to2FADeviceForClient(device)
 }
 
 /**
  * Verifies and enables a 2FA device.
  */
-const verifyDevice = async (options: {
-  deviceUuid: string
-  userUuid: string
-  token1: string
-  token2: string
-  client?: BaseProtocol
-}): Promise<User2FADeviceForClient> => {
-  const { deviceUuid, userUuid, token1, token2, client = DB } = options
+const verifyDevice = async (
+  options: {
+    deviceUuid: string
+    userUuid: string
+    token1: string
+    token2: string
+  },
+  client: BaseProtocol = DB
+): Promise<User2FADeviceForClient> => {
+  const { deviceUuid, userUuid, token1, token2 } = options
 
-  const device = await getDeviceSafe({ deviceUuid, userUuid, client })
+  const device = await getDeviceSafe({ deviceUuid, userUuid }, client)
   const secret = decryptSecret(device.secret)
 
   // Verify the provided tokens against the secret
   const isValid = [token1, token2].every((token) => verifyToken({ secret, token }))
   if (!isValid) {
-    throw new Error('Invalid verification code')
+    throw new Error(User2FAServiceErrorMessageKeys.invalidVerificationCode)
   }
   // Enable the device
   const enabled = true
@@ -218,10 +224,15 @@ const verifyDevice = async (options: {
 /**
  * Removes a 2FA device.
  */
-const removeDevice = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<void> => {
-  const { deviceUuid, client = DB } = options
-
-  await User2FADeviceRepository.deleteByDeviceUuid(deviceUuid, client)
+const removeDevice = async (
+  options: {
+    deviceUuid: string
+    userUuid: string
+  },
+  client: BaseProtocol = DB
+): Promise<void> => {
+  const { deviceUuid, userUuid } = options
+  await User2FADeviceRepository.deleteByDeviceUuid({ deviceUuid, userUuid }, client)
 }
 
 /**
@@ -298,25 +309,21 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
 /**
  * Regenerates backup codes for a specific device.
  */
-const regenerateBackupCodes = async (options: {
-  deviceUuid: string
-  userUuid: string
-  client?: BaseProtocol
-}): Promise<string[]> => {
-  const { deviceUuid, userUuid, client = DB } = options
+const regenerateBackupCodes = async (
+  options: {
+    deviceUuid: string
+    userUuid: string
+  },
+  client: BaseProtocol = DB
+): Promise<string[]> => {
+  const { deviceUuid, userUuid } = options
 
-  await getDeviceSafe({ deviceUuid, userUuid, client })
+  await getDeviceSafe({ deviceUuid, userUuid }, client)
 
   const backupCodes = generateBackupCodes()
   const backupCodesHashed = hashBackupCodes(backupCodes)
 
-  await User2FADeviceRepository.update(
-    {
-      uuid: deviceUuid,
-      backupCodes: backupCodesHashed,
-    },
-    client
-  )
+  await User2FADeviceRepository.update({ uuid: deviceUuid, backupCodes: backupCodesHashed }, client)
 
   return backupCodes
 }
@@ -324,25 +331,21 @@ const regenerateBackupCodes = async (options: {
 /**
  * Updates a device name.
  */
-const updateDeviceName = async (options: {
-  deviceUuid: string
-  deviceName: string
-  client?: BaseProtocol
-}): Promise<User2FADeviceForClient> => {
-  const { deviceUuid, deviceName, client = DB } = options
+const updateDeviceName = async (
+  options: {
+    deviceUuid: string
+    deviceName: string
+  },
+  client: BaseProtocol = DB
+): Promise<User2FADeviceForClient> => {
+  const { deviceUuid, deviceName } = options
 
-  const updated = await User2FADeviceRepository.update(
-    {
-      uuid: deviceUuid,
-      deviceName,
-    },
-    client
-  )
+  const updated = await User2FADeviceRepository.update({ uuid: deviceUuid, deviceName }, client)
+
   return to2FADeviceForClient(updated)
 }
 
-export const User2FAService = {
-  deviceNotFoundErrorMessageKey,
+export const User2FAServiceServer = {
   addDevice,
   verifyDevice,
   removeDevice,
@@ -355,3 +358,5 @@ export const User2FAService = {
   regenerateBackupCodes,
   updateDeviceName,
 }
+
+export type User2FAService = typeof User2FAServiceServer

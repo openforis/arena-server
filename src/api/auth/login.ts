@@ -106,6 +106,9 @@ const authenticationSuccessful = ({
     }
   })
 
+const getUser2FAService = (): User2FAService =>
+  ServiceRegistry.getInstance().getService(ServerServiceType.user2FA) as User2FAService
+
 const handle2FARequired = async ({
   req,
   res,
@@ -128,10 +131,8 @@ const handle2FARequired = async ({
     return false
   }
   // Verify 2FA token against all enabled devices
-  const isValid = await User2FAService.verifyLogin({
-    userUuid,
-    token: twoFactorToken,
-  })
+  const user2FAService = getUser2FAService()
+  const isValid = await user2FAService.verifyLogin({ userUuid, token: twoFactorToken })
   if (!isValid) {
     res.status(401).json({ message: 'Invalid 2FA code' })
     return false
@@ -150,7 +151,8 @@ export const AuthLogin: ExpressInitializer = {
           // Check if user has any enabled 2FA devices
           const userUuid = user.uuid
           try {
-            const hasEnabled = await User2FAService.hasEnabledDevices({ userUuid })
+            const user2FAService = getUser2FAService()
+            const hasEnabled = await user2FAService.hasEnabledDevices({ userUuid })
             if (hasEnabled) {
               const twoFactorPassed = await handle2FARequired({ req, res, userUuid })
               if (!twoFactorPassed) {

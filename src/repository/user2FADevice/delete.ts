@@ -10,11 +10,21 @@ const deleteWhereCondition = async (values: Record<string, any>, client: BasePro
  * Deletes a 2FA device by its UUID.
  *
  * @param deviceUuid - The device UUID
+ * @param userUuid - The user UUID (to ensure the device belongs to the user)
  * @param client - Database client
  */
-export const deleteByDeviceUuid = async (deviceUuid: string, client: BaseProtocol = DB): Promise<void> => {
+export const deleteByDeviceUuid = async (
+  {
+    deviceUuid,
+    userUuid,
+  }: {
+    deviceUuid: string
+    userUuid: string
+  },
+  client?: BaseProtocol
+): Promise<void> => {
   const table = new TableUser2FADevice()
-  const values = { [table.uuid.columnName]: deviceUuid }
+  const values = { [table.uuid.columnName]: deviceUuid, [table.userUuid.columnName]: userUuid }
   await deleteWhereCondition(values, client)
 }
 
