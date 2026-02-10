@@ -14,7 +14,7 @@ const sendError = (res: Response, error: any): void => {
   } else if (error instanceof ServerError) {
     res.status(error.statusCode).json(getError(error))
   } else {
-    res.status(error.statusCode).json(
+    res.status(error.statusCode ?? 500).json(
       getError({
         key: 'appErrors.generic',
         params: { text: `Could not serve: ${error.toString()}` },

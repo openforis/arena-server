@@ -21,6 +21,13 @@ export class SqlUpdateBuilder extends SqlBuilder {
     return this
   }
 
+  setColumnNames(columnNames: string[]): this {
+    for (const columnName of columnNames) {
+      this.set(columnName, `$/${columnName}/`)
+    }
+    return this
+  }
+
   where(...conditions: Array<string>): this {
     this._where.push(...conditions)
     return this

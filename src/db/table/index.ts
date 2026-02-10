@@ -8,6 +8,7 @@ export {
   TableUserTempAuthToken,
   TableUserRefreshToken,
   TableUserResetPassword,
+  TableUser2FADevice,
   TableAuthGroup,
   TableAuthGroupUser,
 } from './schemaPublic'

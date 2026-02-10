@@ -16,7 +16,7 @@ import {
 
 import { Logger } from '../../log'
 import { ExpressInitializer, ServerServiceType } from '../../server'
-import { UserTempAuthTokenService } from '../../service'
+import { UserTempAuthTokenService, User2FAService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
@@ -106,15 +106,64 @@ const authenticationSuccessful = ({
     }
   })
 
+const getUser2FAService = (): User2FAService =>
+  ServiceRegistry.getInstance().getService(ServerServiceType.user2FA) as User2FAService
+
+const handle2FARequired = async ({
+  req,
+  res,
+  userUuid,
+}: {
+  req: Request
+  res: Response
+  userUuid: string
+}): Promise<boolean> => {
+  // 2FA is enabled - require verification
+  const { twoFactorToken } = Requests.getParams(req)
+
+  if (!twoFactorToken) {
+    // No 2FA token provided - send response indicating 2FA is required
+    res.status(200).json({
+      twoFactorRequired: true,
+      userUuid,
+      message: '2FA verification required',
+    })
+    return false
+  }
+  // Verify 2FA token against all enabled devices
+  const user2FAService = getUser2FAService()
+  const isValid = await user2FAService.verifyLogin({ userUuid, token: twoFactorToken })
+  if (!isValid) {
+    res.status(401).json({ message: 'Invalid 2FA code' })
+    return false
+  }
+  return true
+}
+
 export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
-    express.post(ApiEndpoint.auth.login(), (req, res: Response, next) => {
-      passport.authenticate('local', { session: false }, (err: any, user: User, info: any) => {
+    express.post(ApiEndpoint.auth.login(), (req: Request, res: Response, next) => {
+      passport.authenticate('local', { session: false }, async (err: any, user: User, info: any) => {
         if (err) {
           return next(err)
         }
         if (user) {
-          return authenticationSuccessful({ req, res, next, user })
+          // Check if user has any enabled 2FA devices
+          const userUuid = user.uuid
+          try {
+            const user2FAService = getUser2FAService()
+            const hasEnabled = await user2FAService.hasEnabledDevices({ userUuid })
+            if (hasEnabled) {
+              const twoFactorPassed = await handle2FARequired({ req, res, userUuid })
+              if (!twoFactorPassed) {
+                return
+              }
+            }
+            // Either 2FA is not enabled or verification was successful
+            return authenticationSuccessful({ req, res, next, user })
+          } catch (error) {
+            return next(error)
+          }
         }
         return res.status(401).json(info)
       })(req, res, next)
