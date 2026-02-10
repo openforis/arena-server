@@ -56,17 +56,17 @@ const normalizeBackupCodesAfterPlainMatch = (codes: string[], usedToken: string)
   return [...remainingHashed, ...hashBackupCodes(remainingPlain)]
 }
 
-const findAndConsumeBackupCode = (
+const findAndConsumeBackupCode = async (
   codes: string[] | undefined,
   token: string
-): { matched: boolean; updatedCodes?: string[] } => {
+): Promise<{ matched: boolean; updatedCodes?: string[] }> => {
   if (!codes || codes.length === 0) {
     return { matched: false }
   }
 
   for (const code of codes) {
     if (isBcryptHash(code)) {
-      if (bcrypt.compareSync(token, code)) {
+      if (await bcrypt.compare(token, code)) {
         return { matched: true, updatedCodes: codes.filter((entry) => entry !== code) }
       }
       continue
@@ -279,26 +279,19 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
 
   // Check if token matches any enabled device
   for (const device of enabledDevices) {
+    const { uuid: deviceUuid, backupCodes } = device
     // Check if it's a backup code
-    const { matched, updatedCodes } = findAndConsumeBackupCode(device.backupCodes, token)
+    const { matched, updatedCodes } = await findAndConsumeBackupCode(backupCodes, token)
     if (matched) {
-      await User2FADeviceRepository.update(
-        {
-          uuid: device.uuid,
-          backupCodes: updatedCodes ?? [],
-        },
-        client
-      )
+      await User2FADeviceRepository.update({ uuid: deviceUuid, backupCodes: updatedCodes ?? [] }, client)
       return true
     }
-
     // Verify TOTP token
     const secret = decryptSecret(device.secret)
     if (verifyToken({ secret, token })) {
       return true
     }
   }
-
   return false
 }
 

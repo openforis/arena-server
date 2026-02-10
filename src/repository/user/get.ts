@@ -6,9 +6,9 @@ import { BaseProtocol, DB, SqlSelectBuilder, TableUser } from '../../db'
 type getOptionsType = { userUuid: string } | { email: string } | { email: string; password: string }
 
 /**
- * Returns a user by id.
+ * Returns a user by UUID or email, or email and password.
  *
- * @param options
+ * @param options: getOptionsType - The options to filter the user by. Must include either `userUuid`, `email`, or both `email` and `password`.
  * @param client - Database client.
  */
 export const get = async (options: getOptionsType, client: BaseProtocol = DB): Promise<User | null> => {
@@ -43,9 +43,10 @@ export const get = async (options: getOptionsType, client: BaseProtocol = DB): P
     return null
   }
   // Incorrect password check
+  const { status, password } = user
   if (
     'password' in options &&
-    (user.status !== UserStatus.ACCEPTED || !user.password || !bcrypt.compareSync(options.password, user.password))
+    (status !== UserStatus.ACCEPTED || !password || !(await bcrypt.compare(options.password, password)))
   ) {
     return null
   }
