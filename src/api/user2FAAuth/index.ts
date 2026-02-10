@@ -140,26 +140,5 @@ export const User2FAAuthApi: ExpressInitializer = {
         return Responses.sendError(res, error)
       }
     })
-
-    // POST /api/2fa/verify-login - Verify 2FA token during login (checks all enabled devices)
-    express.post(ApiEndpoint.user2FAAuth.verifyLogin(), async (req: Request, res: Response) => {
-      try {
-        const { userUuid, token } = Requests.getParams(req)
-
-        if (!userUuid || !token) {
-          return res.status(400).json({ message: 'User UUID and token are required' })
-        }
-
-        const isValid = await User2FAService.verifyLogin({ userUuid, token })
-
-        if (!isValid) {
-          return res.status(401).json({ message: 'Invalid 2FA code' })
-        }
-
-        return res.json({ valid: true })
-      } catch (error: any) {
-        return Responses.sendError(res, error)
-      }
-    })
   },
 }

@@ -9,5 +9,4 @@ export const user2FAAuth = {
   removeDevice: (): string => getApiPath('2fa', 'device', ':deviceUuid', 'remove'),
   disableAll: (): string => getApiPath('2fa', 'devices', 'disable-all'),
   regenerateBackupCodes: (): string => getApiPath('2fa', 'device', ':deviceUuid', 'regenerate-backup-codes'),
-  verifyLogin: (): string => getApiPath('2fa', 'verify-login'),
 }
