@@ -270,9 +270,9 @@ const getDevices = async (options: { userUuid: string; client?: BaseProtocol }):
 const hasEnabledDevices = async (options: { userUuid: string; client?: BaseProtocol }): Promise<boolean> => {
   const { userUuid, client = DB } = options
 
-  const devices = await User2FADeviceRepository.getByUserUuid(userUuid, client)
+  const enabledDevices = await User2FADeviceRepository.getEnabledByUserUuid(userUuid, client)
 
-  return devices.some((device) => device.enabled)
+  return enabledDevices.length > 0
 }
 
 /**
@@ -281,8 +281,7 @@ const hasEnabledDevices = async (options: { userUuid: string; client?: BaseProto
 const verifyLogin = async (options: { userUuid: string; token: string; client?: BaseProtocol }): Promise<boolean> => {
   const { userUuid, token, client = DB } = options
 
-  const devices = await User2FADeviceRepository.getByUserUuid(userUuid, client)
-  const enabledDevices = devices.filter((device) => device.enabled)
+  const enabledDevices = await User2FADeviceRepository.getEnabledByUserUuid(userUuid, client)
 
   if (enabledDevices.length === 0) {
     return false
@@ -335,10 +334,13 @@ const updateDeviceName = async (
   options: {
     deviceUuid: string
     deviceName: string
+    userUuid: string
   },
   client: BaseProtocol = DB
 ): Promise<User2FADeviceForClient> => {
-  const { deviceUuid, deviceName } = options
+  const { deviceUuid, deviceName, userUuid } = options
+
+  await getDeviceSafe({ deviceUuid, userUuid }, client)
 
   const updated = await User2FADeviceRepository.update({ uuid: deviceUuid, deviceName }, client)
 
