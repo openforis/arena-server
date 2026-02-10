@@ -160,8 +160,13 @@ const addDevice = async (options: {
   }
 }
 
-const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol): Promise<User2FADevice> => {
-  const device = await User2FADeviceRepository.getByDeviceUuid(deviceUuid, client)
+const getDeviceSafe = async (options: {
+  deviceUuid: string
+  userUuid: string
+  client: BaseProtocol
+}): Promise<User2FADevice> => {
+  const { deviceUuid, userUuid, client } = options
+  const device = await User2FADeviceRepository.getByDeviceUuid({ deviceUuid, userUuid }, client)
 
   if (!device) {
     throw new Error(deviceNotFoundErrorMessageKey)
@@ -172,10 +177,14 @@ const getDeviceSafe = async (deviceUuid: string, client: BaseProtocol): Promise<
 /**
  * Gets a specific 2FA device by its UUID.
  */
-const getDevice = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<User2FADeviceForClient> => {
-  const { deviceUuid, client = DB } = options
+const getDevice = async (options: {
+  deviceUuid: string
+  userUuid: string
+  client?: BaseProtocol
+}): Promise<User2FADeviceForClient> => {
+  const { deviceUuid, userUuid, client = DB } = options
 
-  const device = await getDeviceSafe(deviceUuid, client)
+  const device = await getDeviceSafe({ deviceUuid, userUuid, client })
 
   return to2FADeviceForClient(device)
 }
@@ -185,13 +194,14 @@ const getDevice = async (options: { deviceUuid: string; client?: BaseProtocol })
  */
 const verifyDevice = async (options: {
   deviceUuid: string
+  userUuid: string
   token1: string
   token2: string
   client?: BaseProtocol
 }): Promise<User2FADeviceForClient> => {
-  const { deviceUuid, token1, token2, client = DB } = options
+  const { deviceUuid, userUuid, token1, token2, client = DB } = options
 
-  const device = await getDeviceSafe(deviceUuid, client)
+  const device = await getDeviceSafe({ deviceUuid, userUuid, client })
   const secret = decryptSecret(device.secret)
 
   // Verify the provided tokens against the secret
@@ -295,10 +305,14 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
 /**
  * Regenerates backup codes for a specific device.
  */
-const regenerateBackupCodes = async (options: { deviceUuid: string; client?: BaseProtocol }): Promise<string[]> => {
-  const { deviceUuid, client = DB } = options
+const regenerateBackupCodes = async (options: {
+  deviceUuid: string
+  userUuid: string
+  client?: BaseProtocol
+}): Promise<string[]> => {
+  const { deviceUuid, userUuid, client = DB } = options
 
-  await getDeviceSafe(deviceUuid, client)
+  await getDeviceSafe({ deviceUuid, userUuid, client })
 
   const backupCodes = generateBackupCodes()
   const backupCodesHashed = hashBackupCodes(backupCodes)
