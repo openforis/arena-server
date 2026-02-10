@@ -21,7 +21,7 @@ export const deleteByDeviceUuid = async (
     deviceUuid: string
     userUuid: string
   },
-  client?: BaseProtocol
+  client: BaseProtocol = DB
 ): Promise<void> => {
   const table = new TableUser2FADevice()
   const values = { [table.uuid.columnName]: deviceUuid, [table.userUuid.columnName]: userUuid }
