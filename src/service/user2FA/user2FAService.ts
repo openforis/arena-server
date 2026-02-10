@@ -52,6 +52,11 @@ const isBcryptHash = (value: string): boolean => value.startsWith('$2')
 
 const hashBackupCodes = (codes: string[]): string[] => codes.map((code) => bcrypt.hashSync(code, backupCodeHashRounds))
 
+const formatBackupCode = (code: string): string => {
+  const chunks = code.match(/.{1,4}/g)
+  return chunks ? chunks.join('-') : code
+}
+
 const normalizeBackupCodesAfterPlainMatch = (codes: string[], usedToken: string): string[] => {
   const remainingPlain = codes.filter((code) => !isBcryptHash(code) && code !== usedToken)
   const remainingHashed = codes.filter((code) => isBcryptHash(code))
@@ -104,8 +109,8 @@ const generateSecret = async (options: {
 const generateBackupCodes = (): string[] => {
   const codes: string[] = []
   for (let i = 0; i < 8; i++) {
-    const code = crypto.randomBytes(4).toString('hex').toUpperCase()
-    codes.push(code)
+    const rawCode = crypto.randomBytes(16).toString('hex').toUpperCase()
+    codes.push(formatBackupCode(rawCode))
   }
   return codes
 }
