@@ -4,16 +4,38 @@ ALTER TABLE node
 ALTER TABLE node
 	ADD COLUMN p_i_id INTEGER;
 
--- Populate the i_id column with the row number for each record_uuid
-WITH ranked AS (
-	SELECT id,
-				 ROW_NUMBER() OVER (PARTITION BY record_uuid ORDER BY id) AS i_id
-	FROM node
-)
-UPDATE node
-SET i_id = ranked.i_id
-FROM ranked
-WHERE node.id = ranked.id;
+CREATE INDEX IF NOT EXISTS node_uuid_idx 
+    ON node (uuid);
+
+CREATE INDEX IF NOT EXISTS node_id_idx 
+    ON node (id);
+
+CREATE INDEX IF NOT EXISTS node_record_uuid_id_idx 
+    ON node (record_uuid, id);
+
+DO $$
+DECLARE
+    row_count INT;
+BEGIN
+    LOOP
+        -- Update 50,000 rows at a time
+        UPDATE node
+        SET i_id = ranked.i_id
+        FROM (
+            SELECT id, ROW_NUMBER() OVER (PARTITION BY record_uuid ORDER BY id) as i_id
+            FROM node
+            WHERE i_id IS NULL -- Only target rows not yet processed
+            LIMIT 500000
+        ) AS ranked
+        WHERE node.id = ranked.id;
+
+        GET DIAGNOSTICS row_count = ROW_COUNT;
+        EXIT WHEN row_count = 0;
+        
+        COMMIT; -- Finalize this chunk so disk space can be reclaimed
+        RAISE NOTICE 'Updated 500,000 rows...';
+    END LOOP;
+END $$;
 
 ALTER TABLE node
 	ALTER COLUMN i_id SET NOT NULL;
@@ -22,8 +44,8 @@ ALTER TABLE node
 UPDATE node AS child
 SET p_i_id = parent.i_id
 FROM node AS parent
-WHERE child.parent_uuid = parent.uuid
-	AND child.record_uuid = parent.record_uuid;
+WHERE child.parent_uuid IS NOT NULL 
+    AND child.parent_uuid = parent.uuid;
 
 -- Replace meta.h UUID array with i_id array, preserving order
 UPDATE node AS n
@@ -46,27 +68,30 @@ UPDATE activity_log AS al
 SET content = updated.content
 FROM (
 	SELECT al.id,
-		jsonb_set(
+        COALESCE(
             jsonb_set(
                 jsonb_set(
-                    (
-                        CASE
-                            WHEN al.content ? 'meta'
-                                THEN jsonb_set(al.content, '{meta}', (al.content->'meta') - 'h')
-                            ELSE al.content
-                        END
-                    ) - 'uuid' - 'parentUuid',
-                    '{iId}',
-                    to_jsonb(n.i_id),
+                    jsonb_set(
+                        (
+                            CASE
+                                WHEN al.content ? 'meta'
+                                    THEN jsonb_set(al.content, '{meta}', (al.content->'meta') - 'h')
+                                ELSE al.content
+                            END
+                        ) - 'parentUuid',
+                        '{iId}',
+                        to_jsonb(n.i_id),
+                        true
+                    ),
+                    '{pIId}',
+                    to_jsonb(n.p_i_id),
                     true
                 ),
-                '{pIId}',
-                to_jsonb(n.p_i_id),
+                '{recordUuid}',
+                to_jsonb(n.record_uuid),
                 true
             ),
-		    '{recordUuid}',
-		    to_jsonb(n.record_uuid),
-			true
+            al.content -- Fallback to original content if anything fails
 		) AS content
 	FROM activity_log AS al
 	JOIN node AS n ON n.uuid = (al.content->>'uuid')::uuid
