@@ -64,13 +64,12 @@ SET meta = jsonb_set(
 )
 WHERE n.meta ? 'h';
 
--- Add a unique constraint on the combination of record_uuid and i_id
 ALTER TABLE node
-	DROP CONSTRAINT IF EXISTS node_pkey;
-
--- Add a composite primary key on record_uuid and i_id
-ALTER TABLE node
-	ADD PRIMARY KEY (record_uuid, i_id);
+	DROP CONSTRAINT IF EXISTS node_parent_fk,
+	DROP CONSTRAINT IF EXISTS node_pkey,
+	-- Add a composite primary key on record_uuid and i_id
+	ADD PRIMARY KEY (record_uuid, i_id),
+	ADD CONSTRAINT node_parent_fk FOREIGN KEY (record_uuid, p_i_id) REFERENCES "node" (record_uuid, i_id) ON DELETE CASCADE;
 
 -- Create an index on the combination of record_uuid and i_id for faster lookups
 CREATE INDEX IF NOT EXISTS node_record_uuid_i_id_idx
