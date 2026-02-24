@@ -57,7 +57,9 @@ SET meta = jsonb_set(
 		(
 			SELECT jsonb_agg(p.i_id ORDER BY elems.ordinality)
 			FROM jsonb_array_elements_text(n.meta->'h') WITH ORDINALITY AS elems(uuid_text, ordinality)
-			JOIN node AS p ON p.uuid = elems.uuid_text::uuid
+			JOIN node AS p 
+				ON p.record_uuid = n.record_uuid 
+				AND p.uuid = elems.uuid_text::uuid
 		),
 		'[]'::jsonb
 	)
