@@ -4,6 +4,7 @@ import { ArenaServer } from '../../server'
 import { ApiTest } from './utils/apiTest'
 import { insertTestUser } from './utils/insertTestUser'
 import login from './auth/login'
+import info from './info'
 
 declare global {
   var api: ApiTest
@@ -24,4 +25,5 @@ afterAll(async () => {
 
 describe('API Tests', () => {
   login()
+  info()
 })
