@@ -11,8 +11,8 @@ export default (): void =>
     test('Get app info', async () => {
       const { body } = await globalThis.api.get(ApiEndpoint.info.info()).expect(200)
 
-      expect(body.info).toBeDefined()
-      expect(body.info.applicationVersion).toBe(ProcessEnv.applicationVersion)
-      expect(body.info.fileUploadLimit).toBe(ProcessEnv.fileUploadLimit)
+      expect(body).toBeDefined()
+      expect(body.applicationVersion).toBe(ProcessEnv.applicationVersion)
+      expect(body.fileUploadLimit).toBe(ProcessEnv.fileUploadLimit)
     })
   })
