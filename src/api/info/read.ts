@@ -8,10 +8,8 @@ export const InfoRead: ExpressInitializer = {
   init: (express: Express): void => {
     express.get(ApiEndpoint.info.info(), (_req, res, _next) => {
       res.json({
-        info: {
-          applicationVersion: ProcessEnv.applicationVersion,
-          fileUploadLimit: ProcessEnv.fileUploadLimit,
-        },
+        applicationVersion: ProcessEnv.applicationVersion,
+        fileUploadLimit: ProcessEnv.fileUploadLimit,
       })
     })
   },
