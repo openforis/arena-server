@@ -18,22 +18,19 @@ export class ApiTest {
 
   constructor(app: ArenaApp) {
     this.agent = request(app.express)
-    this.agent.set('Accept', 'application/json')
   }
 
   public get(url: string): Test {
-    return this.withAuthToken(this.agent.get(url))
+    return this.withAuthToken(this.agent.get(url).set('Accept', 'application/json'))
   }
 
   public post(url: string): Test {
-    return this.withAuthToken(this.agent.post(url))
+    return this.withAuthToken(this.agent.post(url).set('Accept', 'application/json'))
   }
 
-  public login(): Test {
-    const req = this.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
-    req.then(({ body = {} }) => {
-      this.authToken = body.authToken
-    })
-    return req
+  public async login(): Promise<void> {
+    const req = await this.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
+    const { body = {} } = req
+    this.authToken = body.authToken
   }
 }
