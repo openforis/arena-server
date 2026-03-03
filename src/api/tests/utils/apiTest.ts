@@ -9,11 +9,11 @@ export class ApiTest {
   private readonly agent: TestAgent<Test>
   private authToken?: string
 
-  private setAuthToken(authToken?: string): void {
-    this.authToken = authToken
+  private withAuthToken(test: Test): Test {
     if (this.authToken) {
-      this.agent.set('Authorization', `Bearer ${this.authToken}`)
+      return test.set('Authorization', `Bearer ${this.authToken}`)
     }
+    return test
   }
 
   constructor(app: ArenaApp) {
@@ -22,17 +22,17 @@ export class ApiTest {
   }
 
   public get(url: string): Test {
-    return this.agent.get(url)
+    return this.withAuthToken(this.agent.get(url))
   }
 
   public post(url: string): Test {
-    return this.agent.post(url)
+    return this.withAuthToken(this.agent.post(url))
   }
 
   public login(): Test {
     const req = this.post(ApiEndpoint.auth.login()).send(mockUser)
     req.then(({ body = {} }) => {
-      this.setAuthToken(body.authToken)
+      this.authToken = body.authToken
     })
     return req
   }
