@@ -30,7 +30,7 @@ export class ApiTest {
   }
 
   public login(): Test {
-    const req = this.post(ApiEndpoint.auth.login()).send(mockUser)
+    const req = this.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
     req.then(({ body = {} }) => {
       this.authToken = body.authToken
     })
