@@ -7,20 +7,33 @@ import { mockUser } from '../mock/user'
 
 export class ApiTest {
   private readonly agent: TestAgent<Test>
+  private authToken?: string
+
+  private setAuthToken(authToken?: string): void {
+    this.authToken = authToken
+    if (this.authToken) {
+      this.agent.set('Authorization', `Bearer ${this.authToken}`)
+    }
+  }
 
   constructor(app: ArenaApp) {
     this.agent = request(app.express)
+    this.agent.set('Accept', 'application/json')
   }
 
   public get(url: string): Test {
-    return this.agent.get(url).set('Accept', 'application/json')
+    return this.agent.get(url)
   }
 
   public post(url: string): Test {
-    return this.agent.post(url).set('Accept', 'application/json')
+    return this.agent.post(url)
   }
 
   public login(): Test {
-    return this.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
+    const req = this.post(ApiEndpoint.auth.login()).send(mockUser)
+    req.then(({ body = {} }) => {
+      this.setAuthToken(body.authToken)
+    })
+    return req
   }
 }

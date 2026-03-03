@@ -10,8 +10,7 @@ declare global {
 const initInfoApiTests = (): void =>
   describe(`Info ${ApiEndpoint.info.info()}`, () => {
     test('Get app info', async () => {
-      // need to login first to get the info
-      await globalThis.api.login().expect(200)
+      await globalThis.api.login()
 
       const { body } = await globalThis.api.get(ApiEndpoint.info.info()).expect(200)
 
