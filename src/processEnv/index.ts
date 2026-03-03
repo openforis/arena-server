@@ -50,4 +50,7 @@ export const ProcessEnv = {
   // Security
   userAuthTokenSecret: process.env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
   user2FASecret: process.env.USER_2FA_SECRET || 'user-2fa-secret',
+
+  // Experimental features
+  experimentalFeatures: isTrue(process.env.EXPERIMENTAL_FEATURES),
 }

@@ -2,12 +2,16 @@ import { authenticator } from 'otplib'
 import * as crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 
-import { User2FADevice, User2FADeviceForClient, User2FADeviceForClientFirstTimeSetup } from '../../model'
+import {
+  ArenaServerConstants,
+  User2FADevice,
+  User2FADeviceForClient,
+  User2FADeviceForClientFirstTimeSetup,
+} from '../../model'
 import { User2FADeviceRepository } from '../../repository'
 import { BaseProtocol, DB } from '../../db'
 import { ProcessEnv } from '../../processEnv'
 
-const APP_NAME = 'Arena'
 const ENCRYPTION_VERSION = 'v1'
 const backupCodeHashRounds = 10
 
@@ -98,7 +102,7 @@ const generateSecret = async (options: {
 
   const secret = authenticator.generateSecret()
   const accountName = `${deviceName} - ${userEmail}`
-  const otpAuthUrl = authenticator.keyuri(accountName, APP_NAME, secret)
+  const otpAuthUrl = authenticator.keyuri(accountName, ArenaServerConstants.appId, secret)
 
   return { secret, otpAuthUrl }
 }
