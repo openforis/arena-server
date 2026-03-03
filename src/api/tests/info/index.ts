@@ -13,10 +13,11 @@ const initInfoApiTests = (): void =>
       const { body } = await globalThis.api.get(ApiEndpoint.info.info()).expect(200)
 
       expect(body).toBeDefined()
-      expect(body.appInfo.appId).toBe(ArenaServerConstants.appId)
-      expect(body.appInfo.version).toBe(ProcessEnv.applicationVersion)
-      expect(body.config.fileUploadLimit).toBe(ProcessEnv.fileUploadLimit)
-      expect(body.config.experimentalFeatures).toBe(ProcessEnv.experimentalFeatures)
+      const { appInfo = {}, config = {} } = body ?? {}
+      expect(appInfo.appId).toBe(ArenaServerConstants.appId)
+      expect(appInfo.version).toBe(ProcessEnv.applicationVersion)
+      expect(config.fileUploadLimit).toBe(ProcessEnv.fileUploadLimit)
+      expect(config.experimentalFeatures).toBe(ProcessEnv.experimentalFeatures)
     })
   })
 
