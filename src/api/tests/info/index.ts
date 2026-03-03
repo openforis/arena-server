@@ -1,6 +1,7 @@
 import { ApiEndpoint } from '../../../api/endpoint'
 import { ArenaServerConstants } from '../../../model'
 import { ProcessEnv } from '../../../processEnv'
+import { mockUser } from '../mock/user'
 import { ApiTest } from '../utils/apiTest'
 
 declare global {
@@ -10,6 +11,9 @@ declare global {
 const initInfoApiTests = (): void =>
   describe(`Info ${ApiEndpoint.info.info()}`, () => {
     test('Get app info', async () => {
+      // need to login first to get the info
+      await globalThis.api.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
+
       const { body } = await globalThis.api.get(ApiEndpoint.info.info()).expect(200)
 
       expect(body).toBeDefined()
