@@ -5,7 +5,7 @@ const config: Config = {
   testEnvironment: 'node',
   verbose: true,
   transform: { '^.+\\.[jt]s$': 'ts-jest' },
-  transformIgnorePatterns: ['/node_modules/(?!(change-case|uuid)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(change-case|uuid|otplib|@otplib|@scure/base|@noble)/)'],
 }
 
 export default config

@@ -9,6 +9,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@machinomy/types-node-db-migrate": "^0.0.2",
     "@types/bcryptjs": "^3.0.0",
     "@types/compression": "^1.8.1",
