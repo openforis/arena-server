@@ -1010,13 +1010,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^1.0.94":
-  version: 1.0.94
-  resolution: "@openforis/arena-core@npm:1.0.94::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F1.0.94%2F6bd16534994bf3f6eba18352a0692a5e2b1ae10a"
+"@openforis/arena-core@npm:^1.0.95":
+  version: 1.0.95
+  resolution: "@openforis/arena-core@npm:1.0.95::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F1.0.95%2F33483b31152a0297a942ff12e5c2f7621a76a09f"
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
     "@turf/destination": "npm:^7.3.4"
     bignumber.js: "npm:^10.0.2"
+    change-case: "npm:^5.4.4"
     jsep: "npm:^1.4.0"
     lodash.differencewith: "npm:^4.5.0"
     lodash.frompairs: "npm:^4.0.1"
@@ -1024,8 +1025,8 @@ __metadata:
     lodash.topairs: "npm:^4.3.0"
     moment: "npm:^2.30.1"
     proj4: "npm:^2.20.4"
-    uuid: "npm:^11.1.0"
-  checksum: 10c0/35da1446409ed9df78109ed106bcd301eaa9e015ca4778c0b6b5800a7164209f45159ec17839f3d4ddc6003a47100d82a9c9e2cefe5d1a5f02215c2f7bf6fcad
+    uuid: "npm:^13.0.0"
+  checksum: 10c0/bd747559b845f24319f41d0d4127878a22cb2637e735516bc38ea9c696379f5137e38b204024c722e6707f876a858718b932d4f55c98fe727edfaecdd345b46a
   languageName: node
   linkType: hard
 
@@ -1035,7 +1036,7 @@ __metadata:
   dependencies:
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^1.0.94"
+    "@openforis/arena-core": "npm:^1.0.95"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
@@ -2535,6 +2536,13 @@ __metadata:
     ansi-styles: "npm:^4.1.0"
     supports-color: "npm:^7.1.0"
   checksum: 10c0/4a3fef5cc34975c898ffe77141450f679721df9dde00f6c304353fa9c8b571929123b26a0e4617bde5018977eb655b31970c297b91b63ee83bb82aeb04666880
+  languageName: node
+  linkType: hard
+
+"change-case@npm:^5.4.4":
+  version: 5.4.4
+  resolution: "change-case@npm:5.4.4"
+  checksum: 10c0/2a9c2b9c9ad6ab2491105aaf506db1a9acaf543a18967798dcce20926c6a173aa63266cb6189f3086e3c14bf7ae1f8ea4f96ecc466fcd582310efa00372f3734
   languageName: node
   linkType: hard
 
@@ -8256,12 +8264,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^11.1.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
+"uuid@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "uuid@npm:13.0.0"
   bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10c0/34aa51b9874ae398c2b799c88a127701408cd581ee89ec3baa53509dd8728cbb25826f2a038f9465f8b7be446f0fbf11558862965b18d21c993684297628d4d3
+    uuid: dist-node/bin/uuid
+  checksum: 10c0/950e4c18d57fef6c69675344f5700a08af21e26b9eff2bf2180427564297368c538ea11ac9fb2e6528b17fc3966a9fd2c5049361b0b63c7d654f3c550c9b3d67
   languageName: node
   linkType: hard
 
