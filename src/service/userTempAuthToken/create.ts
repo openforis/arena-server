@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid'
+import * as crypto from 'node:crypto'
 
 import { BaseProtocol, DB } from '../../db'
 import { UserTempAuthTokenForClient, UserTempAuthTokenStored } from '../../model'
@@ -24,7 +24,7 @@ export const create = async (
   const now = new Date()
   const expiresAt = new Date(now.getTime() + expirationMinutes * 60 * 1000)
 
-  const token = uuidv4()
+  const token = crypto.randomUUID()
   const tokenHash = hashToken(token)
 
   const tempAuthToken: UserTempAuthTokenStored = {

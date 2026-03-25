@@ -1,4 +1,4 @@
-import { authenticator } from 'otplib'
+import { generateSecret as generateOtpSecret, generateURI, verifySync } from 'otplib'
 import * as crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 
@@ -100,9 +100,13 @@ const generateSecret = async (options: {
 }): Promise<{ secret: string; otpAuthUrl: string }> => {
   const { userEmail, deviceName } = options
 
-  const secret = authenticator.generateSecret()
+  const secret = generateOtpSecret()
   const accountName = `${deviceName} - ${userEmail}`
-  const otpAuthUrl = authenticator.keyuri(accountName, ArenaServerConstants.appId, secret)
+  const otpAuthUrl = generateURI({
+    issuer: ArenaServerConstants.appId,
+    label: accountName,
+    secret,
+  })
 
   return { secret, otpAuthUrl }
 }
@@ -124,11 +128,13 @@ const generateBackupCodes = (): string[] => {
  */
 const verifyToken = (options: { secret: string; token: string }): boolean => {
   const { secret, token } = options
-
-  // Set window to allow for clock skew (2 time steps before and after)
-  authenticator.options = { window: 2 }
-
-  return authenticator.verify({ token, secret })
+  const result = verifySync({
+    secret,
+    token,
+    // Allow for clock skew: 2 TOTP windows on either side of current time.
+    epochTolerance: 60,
+  })
+  return result.valid
 }
 
 const to2FADeviceForClient = (device: User2FADevice): User2FADeviceForClient => {
