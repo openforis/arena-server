@@ -9,7 +9,7 @@ export class JobRegistry extends Map<string, JobConstructor> {
       JobRegistry.instance = new Map<string, JobConstructor>()
 
       if (ProcessEnv.nodeEnv === NodeEnv.test) {
-        const { SimpleJob, SimpleJobWithJobs } = await import('./tests/testJobs')
+        const { SimpleJob, SimpleJobWithJobs } = await import('./tests/testJobs.js')
         JobRegistry.instance.set(SimpleJob.type, SimpleJob)
         JobRegistry.instance.set(SimpleJobWithJobs.type, SimpleJobWithJobs)
       }
