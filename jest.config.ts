@@ -1,8 +1,10 @@
 import type { Config } from 'jest'
 
 const config: Config = {
+  roots: ['<rootDir>/dist/'],
   testEnvironment: 'node',
-  transform: { '^.+\\.[tj]sx?$': 'ts-jest' },
+  verbose: true,
+  transform: { '^.+\\.[jt]s$': 'ts-jest' },
   transformIgnorePatterns: ['/node_modules/(?!(change-case|uuid)/)'],
 }
 
