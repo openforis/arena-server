@@ -12,6 +12,7 @@ import {
   WidthType,
 } from 'docx'
 
+import type { Node as ArenaNode, ArenaRecord, Dictionary } from '@openforis/arena-core'
 import {
   CategoryItem,
   LanguageCode,
@@ -20,29 +21,54 @@ import {
   NodeDefEntityRenderType,
   NodeDefType,
   NodeDefs,
+  NodeValueFormatter,
+  NodeValues,
+  Nodes,
+  Records,
   Survey,
   Surveys,
 } from '@openforis/arena-core'
+import type { NodeDefinitionFetchParams } from '../../../repository/nodeDef'
+import { NodeDefRepository } from '../../../repository/nodeDef'
+import { SurveyRepository } from '../../../repository/survey'
+
+// ─── types ────────────────────────────────────────────────────────────────────
+
+interface RenderContext {
+  survey: Survey
+  lang: LanguageCode
+  cycle: string
+  record?: ArenaRecord
+}
+
+type DocChild = Paragraph | Table
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const EMPTY_FIELD = '________________________________'
 const EMPTY_SHORT = '___________'
 
-type DocChild = Paragraph | Table
-
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
 
 const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} })
 
+/** Blank input field (underlined placeholder). */
 const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
   new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), inputLine(fieldPlaceholder)],
   })
 
-const checkboxRun = (text: string): [CheckBox, TextRun] => [
-  new CheckBox({ checked: false }),
+/** Field showing an actual data value (no underline). */
+const valueRow = (fieldLabel: string, value: string): Paragraph =>
+  new Paragraph({
+    spacing: { before: 80, after: 80 },
+    children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), new TextRun({ text: value })],
+  })
+
+/** Checkbox run – supports checked/unchecked state for data-filled rendering. */
+const checkboxRun = (text: string, checked = false): [CheckBox, TextRun] => [
+  new CheckBox({ checked }),
   new TextRun({ text: ` ${text}    ` }),
 ]
 
@@ -57,28 +83,83 @@ const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string =>
   return item.props?.code ?? ''
 }
 
+/**
+ * Formats a node's value as a display string.
+ * Used for table cells and simple inline value rendering.
+ */
+const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node: ArenaNode): string => {
+  if (Nodes.isValueBlank(node)) return ''
+  const { survey, lang, cycle } = context
+  switch (nodeDef.type) {
+    case NodeDefType.boolean:
+      return node.value === true || node.value === 'true' ? 'Yes' : 'No'
+    case NodeDefType.date: {
+      const d = NodeValues.getDateDay(node)
+      const m = NodeValues.getDateMonth(node)
+      const y = NodeValues.getDateYear(node)
+      return `${String(d ?? '').padStart(2, '0')}/${String(m ?? '').padStart(2, '0')}/${String(y ?? '')}`
+    }
+    case NodeDefType.time: {
+      const h = NodeValues.getTimeHour(node)
+      const min = NodeValues.getTimeMinute(node)
+      return `${String(h ?? '').padStart(2, '0')}:${String(min ?? '').padStart(2, '0')}`
+    }
+    case NodeDefType.coordinate: {
+      const val = node.value ?? {}
+      return [val.srs, `X:${val.x ?? ''}`, `Y:${val.y ?? ''}`].filter(Boolean).join('  ')
+    }
+    case NodeDefType.taxon: {
+      const code = node.value?.code ?? ''
+      const sciName = NodeValues.getScientificName(node) ?? ''
+      return [code, sciName].filter(Boolean).join(' – ')
+    }
+    case NodeDefType.file:
+      return NodeValues.getFileName(node) ?? ''
+    case NodeDefType.code: {
+      const refItem = node.refData?.categoryItem
+      if (refItem) return getCategoryItemLabel(refItem, lang)
+      return node.value?.code ?? ''
+    }
+    default: {
+      const formatted = NodeValueFormatter.format({ survey, cycle, nodeDef, node, value: node.value, lang })
+      return formatted != null ? String(formatted) : ''
+    }
+  }
+}
+
 // ─── per-type renderers ──────────────────────────────────────────────────────
 
-const renderBoolean = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph =>
-  new Paragraph({
+const renderBoolean = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
+  const lbl = label(nodeDef, context.lang)
+  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
+  const isTrue = hasValue && (node.value === true || node.value === 'true')
+  return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
-      new TextRun({ text: `${label(nodeDef, lang)}: `, bold: true }),
-      ...checkboxRun('Yes'),
-      ...checkboxRun('No'),
+      new TextRun({ text: `${lbl}: `, bold: true }),
+      ...checkboxRun('Yes', hasValue ? isTrue : false),
+      ...checkboxRun('No', hasValue ? !isTrue : false),
     ],
   })
+}
 
-const renderCode = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode, items: CategoryItem[]): Paragraph[] => {
-  const lbl = label(nodeDef, lang)
+const renderCode = (
+  nodeDef: NodeDef<NodeDefType>,
+  context: RenderContext,
+  items: CategoryItem[],
+  node?: ArenaNode
+): Paragraph[] => {
+  const lbl = label(nodeDef, context.lang)
   const codeNodeDef = nodeDef as NodeDefCode
   const isCheckboxLayout =
     codeNodeDef.props?.layout && Object.values(codeNodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
+  const selectedItemUuid = node !== undefined ? NodeValues.getItemUuid(node) : undefined
+  const showAsCheckboxes = (isCheckboxLayout || items.length <= 8) && items.length > 0
 
-  if (isCheckboxLayout && items.length > 0) {
+  if (showAsCheckboxes) {
     const optionRuns = items.flatMap((item) => {
-      const itemLabel = getCategoryItemLabel(item, lang)
-      return checkboxRun(itemLabel)
+      const checked = selectedItemUuid !== undefined && item.uuid === selectedItemUuid
+      return checkboxRun(getCategoryItemLabel(item, context.lang), checked)
     })
     return [
       new Paragraph({
@@ -88,29 +169,25 @@ const renderCode = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode, items: Ca
     ]
   }
 
-  if (items.length > 0 && items.length <= 8) {
-    // Small list → inline checkboxes
-    const optionRuns = items.flatMap((item) => {
-      const itemLabel = getCategoryItemLabel(item, lang)
-      return checkboxRun(itemLabel)
-    })
-    return [
-      new Paragraph({
-        spacing: { before: 80, after: 80 },
-        children: [new TextRun({ text: `${lbl}: `, bold: true }), ...optionRuns],
-      }),
-    ]
+  // Large list / dropdown
+  if (selectedItemUuid !== undefined) {
+    const selectedItem = items.find((i) => i.uuid === selectedItemUuid)
+    const displayValue = selectedItem
+      ? getCategoryItemLabel(selectedItem, context.lang)
+      : (node?.value?.code ?? selectedItemUuid)
+    return [valueRow(lbl, displayValue)]
   }
 
-  // Dropdown placeholder or large list
   return [fieldRow(lbl, `[select${items.length > 0 ? ` (${items.length} options)` : ''}]`)]
 }
 
-const renderDate = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph =>
-  new Paragraph({
+const renderDate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
+  const lbl = label(nodeDef, context.lang)
+  if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
+  return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
-      new TextRun({ text: `${label(nodeDef, lang)}: `, bold: true }),
+      new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: 'DD', underline: {} }),
       new TextRun({ text: ' / ' }),
       new TextRun({ text: 'MM', underline: {} }),
@@ -118,20 +195,30 @@ const renderDate = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragrap
       new TextRun({ text: 'YYYY', underline: {} }),
     ],
   })
+}
 
-const renderTime = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph =>
-  new Paragraph({
+const renderTime = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
+  const lbl = label(nodeDef, context.lang)
+  if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
+  return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
-      new TextRun({ text: `${label(nodeDef, lang)}: `, bold: true }),
+      new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: 'HH', underline: {} }),
       new TextRun({ text: ' : ' }),
       new TextRun({ text: 'MM', underline: {} }),
     ],
   })
+}
 
-const renderCoordinate = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph[] => {
-  const lbl = label(nodeDef, lang)
+const renderCoordinate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph[] => {
+  const lbl = label(nodeDef, context.lang)
+  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
+  const val = hasValue ? (node.value ?? {}) : null
+  const srs = val ? (val.srs ?? '') : EMPTY_SHORT
+  const x = val ? String(val.x ?? '') : EMPTY_SHORT
+  const y = val ? String(val.y ?? '') : EMPTY_SHORT
+  const cell = (v: string) => (hasValue ? new TextRun({ text: v }) : inputLine(v))
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
     new Paragraph({
@@ -139,18 +226,21 @@ const renderCoordinate = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Pa
       indent: { left: 360 },
       children: [
         new TextRun({ text: 'SRS: ', bold: true }),
-        inputLine(EMPTY_SHORT),
+        cell(srs),
         new TextRun({ text: '   X: ', bold: true }),
-        inputLine(EMPTY_SHORT),
+        cell(x),
         new TextRun({ text: '   Y: ', bold: true }),
-        inputLine(EMPTY_SHORT),
+        cell(y),
       ],
     }),
   ]
 }
 
-const renderTaxon = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph[] => {
-  const lbl = label(nodeDef, lang)
+const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph[] => {
+  const lbl = label(nodeDef, context.lang)
+  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
+  const taxonCode = hasValue ? (node.value?.code ?? '') : EMPTY_SHORT
+  const sciName = hasValue ? (NodeValues.getScientificName(node) ?? '') : EMPTY_FIELD
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
     new Paragraph({
@@ -158,34 +248,42 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragra
       indent: { left: 360 },
       children: [
         new TextRun({ text: 'Code: ', bold: true }),
-        inputLine(EMPTY_SHORT),
+        hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
         new TextRun({ text: '   Scientific name: ', bold: true }),
-        inputLine(EMPTY_FIELD),
+        hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
       ],
     }),
   ]
 }
 
-const renderFile = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph =>
-  new Paragraph({
+const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
+  const lbl = label(nodeDef, context.lang)
+  if (node !== undefined && !Nodes.isValueBlank(node)) {
+    return valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')
+  }
+  return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
-      new TextRun({ text: `${label(nodeDef, lang)}: `, bold: true }),
+      new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
     ],
   })
+}
 
-const renderGeo = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): Paragraph =>
-  new Paragraph({
+const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
+  const lbl = label(nodeDef, context.lang)
+  if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, '[geometry data]')
+  return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
-      new TextRun({ text: `${label(nodeDef, lang)}: `, bold: true }),
+      new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: '[geometry]', italics: true, color: '888888' }),
     ],
   })
+}
 
-const renderFormHeader = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode, depth: number): Paragraph => {
-  const lbl = label(nodeDef, lang)
+const renderFormHeader = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, depth: number): Paragraph => {
+  const lbl = label(nodeDef, context.lang)
   const headingMap: Record<number, (typeof HeadingLevel)[keyof typeof HeadingLevel]> = {
     0: HeadingLevel.HEADING_3,
     1: HeadingLevel.HEADING_4,
@@ -202,59 +300,75 @@ const renderFormHeader = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode, dep
 
 const renderAttribute = (
   nodeDef: NodeDef<NodeDefType>,
-  lang: LanguageCode,
-  survey: Survey,
-  depth: number
+  context: RenderContext,
+  depth: number,
+  node?: ArenaNode
 ): DocChild[] => {
   switch (nodeDef.type) {
     case NodeDefType.boolean:
-      return [renderBoolean(nodeDef, lang)]
+      return [renderBoolean(nodeDef, context, node)]
 
     case NodeDefType.code: {
       const codeNodeDef = nodeDef as NodeDefCode
-      const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef: codeNodeDef }) : []
-      return renderCode(nodeDef, lang, items)
+      const items = context.survey.refData
+        ? Surveys.getCategoryItemsByNodeDef({ survey: context.survey, nodeDef: codeNodeDef })
+        : []
+      return renderCode(nodeDef, context, items, node)
     }
 
     case NodeDefType.date:
-      return [renderDate(nodeDef, lang)]
+      return [renderDate(nodeDef, context, node)]
 
     case NodeDefType.time:
-      return [renderTime(nodeDef, lang)]
+      return [renderTime(nodeDef, context, node)]
 
     case NodeDefType.coordinate:
-      return renderCoordinate(nodeDef, lang)
+      return renderCoordinate(nodeDef, context, node)
 
     case NodeDefType.taxon:
-      return renderTaxon(nodeDef, lang)
+      return renderTaxon(nodeDef, context, node)
 
     case NodeDefType.file:
-      return [renderFile(nodeDef, lang)]
+      return [renderFile(nodeDef, context, node)]
 
     case NodeDefType.geo:
-      return [renderGeo(nodeDef, lang)]
+      return [renderGeo(nodeDef, context, node)]
 
     case NodeDefType.formHeader:
-      return [renderFormHeader(nodeDef, lang, depth)]
+      return [renderFormHeader(nodeDef, context, depth)]
 
     case NodeDefType.integer:
-    case NodeDefType.decimal:
-      return [fieldRow(label(nodeDef, lang), EMPTY_SHORT)]
+    case NodeDefType.decimal: {
+      const lbl = label(nodeDef, context.lang)
+      if (node !== undefined && !Nodes.isValueBlank(node))
+        return [valueRow(lbl, formatNodeValue(nodeDef, context, node))]
+      return [fieldRow(lbl, EMPTY_SHORT)]
+    }
 
     case NodeDefType.text:
-    default:
-      return [fieldRow(label(nodeDef, lang), EMPTY_FIELD)]
+    default: {
+      const lbl = label(nodeDef, context.lang)
+      if (node !== undefined && !Nodes.isValueBlank(node))
+        return [valueRow(lbl, formatNodeValue(nodeDef, context, node))]
+      return [fieldRow(lbl, EMPTY_FIELD)]
+    }
   }
 }
 
 // ─── table renderer (for multiple entities with table layout) ─────────────────
 
+const emptyTableRows = (attrDefs: NodeDef<NodeDefType>[], count = 3): TableRow[] =>
+  Array.from(
+    { length: count },
+    () => new TableRow({ children: attrDefs.map(() => new TableCell({ children: [new Paragraph({ text: '' })] })) })
+  )
+
 const renderEntityAsTable = (
-  survey: Survey,
   entityDef: NodeDef<NodeDefType>,
-  lang: LanguageCode,
-  cycle: string
+  context: RenderContext,
+  parentEntityNode?: ArenaNode
 ): Table => {
+  const { survey, lang, cycle, record } = context
   const children = Surveys.getNodeDefChildrenSorted({ survey, nodeDef: entityDef, cycle, includeAnalysis: false })
   const attrDefs = children.filter(NodeDefs.isAttribute)
 
@@ -266,18 +380,30 @@ const renderEntityAsTable = (
       })
   )
 
-  // 3 empty data rows
-  const emptyRows = Array.from(
-    { length: 3 },
-    () =>
-      new TableRow({
-        children: attrDefs.map(() => new TableCell({ children: [new Paragraph({ text: '' })] })),
-      })
-  )
+  let dataRows: TableRow[]
+  if (record !== undefined && parentEntityNode !== undefined) {
+    const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(record)
+    if (entityNodes.length > 0) {
+      dataRows = entityNodes.map(
+        (entityNode) =>
+          new TableRow({
+            children: attrDefs.map((attrDef) => {
+              const attrNode = Records.getChildren(entityNode, attrDef.uuid)(record)[0]
+              const cellText = attrNode ? formatNodeValue(attrDef, context, attrNode) : ''
+              return new TableCell({ children: [new Paragraph({ text: cellText })] })
+            }),
+          })
+      )
+    } else {
+      dataRows = emptyTableRows(attrDefs)
+    }
+  } else {
+    dataRows = emptyTableRows(attrDefs)
+  }
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [new TableRow({ children: headerCells, tableHeader: true }), ...emptyRows],
+    rows: [new TableRow({ children: headerCells, tableHeader: true }), ...dataRows],
   })
 }
 
@@ -295,13 +421,17 @@ const headingLevels = [
 const headingForDepth = (depth: number): (typeof HeadingLevel)[keyof typeof HeadingLevel] =>
   headingLevels[Math.min(depth, headingLevels.length - 1)]
 
+/**
+ * Renders the attribute and entity children of a given entity definition,
+ * optionally bound to a specific entity node from the record.
+ */
 const renderEntityChildren = (
-  survey: Survey,
   entityDef: NodeDef<NodeDefType>,
-  lang: LanguageCode,
-  cycle: string,
-  depth: number
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode
 ): DocChild[] => {
+  const { survey, cycle, record } = context
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
     nodeDef: entityDef,
@@ -314,34 +444,48 @@ const renderEntityChildren = (
 
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
-      result.push(...renderEntityDef(survey, child, lang, cycle, depth + 1))
+      result.push(...renderEntityDef(child, context, depth + 1, parentEntityNode))
     } else {
-      result.push(...renderAttribute(child, lang, survey, depth))
+      let childNode: ArenaNode | undefined
+      if (record !== undefined && parentEntityNode !== undefined) {
+        childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
+      }
+      result.push(...renderAttribute(child, context, depth, childNode))
     }
   }
 
   return result
 }
 
+/**
+ * Renders an entity definition – adding a heading and recursing into children.
+ * When a record is present, fetches actual entity instances from the record
+ * and renders one section per instance (form layout) or one row per instance
+ * (table layout).
+ */
 const renderEntityDef = (
-  survey: Survey,
   entityDef: NodeDef<NodeDefType>,
-  lang: LanguageCode,
-  cycle: string,
-  depth: number
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode
 ): DocChild[] => {
+  const { record } = context
   const isRoot = NodeDefs.isRoot(entityDef)
   const isMultiple = NodeDefs.isMultiple(entityDef)
-  const layoutRenderType = NodeDefs.getLayoutRenderType(cycle)(entityDef as any)
+  const layoutRenderType = NodeDefs.getLayoutRenderType(context.cycle)(entityDef as any)
   const isTableLayout = layoutRenderType === NodeDefEntityRenderType.table
+
+  const entityNodes: ArenaNode[] =
+    record !== undefined && parentEntityNode !== undefined
+      ? Records.getChildren(parentEntityNode, entityDef.uuid)(record)
+      : []
 
   const result: DocChild[] = []
 
-  // Add heading for non-root entities
   if (!isRoot) {
     result.push(
       new Paragraph({
-        text: label(entityDef, lang),
+        text: label(entityDef, context.lang),
         heading: headingForDepth(depth),
         spacing: { before: 300, after: 120 },
         pageBreakBefore: isMultiple && depth <= 2,
@@ -350,11 +494,30 @@ const renderEntityDef = (
   }
 
   if (isMultiple && isTableLayout) {
-    // Multiple entity with table layout → render an empty table
-    result.push(renderEntityAsTable(survey, entityDef, lang, cycle))
+    // Multiple entity with table layout → table with data rows (or empty rows)
+    result.push(renderEntityAsTable(entityDef, context, parentEntityNode))
+  } else if (isMultiple) {
+    // Multiple entity with form layout → one section per record instance
+    if (entityNodes.length > 0) {
+      entityNodes.forEach((entityNode, index) => {
+        if (entityNodes.length > 1) {
+          result.push(
+            new Paragraph({
+              text: `${label(entityDef, context.lang)} #${index + 1}`,
+              heading: headingForDepth(Math.min(depth + 1, headingLevels.length - 1)),
+              spacing: { before: 200, after: 80 },
+            })
+          )
+        }
+        result.push(...renderEntityChildren(entityDef, context, depth + 1, entityNode))
+      })
+    } else {
+      // No record data: render a single blank form section
+      result.push(...renderEntityChildren(entityDef, context, depth, undefined))
+    }
   } else {
-    // Single entity or multiple with form layout → render children recursively
-    result.push(...renderEntityChildren(survey, entityDef, lang, cycle, depth))
+    // Single entity
+    result.push(...renderEntityChildren(entityDef, context, depth, entityNodes[0]))
   }
 
   return result
@@ -363,18 +526,40 @@ const renderEntityDef = (
 // ─── public API ──────────────────────────────────────────────────────────────
 
 export interface SurveyDocxOptions {
-  survey: Survey
+  surveyId: number
+  draft?: boolean
   lang?: LanguageCode
   cycle?: string
+  nodeDefOptions?: Pick<NodeDefinitionFetchParams, 'advanced' | 'includeDeleted' | 'backup' | 'includeAnalysis'>
+  /** When provided, the document is filled with the record's data instead of blank input fields. */
+  record?: ArenaRecord
 }
 
 export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<Buffer> => {
-  const { survey } = options
+  const { surveyId, draft, cycle, nodeDefOptions, record } = options
+  const survey = await SurveyRepository.get({ surveyId, draft })
+  const { advanced = false } = nodeDefOptions ?? {}
+  const nodeDefs = await NodeDefRepository.getNodeDefsBySurveyId({
+    surveyId,
+    draft,
+    cycle,
+    advanced,
+  })
+  const nodeDefsDictionary = {} as Dictionary<NodeDef<any>>
+  for (const nodeDef of nodeDefs) {
+    nodeDefsDictionary[nodeDef.uuid] = nodeDef
+  }
+  survey.nodeDefs = nodeDefsDictionary
+  Surveys.buildAndAssocNodeDefsIndex(survey)
+
   const lang: LanguageCode = options.lang ?? Surveys.getDefaultLanguage(survey)
-  const cycle: string = options.cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
+  const cycleResolved: string = cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
+
+  const context: RenderContext = { survey, lang, cycle: cycleResolved, record }
 
   const surveyTitle = Surveys.getLabelOrName(lang)(survey)
   const rootDef = Surveys.getNodeDefRoot({ survey })
+  const rootEntityNode = record !== undefined ? Records.getRoot(record) : undefined
 
   const bodyChildren: DocChild[] = [
     new Paragraph({
@@ -385,7 +570,7 @@ export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<Bu
     }),
   ]
 
-  bodyChildren.push(...renderEntityChildren(survey, rootDef, lang, cycle, 0))
+  bodyChildren.push(...renderEntityChildren(rootDef, context, 0, rootEntityNode))
 
   const doc = new Document({
     styles: {
