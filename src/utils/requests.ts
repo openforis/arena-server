@@ -36,6 +36,18 @@ const getArrayParam =
     }
     return Array.isArray(param) ? param : [param]
   }
+
+const getBooleanParam =
+  (paramName: string, defaultValue = false) =>
+  (req: Request): boolean => {
+    const params = getParams(req)
+    const param = params[paramName]
+    if (param === undefined) return defaultValue
+    if (typeof param === 'boolean') return param
+    if (typeof param === 'string') return param.toLowerCase() === 'true'
+    return Boolean(param)
+  }
+
 const getServerUrl = (request: Request): string => `${request.protocol}://${request.get('host')}`
 const getUrl = (request: Request): string => request.url
 const getUser = (request: Request): User => request.user
@@ -55,6 +67,7 @@ export const Requests = {
   getParams,
   getJsonParam,
   getArrayParam,
+  getBooleanParam,
   getServerUrl,
   getUrl,
   getUser,

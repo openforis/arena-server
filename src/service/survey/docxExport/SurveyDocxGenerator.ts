@@ -12,7 +12,7 @@ import {
   WidthType,
 } from 'docx'
 
-import type { Node as ArenaNode, ArenaRecord, Dictionary } from '@openforis/arena-core'
+import type { Node as ArenaNode, ArenaRecord } from '@openforis/arena-core'
 import {
   CategoryItem,
   LanguageCode,
@@ -28,9 +28,6 @@ import {
   Survey,
   Surveys,
 } from '@openforis/arena-core'
-import type { NodeDefinitionFetchParams } from '../../../repository/nodeDef'
-import { NodeDefRepository } from '../../../repository/nodeDef'
-import { SurveyRepository } from '../../../repository/survey'
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -526,31 +523,30 @@ const renderEntityDef = (
 // ─── public API ──────────────────────────────────────────────────────────────
 
 export interface SurveyDocxOptions {
-  surveyId: number
-  draft?: boolean
+  survey: Survey
   lang?: LanguageCode
   cycle?: string
-  nodeDefOptions?: Pick<NodeDefinitionFetchParams, 'advanced' | 'includeDeleted' | 'backup' | 'includeAnalysis'>
   /** When provided, the document is filled with the record's data instead of blank input fields. */
   record?: ArenaRecord
 }
 
-export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<Buffer> => {
-  const { surveyId, draft, cycle, nodeDefOptions, record } = options
-  const survey = await SurveyRepository.get({ surveyId, draft })
-  const { advanced = false } = nodeDefOptions ?? {}
-  const nodeDefs = await NodeDefRepository.getNodeDefsBySurveyId({
-    surveyId,
-    draft,
-    cycle,
-    advanced,
-  })
-  const nodeDefsDictionary = {} as Dictionary<NodeDef<any>>
-  for (const nodeDef of nodeDefs) {
-    nodeDefsDictionary[nodeDef.uuid] = nodeDef
-  }
-  survey.nodeDefs = nodeDefsDictionary
-  Surveys.buildAndAssocNodeDefsIndex(survey)
+export interface SurveyDocxResult {
+  buffer: Buffer
+  surveyName: string
+}
+
+const toFileNameSafeSurveyName = (surveyName: string, surveyId: number): string => {
+  const normalized = surveyName
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, ' ')
+    .replace(/\s+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  return normalized || `survey_${surveyId}`
+}
+
+export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
+  const { survey, cycle, record } = options
 
   const lang: LanguageCode = options.lang ?? Surveys.getDefaultLanguage(survey)
   const cycleResolved: string = cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
@@ -558,6 +554,7 @@ export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<Bu
   const context: RenderContext = { survey, lang, cycle: cycleResolved, record }
 
   const surveyTitle = Surveys.getLabelOrName(lang)(survey)
+  const surveyName = toFileNameSafeSurveyName(surveyTitle, survey.id ?? 0)
   const rootDef = Surveys.getNodeDefRoot({ survey })
   const rootEntityNode = record !== undefined ? Records.getRoot(record) : undefined
 
@@ -594,5 +591,8 @@ export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<Bu
     ],
   })
 
-  return Packer.toBuffer(doc)
+  return {
+    buffer: await Packer.toBuffer(doc),
+    surveyName,
+  }
 }

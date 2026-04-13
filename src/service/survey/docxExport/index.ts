@@ -1,2 +1,2 @@
 export { generateSurveyDocx } from './SurveyDocxGenerator'
-export type { SurveyDocxOptions } from './SurveyDocxGenerator'
+export type { SurveyDocxOptions, SurveyDocxResult } from './SurveyDocxGenerator'

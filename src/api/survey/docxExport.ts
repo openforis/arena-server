@@ -1,10 +1,11 @@
 import { Express, Request, Response, NextFunction } from 'express'
+import { ServiceRegistry, ServiceType } from '@openforis/arena-core'
 
+import type { SurveyServiceWithDocx } from '../../service/survey'
 import { ExpressInitializer } from '../../server'
 import { Requests } from '../../utils'
 import { ApiAuthMiddleware } from '../middleware'
 import { ApiEndpoint } from '../endpoint'
-import { generateSurveyDocx } from '../../service/survey/docxExport'
 
 export const SurveyDocxExport: ExpressInitializer = {
   init: (express: Express): void => {
@@ -13,11 +14,12 @@ export const SurveyDocxExport: ExpressInitializer = {
       ApiAuthMiddleware.requireSurveyViewPermission,
       async (req: Request, res: Response, next: NextFunction) => {
         try {
-          const { surveyId, lang, cycle, draft: draftParam } = Requests.getParams(req)
-          const draft = draftParam === true || draftParam === 'true'
+          const { surveyId, lang, cycle } = Requests.getParams(req)
+          const draft = Requests.getBooleanParam('draft')(req)
           const surveyIdNumber = Number(surveyId)
+          const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyServiceWithDocx
 
-          const buffer = await generateSurveyDocx({
+          const { buffer, surveyName } = await surveyService.generateDocx({
             surveyId: surveyIdNumber,
             draft,
             lang,
@@ -29,8 +31,6 @@ export const SurveyDocxExport: ExpressInitializer = {
             },
           })
 
-          // Name fallback kept local to avoid an extra survey fetch in the API layer.
-          const surveyName = `survey_${surveyId}`
           res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
           res.setHeader('Content-Disposition', `attachment; filename="${surveyName}_form.docx"`)
           res.send(buffer)
