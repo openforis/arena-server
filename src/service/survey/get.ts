@@ -5,6 +5,7 @@ import { Logger } from '../../log'
 import { SurveyRepository } from '../../repository'
 import type { NodeDefinitionFetchParams } from '../../repository/nodeDef'
 import { NodeDefRepository } from '../../repository/nodeDef'
+import { DB } from '../../db'
 
 const logger = new Logger('SurveyService.get')
 
@@ -13,28 +14,24 @@ export interface SurveyGetOptions {
   draft?: boolean
   backup?: boolean
   cycle?: string
-  nodeDefOptions?: Pick<NodeDefinitionFetchParams, 'advanced' | 'includeDeleted' | 'backup' | 'includeAnalysis'>
+  nodeDefOptions?: Omit<NodeDefinitionFetchParams, 'surveyId'> // nodeDefOptions are used to fetch node defs to be associated to the survey, if not provided node defs won't be fetched and associated
 }
 
-export const get = async (options: SurveyGetOptions): Promise<Survey> => {
-  const { cycle, backup, nodeDefOptions, ...repoOptions } = options
-  const { draft } = repoOptions
-  const { advanced = false } = nodeDefOptions ?? {}
+export const get = async (options: SurveyGetOptions, client = DB): Promise<Survey> => {
+  const { nodeDefOptions, ...repoOptions } = options
+  const { backup } = repoOptions
 
-  const survey = await SurveyRepository.get(repoOptions)
-  const surveyId = survey.id
-  if (surveyId == null) return survey
+  const survey = await SurveyRepository.get(repoOptions, client)
+  const surveyId = survey.id!
 
   const surveyCycles = Surveys.getCycleKeys(
     backup ? { ...survey, props: { ...survey.props, ...survey.propsDraft } } : survey
   )
 
-  const nodeDefsArray = await NodeDefRepository.getNodeDefsBySurveyId({
-    surveyId,
-    draft,
-    cycle,
-    advanced,
-  })
+  if (!nodeDefOptions) {
+    return survey
+  }
+  const nodeDefsArray = await NodeDefRepository.getNodeDefsBySurveyId({ surveyId, ...nodeDefOptions }, client)
 
   const nodeDefsDictionary: NodeDefMap = {}
   for (const nodeDef of nodeDefsArray) {
