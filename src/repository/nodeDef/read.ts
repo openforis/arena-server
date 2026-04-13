@@ -23,7 +23,7 @@ const rowPropertyByAdvancedPropKeys: Record<(typeof advancedPropKeysDraftToTrack
     {} as Record<(typeof advancedPropKeysDraftToTrack)[number], string>
   )
 
-const rowTransformCallback =
+export const rowTransformCallback =
   ({ draft, advanced = false, backup = false }: { draft?: boolean; advanced?: boolean; backup?: boolean }) =>
   (row: any): any => {
     const rowUpdated = { ...row }

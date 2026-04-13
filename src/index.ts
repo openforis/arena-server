@@ -33,12 +33,14 @@ export { Logger } from './log'
 
 export { ProcessEnv, NodeEnv } from './processEnv'
 
+export { NodeDefRepository } from './repository'
+
+export type { SurveyDocxOptions } from './service/survey'
+export { SurveyDocxGenerator } from './service/survey'
+
 export { Worker, Thread, WorkerMessageType, WorkerCache } from './thread'
 export type { WorkerErrorMessage, WorkerMessage } from './thread'
 
 export { WebSocketEvent, WebSocketServer } from './webSocket'
 
 export { Requests, Responses } from './utils'
-
-export { generateSurveyDocx } from './service/survey/docxExport'
-export type { SurveyDocxOptions } from './service/survey/docxExport'

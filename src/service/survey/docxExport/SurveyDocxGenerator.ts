@@ -524,8 +524,8 @@ const renderEntityDef = (
 
 export interface SurveyDocxOptions {
   survey: Survey
-  lang?: LanguageCode
   cycle?: string
+  lang?: LanguageCode
   /** When provided, the document is filled with the record's data instead of blank input fields. */
   record?: ArenaRecord
 }
@@ -545,7 +545,7 @@ const toFileNameSafeSurveyName = (surveyName: string, surveyId: number): string 
   return normalized || `survey_${surveyId}`
 }
 
-export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
+const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
   const { survey, cycle, record } = options
 
   const lang: LanguageCode = options.lang ?? Surveys.getDefaultLanguage(survey)
@@ -595,4 +595,8 @@ export const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<Su
     buffer: await Packer.toBuffer(doc),
     surveyName,
   }
+}
+
+export const SurveyDocxGenerator = {
+  generateSurveyDocx,
 }

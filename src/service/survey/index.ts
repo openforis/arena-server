@@ -1,16 +1,12 @@
 import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } from '@openforis/arena-core'
 
-import type { SurveyDocxResult } from './docxExport'
-import { generateDocx } from './generateDocx'
-import type { GenerateSurveyDocxOptions } from './generateDocx'
 import { getAllIds } from './getAllIds'
 import { get } from './get'
 
-export interface SurveyServiceWithDocx extends SurveyService {
-  generateDocx(options: GenerateSurveyDocxOptions): Promise<SurveyDocxResult>
-}
+export type { SurveyDocxOptions } from './docxExport'
+export { SurveyDocxGenerator } from './docxExport'
 
-export const SurveyServiceServer: SurveyServiceWithDocx = {
+export const SurveyServiceServer: SurveyService = {
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clone(options: {
@@ -40,8 +36,6 @@ export const SurveyServiceServer: SurveyServiceWithDocx = {
   delete(options: { surveyId: number; user: User }): Promise<void> {
     throw new Error('TODO')
   },
-
-  generateDocx,
 
   get,
 
