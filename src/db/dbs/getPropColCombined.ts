@@ -6,7 +6,7 @@ export const getPropsCombined = (
 ) => {
   const columnPrefix = tableAlias ? Strings.appendIfMissing('.')(tableAlias) : ''
   return draft
-    ? `${columnPrefix}props || ${columnPrefix}props_draft${alias ? ` AS ${alias}` : ''}`
+    ? `(${columnPrefix}props || ${columnPrefix}props_draft)${alias ? ` AS ${alias}` : ''}`
     : `${columnPrefix}props${alias ? ` AS ${alias}` : ''}`
 }
 export const getPropColCombined = (
