@@ -2,7 +2,7 @@ import { Strings } from '@openforis/arena-core'
 
 export const getPropsCombined = (
   draft?: boolean,
-  { tableAlias = '', alias = 'props' }: { tableAlias?: string; alias?: string } = {}
+  { tableAlias = '', alias = 'props' }: { tableAlias?: string; alias?: string | null } = {}
 ) => {
   const columnPrefix = tableAlias ? Strings.appendIfMissing('.')(tableAlias) : ''
   return draft
@@ -23,4 +23,4 @@ export const getPropColCombined = (
     alias?: string | null
   } = {}
 ) =>
-  `(${getPropsCombined(draft, { tableAlias: columnPrefix })})${asText ? '->>' : '->'}'${propName}'${alias ? ` AS ${alias}` : ''}`
+  `(${getPropsCombined(draft, { tableAlias: columnPrefix, alias: null })})${asText ? '->>' : '->'}'${propName}'${alias ? ` AS ${alias}` : ''}`
