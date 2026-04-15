@@ -12,7 +12,7 @@ import {
   WidthType,
 } from 'docx'
 
-import type { Node as ArenaNode, ArenaRecord } from '@openforis/arena-core'
+import type { Node as ArenaNode, ArenaRecord, I18n, NodeDefCoordinate } from '@openforis/arena-core'
 import {
   CategoryItem,
   LanguageCode,
@@ -25,6 +25,7 @@ import {
   NodeValues,
   Nodes,
   Records,
+  Strings,
   Survey,
   Surveys,
 } from '@openforis/arena-core'
@@ -35,6 +36,7 @@ interface RenderContext {
   survey: Survey
   lang: LanguageCode
   cycle: string
+  i18n: I18n
   record?: ArenaRecord
 }
 
@@ -80,6 +82,11 @@ const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string =>
   return item.props?.code ?? ''
 }
 
+const getCommonLabel = (context: RenderContext, key: 'yes' | 'no', fallback: string): string => {
+  const translationKey = `common.${key}`
+  return context.i18n?.exists(translationKey) ? context.i18n.t(translationKey) : fallback
+}
+
 /**
  * Formats a node's value as a display string.
  * Used for table cells and simple inline value rendering.
@@ -94,12 +101,12 @@ const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, 
       const d = NodeValues.getDateDay(node)
       const m = NodeValues.getDateMonth(node)
       const y = NodeValues.getDateYear(node)
-      return `${String(d ?? '').padStart(2, '0')}/${String(m ?? '').padStart(2, '0')}/${String(y ?? '')}`
+      return `${Strings.padStart(2, '0')(String(d))}/${Strings.padStart(2, '0')(String(m))}/${Strings.padStart(4, '0')(String(y))}`
     }
     case NodeDefType.time: {
       const h = NodeValues.getTimeHour(node)
       const min = NodeValues.getTimeMinute(node)
-      return `${String(h ?? '').padStart(2, '0')}:${String(min ?? '').padStart(2, '0')}`
+      return `${Strings.padStart(2, '0')(String(h))}:${Strings.padStart(2, '0')(String(min))}`
     }
     case NodeDefType.coordinate: {
       const val = node.value ?? {}
@@ -130,12 +137,14 @@ const renderBoolean = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, no
   const lbl = label(nodeDef, context.lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const isTrue = hasValue && (node.value === true || node.value === 'true')
+  const yesLabel = getCommonLabel(context, 'yes', 'Yes')
+  const noLabel = getCommonLabel(context, 'no', 'No')
   return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
-      ...checkboxRun('Yes', hasValue ? isTrue : false),
-      ...checkboxRun('No', hasValue ? !isTrue : false),
+      ...checkboxRun(yesLabel, hasValue ? isTrue : false),
+      ...checkboxRun(noLabel, hasValue ? !isTrue : false),
     ],
   })
 }
@@ -208,33 +217,51 @@ const renderTime = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   })
 }
 
-const renderCoordinate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const lbl = label(nodeDef, context.lang)
+const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, node?: ArenaNode): Paragraph[] => {
+  const { i18n, lang } = context
+  const lbl = label(nodeDef, lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const val = hasValue ? (node.value ?? {}) : null
-  const srs = val ? (val.srs ?? '') : EMPTY_SHORT
-  const x = val ? String(val.x ?? '') : EMPTY_SHORT
-  const y = val ? String(val.y ?? '') : EMPTY_SHORT
   const cell = (v: string) => (hasValue ? new TextRun({ text: v }) : inputLine(v))
+  const valueFields = [
+    NodeValues.ValuePropsCoordinate.srs,
+    NodeValues.ValuePropsCoordinate.x,
+    NodeValues.ValuePropsCoordinate.y,
+    ...NodeDefs.getCoordinateAdditionalFields(nodeDef),
+  ]
+  const labelByField = valueFields.reduce(
+    (acc, field) => {
+      const labelKey = `surveyForm:nodeDefCoordinate.${field}`
+      const fieldLabel = i18n.exists(labelKey) ? i18n.t(labelKey) : field
+      acc[field] = fieldLabel
+      return acc
+    },
+    {} as Record<string, string>
+  )
+  const maxLabelLength = Math.max(...valueFields.map((f) => labelByField[f].length))
+  for (const field of valueFields) {
+    const fieldLabel = labelByField[field]
+    if (fieldLabel.length < maxLabelLength) {
+      labelByField[field] = Strings.padStart(maxLabelLength, ' ')(fieldLabel)
+    }
+  }
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
     new Paragraph({
       spacing: { before: 0, after: 80 },
       indent: { left: 360 },
-      children: [
-        new TextRun({ text: 'SRS: ', bold: true }),
-        cell(srs),
-        new TextRun({ text: '   X: ', bold: true }),
-        cell(x),
-        new TextRun({ text: '   Y: ', bold: true }),
-        cell(y),
-      ],
+      children: valueFields.flatMap((valueField) => {
+        const fieldLabel = labelByField[valueField]
+        const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
+        return [new TextRun({ text: `${fieldLabel}: `, bold: true }), cell(fieldValue)]
+      }),
     }),
   ]
 }
 
 const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const lbl = label(nodeDef, context.lang)
+  const { i18n, lang } = context
+  const lbl = label(nodeDef, lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const taxonCode = hasValue ? (node.value?.code ?? '') : EMPTY_SHORT
   const sciName = hasValue ? (NodeValues.getScientificName(node) ?? '') : EMPTY_FIELD
@@ -244,9 +271,9 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
       spacing: { before: 0, after: 80 },
       indent: { left: 360 },
       children: [
-        new TextRun({ text: 'Code: ', bold: true }),
+        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
         hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
-        new TextRun({ text: '   Scientific name: ', bold: true }),
+        new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
         hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
       ],
     }),
@@ -320,7 +347,7 @@ const renderAttribute = (
       return [renderTime(nodeDef, context, node)]
 
     case NodeDefType.coordinate:
-      return renderCoordinate(nodeDef, context, node)
+      return renderCoordinate(nodeDef as NodeDefCoordinate, context, node)
 
     case NodeDefType.taxon:
       return renderTaxon(nodeDef, context, node)
@@ -526,6 +553,7 @@ export interface SurveyDocxOptions {
   survey: Survey
   cycle?: string
   lang?: LanguageCode
+  i18n: I18n
   /** When provided, the document is filled with the record's data instead of blank input fields. */
   record?: ArenaRecord
 }
@@ -546,21 +574,21 @@ const toFileNameSafeSurveyName = (surveyName: string, surveyId: number): string 
 }
 
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
-  const { survey, cycle, record } = options
+  const { survey, cycle, i18n, record } = options
 
   const lang: LanguageCode = options.lang ?? Surveys.getDefaultLanguage(survey)
   const cycleResolved: string = cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
 
-  const context: RenderContext = { survey, lang, cycle: cycleResolved, record }
+  const context: RenderContext = { survey, lang, cycle: cycleResolved, i18n, record }
 
-  const surveyTitle = Surveys.getLabelOrName(lang)(survey)
-  const surveyName = toFileNameSafeSurveyName(surveyTitle, survey.id ?? 0)
+  const surveyLabelOrName = Surveys.getLabelOrName(lang)(survey)
+  const surveyName = toFileNameSafeSurveyName(surveyLabelOrName, survey.id ?? 0)
   const rootDef = Surveys.getNodeDefRoot({ survey })
   const rootEntityNode = record !== undefined ? Records.getRoot(record) : undefined
 
   const bodyChildren: DocChild[] = [
     new Paragraph({
-      text: surveyTitle,
+      text: surveyLabelOrName,
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
