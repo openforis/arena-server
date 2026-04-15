@@ -149,16 +149,13 @@ const renderBoolean = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, no
   })
 }
 
-const renderCode = (
-  nodeDef: NodeDef<NodeDefType>,
-  context: RenderContext,
-  items: CategoryItem[],
-  node?: ArenaNode
-): Paragraph[] => {
+const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNode): Paragraph[] => {
+  const { survey } = context
+  const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef }) : []
+
   const lbl = label(nodeDef, context.lang)
-  const codeNodeDef = nodeDef as NodeDefCode
   const isCheckboxLayout =
-    codeNodeDef.props?.layout && Object.values(codeNodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
+    nodeDef.props?.layout && Object.values(nodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
   const selectedItemUuid = node !== undefined ? NodeValues.getItemUuid(node) : undefined
   const showAsCheckboxes = (isCheckboxLayout || items.length <= 8) && items.length > 0
 
@@ -333,11 +330,7 @@ const renderAttribute = (
       return [renderBoolean(nodeDef, context, node)]
 
     case NodeDefType.code: {
-      const codeNodeDef = nodeDef as NodeDefCode
-      const items = context.survey.refData
-        ? Surveys.getCategoryItemsByNodeDef({ survey: context.survey, nodeDef: codeNodeDef })
-        : []
-      return renderCode(nodeDef, context, items, node)
+      return renderCode(nodeDef as NodeDefCode, context, node)
     }
 
     case NodeDefType.date:
