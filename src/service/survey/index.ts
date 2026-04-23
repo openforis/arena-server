@@ -3,6 +3,9 @@ import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } fr
 import { getAllIds } from './getAllIds'
 import { get } from './get'
 
+export type { SurveyDocxOptions } from './docxExport'
+export { SurveyDocxGenerator } from './docxExport'
+
 export const SurveyServiceServer: SurveyService = {
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
