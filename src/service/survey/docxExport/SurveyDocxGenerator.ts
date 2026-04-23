@@ -394,7 +394,7 @@ const renderEntityAsTable = (
   )
 
   let dataRows: TableRow[]
-  if (record !== undefined && parentEntityNode !== undefined) {
+  if (record && parentEntityNode) {
     const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(record)
     if (entityNodes.length > 0) {
       dataRows = entityNodes.map(
@@ -489,9 +489,7 @@ const renderEntityDef = (
   const isTableLayout = layoutRenderType === NodeDefEntityRenderType.table
 
   const entityNodes: ArenaNode[] =
-    record !== undefined && parentEntityNode !== undefined
-      ? Records.getChildren(parentEntityNode, entityDef.uuid)(record)
-      : []
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, entityDef.uuid)(record) : []
 
   const result: DocChild[] = []
 
@@ -563,7 +561,7 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
 
   const surveyName = Surveys.getName(survey)
   const rootDef = Surveys.getNodeDefRoot({ survey })
-  const rootEntityNode = record !== undefined ? Records.getRoot(record) : undefined
+  const rootEntityNode = record ? Records.getRoot(record) : undefined
 
   const bodyChildren: DocChild[] = [
     new Paragraph({
