@@ -23,5 +23,9 @@ export const getPropColCombined = (
     asText?: boolean
     alias?: string | null
   } = {}
-) =>
-  `(${getPropsCombined(draft, { tableAlias: columnPrefix, alias: null })})${asText ? '->>' : '->'}'${propName}'${alias ? ` AS ${alias}` : ''}`
+) => {
+  const asAliasSuffix = alias ? ` AS ${alias}` : ''
+  const propsJsonCol = getPropsCombined(draft, { tableAlias: columnPrefix, alias: null })
+  const jsonOperator = asText ? '->>' : '->'
+  return `(${propsJsonCol})${jsonOperator}'${propName}'${asAliasSuffix}`
+}
