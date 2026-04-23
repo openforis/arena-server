@@ -12,7 +12,14 @@ import {
   WidthType,
 } from 'docx'
 
-import type { Node as ArenaNode, NodeDefBoolean, ArenaRecord, I18n, NodeDefCoordinate } from '@openforis/arena-core'
+import type {
+  Node as ArenaNode,
+  NodeDefBoolean,
+  ArenaRecord,
+  I18n,
+  NodeDefCoordinate,
+  NodeDefProps,
+} from '@openforis/arena-core'
 import {
   CategoryItem,
   CategoryItems,
@@ -471,6 +478,32 @@ const renderEntityChildren = (
 }
 
 /**
+ * Renders multiple entity nodes, adding a heading for each instance if there are multiple nodes.
+ */
+const renderEntityNodes = (
+  entityNodes: ArenaNode[],
+  entityDef: NodeDef<NodeDefType, NodeDefProps>,
+  context: RenderContext,
+  depth: number
+) => {
+  const result: DocChild[] = []
+  for (let index = 0; index < entityNodes.length; index++) {
+    const entityNode = entityNodes[index]
+    if (entityNodes.length > 1) {
+      result.push(
+        new Paragraph({
+          text: `${label(entityDef, context.lang)} #${index + 1}`,
+          heading: headingForDepth(Math.min(depth + 1, headingLevels.length - 1)),
+          spacing: { before: 200, after: 80 },
+        })
+      )
+    }
+    result.push(...renderEntityChildren(entityDef, context, depth + 1, entityNode))
+  }
+  return result
+}
+
+/**
  * Renders an entity definition – adding a heading and recursing into children.
  * When a record is present, fetches actual entity instances from the record
  * and renders one section per instance (form layout) or one row per instance
@@ -510,19 +543,7 @@ const renderEntityDef = (
   } else if (isMultiple) {
     // Multiple entity with form layout → one section per record instance
     if (entityNodes.length > 0) {
-      for (let index = 0; index < entityNodes.length; index++) {
-        const entityNode = entityNodes[index]
-        if (entityNodes.length > 1) {
-          result.push(
-            new Paragraph({
-              text: `${label(entityDef, context.lang)} #${index + 1}`,
-              heading: headingForDepth(Math.min(depth + 1, headingLevels.length - 1)),
-              spacing: { before: 200, after: 80 },
-            })
-          )
-        }
-        result.push(...renderEntityChildren(entityDef, context, depth + 1, entityNode))
-      }
+      result.push(...renderEntityNodes(entityNodes, entityDef, context, depth))
     } else {
       // No record data: render a single blank form section
       result.push(...renderEntityChildren(entityDef, context, depth))
