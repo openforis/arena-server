@@ -551,16 +551,6 @@ export interface SurveyDocxResult {
   surveyName: string
 }
 
-const toFileNameSafeSurveyName = (surveyName: string, surveyId: number): string => {
-  const normalized = surveyName
-    .trim()
-    .replace(/[\\/:*?"<>|]+/g, ' ')
-    .replace(/\s+/g, '_')
-    .replace(/^_+|_+$/g, '')
-
-  return normalized || `survey_${surveyId}`
-}
-
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
   const { survey, cycle, i18n, record } = options
 
@@ -569,14 +559,13 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
 
   const context: RenderContext = { survey, lang, cycle: cycleResolved, i18n, record }
 
-  const surveyLabelOrName = Surveys.getLabelOrName(lang)(survey)
-  const surveyName = toFileNameSafeSurveyName(surveyLabelOrName, survey.id ?? 0)
+  const surveyName = Surveys.getName(survey)
   const rootDef = Surveys.getNodeDefRoot({ survey })
   const rootEntityNode = record !== undefined ? Records.getRoot(record) : undefined
 
   const bodyChildren: DocChild[] = [
     new Paragraph({
-      text: surveyLabelOrName,
+      text: surveyName,
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
