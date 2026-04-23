@@ -12,9 +12,10 @@ import {
   WidthType,
 } from 'docx'
 
-import type { Node as ArenaNode, ArenaRecord, I18n, NodeDefCoordinate } from '@openforis/arena-core'
+import type { Node as ArenaNode, NodeDefBoolean, ArenaRecord, I18n, NodeDefCoordinate } from '@openforis/arena-core'
 import {
   CategoryItem,
+  CategoryItems,
   LanguageCode,
   NodeDef,
   NodeDefCode,
@@ -28,6 +29,7 @@ import {
   Strings,
   Survey,
   Surveys,
+  Taxa,
 } from '@openforis/arena-core'
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -72,19 +74,20 @@ const checkboxRun = (text: string, checked = false): [CheckBox, TextRun] => [
 ]
 
 const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string => {
-  const labels = item.props?.labels
-  if (labels) {
-    const langLabel = labels[lang]
-    if (langLabel) return langLabel
-    const firstLabel = Object.values(labels).find(Boolean)
-    if (firstLabel) return firstLabel
-  }
-  return item.props?.code ?? ''
+  return CategoryItems.getLabel(item, lang) ?? CategoryItems.getCode(item)
 }
 
-const getCommonLabel = (context: RenderContext, key: 'yes' | 'no', fallback: string): string => {
+const getCommonLabel = (context: RenderContext, key: string, fallback: string): string => {
   const translationKey = `common.${key}`
   return context.i18n?.exists(translationKey) ? context.i18n.t(translationKey) : fallback
+}
+
+const getBooleanValueLabel = (context: RenderContext, nodeDef: NodeDefBoolean, value: boolean): string => {
+  const labelType = nodeDef.props.labelValue
+  if (labelType === 'trueFalse') {
+    return value ? getCommonLabel(context, 'true', 'True') : getCommonLabel(context, 'false', 'False')
+  }
+  return value ? getCommonLabel(context, 'yes', 'Yes') : getCommonLabel(context, 'no', 'No')
 }
 
 /**
@@ -95,37 +98,37 @@ const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, 
   if (Nodes.isValueBlank(node)) return ''
   const { survey, lang, cycle } = context
   switch (nodeDef.type) {
-    case NodeDefType.boolean:
-      return node.value === true || node.value === 'true' ? 'Yes' : 'No'
-    case NodeDefType.date: {
-      const d = NodeValues.getDateDay(node)
-      const m = NodeValues.getDateMonth(node)
-      const y = NodeValues.getDateYear(node)
-      return `${Strings.padStart(2, '0')(String(d))}/${Strings.padStart(2, '0')(String(m))}/${Strings.padStart(4, '0')(String(y))}`
-    }
-    case NodeDefType.time: {
-      const h = NodeValues.getTimeHour(node)
-      const min = NodeValues.getTimeMinute(node)
-      return `${Strings.padStart(2, '0')(String(h))}:${Strings.padStart(2, '0')(String(min))}`
-    }
-    case NodeDefType.coordinate: {
-      const val = node.value ?? {}
-      return [val.srs, `X:${val.x ?? ''}`, `Y:${val.y ?? ''}`].filter(Boolean).join('  ')
+    case NodeDefType.boolean: {
+      const boolDef = nodeDef as NodeDefBoolean
+      return getBooleanValueLabel(context, boolDef, node.value === true || node.value === 'true')
     }
     case NodeDefType.taxon: {
-      const code = node.value?.code ?? ''
-      const sciName = NodeValues.getScientificName(node) ?? ''
-      return [code, sciName].filter(Boolean).join(' – ')
+      const { refData } = node
+      const taxon = refData?.taxon
+      if (!taxon) {
+        return ''
+      }
+      const code = Taxa.getCode(taxon)
+      const sciName = Taxa.getScientificName(taxon)
+      return `${sciName} (${code})`
     }
     case NodeDefType.file:
       return NodeValues.getFileName(node) ?? ''
     case NodeDefType.code: {
       const refItem = node.refData?.categoryItem
       if (refItem) return getCategoryItemLabel(refItem, lang)
-      return node.value?.code ?? ''
+      return NodeValues.getValueCode(node.value) ?? ''
     }
     default: {
-      const formatted = NodeValueFormatter.format({ survey, cycle, nodeDef, node, value: node.value, lang })
+      const formatted = NodeValueFormatter.format({
+        survey,
+        cycle,
+        nodeDef,
+        node,
+        value: node.value,
+        lang,
+        showLabel: true,
+      })
       return formatted != null ? String(formatted) : ''
     }
   }
@@ -133,12 +136,12 @@ const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, 
 
 // ─── per-type renderers ──────────────────────────────────────────────────────
 
-const renderBoolean = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
+const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: ArenaNode): Paragraph => {
   const lbl = label(nodeDef, context.lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const isTrue = hasValue && (node.value === true || node.value === 'true')
-  const yesLabel = getCommonLabel(context, 'yes', 'Yes')
-  const noLabel = getCommonLabel(context, 'no', 'No')
+  const yesLabel = getBooleanValueLabel(context, nodeDef, true)
+  const noLabel = getBooleanValueLabel(context, nodeDef, false)
   return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
@@ -293,7 +296,9 @@ const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
 
 const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
   const lbl = label(nodeDef, context.lang)
-  if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, '[geometry data]')
+  if (node !== undefined && !Nodes.isValueBlank(node)) {
+    return valueRow(lbl, '[geometry data]')
+  }
   return new Paragraph({
     spacing: { before: 80, after: 80 },
     children: [
@@ -327,33 +332,23 @@ const renderAttribute = (
 ): DocChild[] => {
   switch (nodeDef.type) {
     case NodeDefType.boolean:
-      return [renderBoolean(nodeDef, context, node)]
-
-    case NodeDefType.code: {
+      return [renderBoolean(nodeDef as NodeDefBoolean, context, node)]
+    case NodeDefType.code:
       return renderCode(nodeDef as NodeDefCode, context, node)
-    }
-
     case NodeDefType.date:
       return [renderDate(nodeDef, context, node)]
-
     case NodeDefType.time:
       return [renderTime(nodeDef, context, node)]
-
     case NodeDefType.coordinate:
       return renderCoordinate(nodeDef as NodeDefCoordinate, context, node)
-
     case NodeDefType.taxon:
       return renderTaxon(nodeDef, context, node)
-
     case NodeDefType.file:
       return [renderFile(nodeDef, context, node)]
-
     case NodeDefType.geo:
       return [renderGeo(nodeDef, context, node)]
-
     case NodeDefType.formHeader:
       return [renderFormHeader(nodeDef, context, depth)]
-
     case NodeDefType.integer:
     case NodeDefType.decimal: {
       const lbl = label(nodeDef, context.lang)
@@ -361,7 +356,6 @@ const renderAttribute = (
         return [valueRow(lbl, formatNodeValue(nodeDef, context, node))]
       return [fieldRow(lbl, EMPTY_SHORT)]
     }
-
     case NodeDefType.text:
     default: {
       const lbl = label(nodeDef, context.lang)
@@ -516,7 +510,8 @@ const renderEntityDef = (
   } else if (isMultiple) {
     // Multiple entity with form layout → one section per record instance
     if (entityNodes.length > 0) {
-      entityNodes.forEach((entityNode, index) => {
+      for (let index = 0; index < entityNodes.length; index++) {
+        const entityNode = entityNodes[index]
         if (entityNodes.length > 1) {
           result.push(
             new Paragraph({
@@ -527,7 +522,7 @@ const renderEntityDef = (
           )
         }
         result.push(...renderEntityChildren(entityDef, context, depth + 1, entityNode))
-      })
+      }
     } else {
       // No record data: render a single blank form section
       result.push(...renderEntityChildren(entityDef, context, depth, undefined))
