@@ -25,6 +25,7 @@ import {
   NodeValueFormatter,
   NodeValues,
   Nodes,
+  Objects,
   Records,
   Strings,
   Survey,
@@ -129,7 +130,7 @@ const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, 
         lang,
         showLabel: true,
       })
-      return formatted != null ? String(formatted) : ''
+      return Objects.isNil(formatted) ? '' : String(formatted)
     }
   }
 }
@@ -159,7 +160,7 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
   const lbl = label(nodeDef, context.lang)
   const isCheckboxLayout =
     nodeDef.props?.layout && Object.values(nodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
-  const selectedItemUuid = node !== undefined ? NodeValues.getItemUuid(node) : undefined
+  const selectedItemUuid = node ? NodeValues.getItemUuid(node) : undefined
   const showAsCheckboxes = (isCheckboxLayout || items.length <= 8) && items.length > 0
 
   if (showAsCheckboxes) {
@@ -183,8 +184,9 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
       : (node?.value?.code ?? selectedItemUuid)
     return [valueRow(lbl, displayValue)]
   }
-
-  return [fieldRow(lbl, `[select${items.length > 0 ? ` (${items.length} options)` : ''}]`)]
+  const size = items.length
+  const sizeLabel = size > 0 ? ` (${size} options)` : ''
+  return [fieldRow(lbl, `[select${sizeLabel}]`)]
 }
 
 const renderDate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
@@ -458,7 +460,7 @@ const renderEntityChildren = (
       result.push(...renderEntityDef(child, context, depth + 1, parentEntityNode))
     } else {
       let childNode: ArenaNode | undefined
-      if (record !== undefined && parentEntityNode !== undefined) {
+      if (record && parentEntityNode) {
         childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
       }
       result.push(...renderAttribute(child, context, depth, childNode))
@@ -525,7 +527,7 @@ const renderEntityDef = (
       }
     } else {
       // No record data: render a single blank form section
-      result.push(...renderEntityChildren(entityDef, context, depth, undefined))
+      result.push(...renderEntityChildren(entityDef, context, depth))
     }
   } else {
     // Single entity
