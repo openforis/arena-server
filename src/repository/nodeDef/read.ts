@@ -85,8 +85,8 @@ export const getNodeDefsBySurveyId = async (params: NodeDefinitionFetchParams, c
           : ''
       } 
       ${!backup && !draft ? " AND props <> '{}'::jsonb" : ''}
-      ${!includeDeleted ? ' AND deleted IS NOT TRUE' : ''}
-      ${!includeAnalysis ? ' AND analysis IS NOT TRUE' : ''}
+      ${includeDeleted ? '' : ' AND deleted IS NOT TRUE'}
+      ${includeAnalysis ? '' : ' AND analysis IS NOT TRUE'}
     ORDER BY id`,
     [JSON.stringify(cycle || null)],
     rowTransformCallback(params)
