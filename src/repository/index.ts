@@ -1,6 +1,7 @@
 export { AuthGroupRepository } from './authGroup'
 export { InfoRepository } from './info'
 export { MessageRepository } from './message'
+export { NodeDefRepository } from './nodeDef'
 export { SurveyRepository } from './survey'
 export { UserRepository } from './user'
 export { UserTempAuthTokenRepository } from './userTempAuthToken'
