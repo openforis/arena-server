@@ -5,9 +5,10 @@ export const getPropsCombined = (
   { tableAlias = '', alias = 'props' }: { tableAlias?: string; alias?: string | null } = {}
 ) => {
   const columnPrefix = tableAlias ? Strings.appendIfMissing('.')(tableAlias) : ''
+  const asAliasSuffix = alias ? ` AS ${alias}` : ''
   return draft
-    ? `(${columnPrefix}props || ${columnPrefix}props_draft)${alias ? ` AS ${alias}` : ''}`
-    : `${columnPrefix}props${alias ? ` AS ${alias}` : ''}`
+    ? `(${columnPrefix}props || ${columnPrefix}props_draft)${asAliasSuffix}`
+    : `${columnPrefix}props${asAliasSuffix}`
 }
 export const getPropColCombined = (
   propName: string,
