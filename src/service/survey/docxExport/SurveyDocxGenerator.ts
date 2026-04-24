@@ -19,6 +19,7 @@ import type {
   I18n,
   NodeDefCoordinate,
   NodeDefProps,
+  NodeDefEntityChildPosition,
 } from '@openforis/arena-core'
 import {
   CategoryItem,
@@ -441,23 +442,16 @@ const headingLevels = [
 const headingForDepth = (depth: number): (typeof HeadingLevel)[keyof typeof HeadingLevel] =>
   headingLevels[Math.min(depth, headingLevels.length - 1)]
 
-/**
- * Renders the attribute and entity children of a given entity definition as a grid (with cell spanning),
- * if layoutChildren is defined. Otherwise, falls back to the default flat rendering.
- */
-const renderEntityChildren = (
+// Grid layout renderer
+const renderEntityChildrenGrid = (
   entityDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
 ): DocChild[] => {
   const { survey, cycle, record } = context
-  // Try to get grid layout
-
-  // layoutChildren can be (NodeDefEntityChildPosition | string)[]
   const layoutChildrenRaw = NodeDefs.getLayoutChildren?.(cycle)?.(entityDef as any) ?? []
-  // Only use items that are objects with x/y/i (not strings)
-  const layoutChildren = layoutChildrenRaw.filter(
+  const layoutChildren: NodeDefEntityChildPosition[] = layoutChildrenRaw.filter(
     (item: any): item is { x: number; y: number; w?: number; h?: number; i: string } =>
       typeof item === 'object' &&
       item !== null &&
@@ -465,93 +459,92 @@ const renderEntityChildren = (
       typeof item.y === 'number' &&
       typeof item.i === 'string'
   )
-  const hasGrid = layoutChildren.length > 0
-
-  if (hasGrid) {
-    // Map child uuid to nodeDef
-    const childDefByUuid: Record<string, NodeDef<NodeDefType>> = {}
-    const childDefs = Surveys.getNodeDefChildrenSorted({
-      survey,
-      nodeDef: entityDef,
-      cycle,
-      includeAnalysis: false,
-      includeLayoutElements: true,
-    })
-    for (const def of childDefs) {
-      childDefByUuid[def.uuid] = def
-    }
-
-    // Determine grid size
-    let maxX = 0,
-      maxY = 0
-    for (const item of layoutChildren) {
-      const w = item.w ?? 1
-      const h = item.h ?? 1
-      maxX = Math.max(maxX, item.x + w)
-      maxY = Math.max(maxY, item.y + h)
-    }
-
-    // Build grid: grid[y][x] = {item, nodeDef}
-    const grid: Array<Array<{ item: (typeof layoutChildren)[0]; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
-      Array.from({ length: maxY }, () => Array(maxX).fill(null))
-    for (const item of layoutChildren) {
-      const nodeDef = childDefByUuid[item.i]
-      if (!nodeDef) continue
-      grid[item.y][item.x] = { item, nodeDef }
-    }
-
-    // Track merged cells
-    const skip: boolean[][] = Array.from({ length: maxY }, () => Array(maxX).fill(false))
-
-    // Build TableRows
-    const tableRows: TableRow[] = []
-    for (let y = 0; y < maxY; y++) {
-      const rowCells: TableCell[] = []
-      for (let x = 0; x < maxX; x++) {
-        if (skip[y][x]) continue
-        const cell = grid[y][x]
-        if (cell && cell.nodeDef) {
-          const { item, nodeDef } = cell
-          const w = item.w ?? 1
-          const h = item.h ?? 1
-          // Mark spanned cells to skip
-          for (let dy = 0; dy < h; dy++) {
-            for (let dx = 0; dx < w; dx++) {
-              if (dy !== 0 || dx !== 0) skip[y + dy][x + dx] = true
-            }
-          }
-          // Get node value if present
-          let childNode: ArenaNode | undefined
-          if (record && parentEntityNode) {
-            childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
-          }
-          // Render attribute/entity
-          const rendered = NodeDefs.isEntity(nodeDef)
-            ? renderEntityDef(nodeDef, context, depth + 1, parentEntityNode)
-            : renderAttribute(nodeDef, context, depth, childNode)
-          rowCells.push(
-            new TableCell({
-              children: Array.isArray(rendered) ? rendered : [rendered],
-              columnSpan: w > 1 ? w : undefined,
-              rowSpan: h > 1 ? h : undefined,
-            })
-          )
-        } else {
-          // Empty cell
-          rowCells.push(new TableCell({ children: [new Paragraph({ text: '' })] }))
-        }
-      }
-      tableRows.push(new TableRow({ children: rowCells }))
-    }
-    return [
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows: tableRows,
-      }),
-    ]
+  // Map child uuid to nodeDef
+  const childDefByUuid: Record<string, NodeDef<NodeDefType>> = {}
+  const childDefs = Surveys.getNodeDefChildrenSorted({
+    survey,
+    nodeDef: entityDef,
+    cycle,
+    includeAnalysis: false,
+  })
+  for (const def of childDefs) {
+    childDefByUuid[def.uuid] = def
   }
+  // Determine grid size
+  let maxX = 0,
+    maxY = 0
+  for (const item of layoutChildren) {
+    const w = item.w ?? 1
+    const h = item.h ?? 1
+    maxX = Math.max(maxX, item.x + w)
+    maxY = Math.max(maxY, item.y + h)
+  }
+  // Build grid: grid[y][x] = {item, nodeDef}
+  const grid: Array<Array<{ item: (typeof layoutChildren)[0]; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
+    Array.from({ length: maxY }, () => Array(maxX).fill(null))
+  for (const item of layoutChildren) {
+    const nodeDef = childDefByUuid[item.i]
+    if (!nodeDef) continue
+    grid[item.y][item.x] = { item, nodeDef }
+  }
+  // Track merged cells
+  const skip: boolean[][] = Array.from({ length: maxY }, () => Array(maxX).fill(false))
+  // Build TableRows
+  const tableRows: TableRow[] = []
+  for (let y = 0; y < maxY; y++) {
+    const rowCells: TableCell[] = []
+    for (let x = 0; x < maxX; x++) {
+      if (skip[y][x]) continue
+      const cell = grid[y][x]
+      if (cell && cell.nodeDef) {
+        const { item, nodeDef } = cell
+        const w = item.w ?? 1
+        const h = item.h ?? 1
+        // Mark spanned cells to skip
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            if (dy !== 0 || dx !== 0) skip[y + dy][x + dx] = true
+          }
+        }
+        // Get node value if present
+        let childNode: ArenaNode | undefined
+        if (record && parentEntityNode) {
+          childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
+        }
+        // Render attribute/entity
+        const rendered = NodeDefs.isEntity(nodeDef)
+          ? renderEntityDef(nodeDef, context, depth + 1, parentEntityNode)
+          : renderAttribute(nodeDef, context, depth, childNode)
+        rowCells.push(
+          new TableCell({
+            children: Array.isArray(rendered) ? rendered : [rendered],
+            columnSpan: w > 1 ? w : undefined,
+            rowSpan: h > 1 ? h : undefined,
+          })
+        )
+      } else {
+        // Empty cell
+        rowCells.push(new TableCell({ children: [new Paragraph({ text: '' })] }))
+      }
+    }
+    tableRows.push(new TableRow({ children: rowCells }))
+  }
+  return [
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: tableRows,
+    }),
+  ]
+}
 
-  // Fallback: default flat rendering
+// Default flat renderer
+const renderEntityChildrenDefault = (
+  entityDef: NodeDef<NodeDefType>,
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode
+): DocChild[] => {
+  const { survey, cycle, record } = context
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
     nodeDef: entityDef,
@@ -559,9 +552,7 @@ const renderEntityChildren = (
     includeAnalysis: false,
     includeLayoutElements: true,
   })
-
   const result: DocChild[] = []
-
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
       result.push(...renderEntityDef(child, context, depth + 1, parentEntityNode))
@@ -573,8 +564,29 @@ const renderEntityChildren = (
       result.push(...renderAttribute(child, context, depth, childNode))
     }
   }
-
   return result
+}
+
+// Main delegator
+const renderEntityChildren = (
+  entityDef: NodeDef<NodeDefType>,
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode
+): DocChild[] => {
+  const layoutChildrenRaw = NodeDefs.getLayoutChildren?.(context.cycle)?.(entityDef as any) ?? []
+  const layoutChildren = layoutChildrenRaw.filter(
+    (item: any): item is { x: number; y: number; w?: number; h?: number; i: string } =>
+      typeof item === 'object' &&
+      item !== null &&
+      typeof item.x === 'number' &&
+      typeof item.y === 'number' &&
+      typeof item.i === 'string'
+  )
+  if (layoutChildren.length > 0) {
+    return renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
+  }
+  return renderEntityChildrenDefault(entityDef, context, depth, parentEntityNode)
 }
 
 /**
