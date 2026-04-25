@@ -730,17 +730,33 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
   const context: RenderContext = { survey, lang, cycle: cycleResolved, i18n, record }
 
   const surveyName = Surveys.getName(survey)
+  const surveyLabel = Surveys.getLabel(lang)(survey)
+  const surveyDescription = Surveys.getDescription(lang)(survey)
+
   const rootDef = Surveys.getNodeDefRoot({ survey })
   const rootEntityNode = record ? Records.getRoot(record) : undefined
 
-  const bodyChildren: DocChild[] = [
+  const bodyChildren: DocChild[] = []
+  // Title
+  bodyChildren.push(
     new Paragraph({
-      text: surveyName,
+      text: surveyLabel ?? surveyName,
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
-      spacing: { after: 400 },
-    }),
-  ]
+      spacing: { after: surveyDescription ? 100 : 400 },
+    })
+  )
+  // Subtitle (description)
+  if (surveyDescription) {
+    bodyChildren.push(
+      new Paragraph({
+        text: surveyDescription,
+        heading: HeadingLevel.HEADING_2,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 300 },
+      })
+    )
+  }
 
   bodyChildren.push(...renderEntityChildren(rootDef, context, 0, rootEntityNode))
 
