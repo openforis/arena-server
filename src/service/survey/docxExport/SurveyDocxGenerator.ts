@@ -18,8 +18,8 @@ import type {
   ArenaRecord,
   I18n,
   NodeDefCoordinate,
-  NodeDefProps,
   NodeDefEntityChildPosition,
+  NodeDefEntity,
 } from '@openforis/arena-core'
 import {
   CategoryItem,
@@ -390,7 +390,13 @@ const renderEntityAsTable = (
   parentEntityNode?: ArenaNode
 ): Table => {
   const { survey, lang, cycle, record } = context
-  const children = Surveys.getNodeDefChildrenSorted({ survey, nodeDef: entityDef, cycle, includeAnalysis: false })
+  const children = Surveys.getNodeDefChildrenSorted({
+    survey,
+    nodeDef: entityDef,
+    cycle,
+    includeAnalysis: false,
+    includeLayoutElements: true,
+  })
   const attrDefs = children.filter(NodeDefs.isAttribute)
 
   const headerCells = attrDefs.map(
@@ -444,21 +450,15 @@ const headingForDepth = (depth: number): (typeof HeadingLevel)[keyof typeof Head
 
 // Grid layout renderer
 const renderEntityChildrenGrid = (
-  entityDef: NodeDef<NodeDefType>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
 ): DocChild[] => {
   const { survey, cycle, record } = context
-  const layoutChildrenRaw = NodeDefs.getLayoutChildren?.(cycle)?.(entityDef as any) ?? []
-  const layoutChildren: NodeDefEntityChildPosition[] = layoutChildrenRaw.filter(
-    (item: any): item is { x: number; y: number; w?: number; h?: number; i: string } =>
-      typeof item === 'object' &&
-      item !== null &&
-      typeof item.x === 'number' &&
-      typeof item.y === 'number' &&
-      typeof item.i === 'string'
-  )
+  const layoutChildren: NodeDefEntityChildPosition[] = NodeDefs.getLayoutChildren(cycle)(
+    entityDef
+  ) as NodeDefEntityChildPosition[]
   // Map child uuid to nodeDef
   const childDefByUuid: Record<string, NodeDef<NodeDefType>> = {}
   const childDefs = Surveys.getNodeDefChildrenSorted({
@@ -466,6 +466,7 @@ const renderEntityChildrenGrid = (
     nodeDef: entityDef,
     cycle,
     includeAnalysis: false,
+    includeLayoutElements: true,
   })
   for (const def of childDefs) {
     childDefByUuid[def.uuid] = def
@@ -503,7 +504,9 @@ const renderEntityChildrenGrid = (
         // Mark spanned cells to skip
         for (let dy = 0; dy < h; dy++) {
           for (let dx = 0; dx < w; dx++) {
-            if (dy !== 0 || dx !== 0) skip[y + dy][x + dx] = true
+            if (dy !== 0 || dx !== 0) {
+              skip[y + dy][x + dx] = true
+            }
           }
         }
         // Get node value if present
@@ -513,7 +516,7 @@ const renderEntityChildrenGrid = (
         }
         // Render attribute/entity
         const rendered = NodeDefs.isEntity(nodeDef)
-          ? renderEntityDef(nodeDef, context, depth + 1, parentEntityNode)
+          ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
           : renderAttribute(nodeDef, context, depth, childNode)
         rowCells.push(
           new TableCell({
@@ -555,7 +558,7 @@ const renderEntityChildrenDefault = (
   const result: DocChild[] = []
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
-      result.push(...renderEntityDef(child, context, depth + 1, parentEntityNode))
+      result.push(...renderEntityDef(child as NodeDefEntity, context, depth + 1, parentEntityNode))
     } else {
       let childNode: ArenaNode | undefined
       if (record && parentEntityNode) {
@@ -567,9 +570,8 @@ const renderEntityChildrenDefault = (
   return result
 }
 
-// Main delegator
 const renderEntityChildren = (
-  entityDef: NodeDef<NodeDefType>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
@@ -594,7 +596,7 @@ const renderEntityChildren = (
  */
 const renderEntityNodes = (
   entityNodes: ArenaNode[],
-  entityDef: NodeDef<NodeDefType, NodeDefProps>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number
 ) => {
@@ -622,7 +624,7 @@ const renderEntityNodes = (
  * (table layout).
  */
 const renderEntityDef = (
-  entityDef: NodeDef<NodeDefType>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
