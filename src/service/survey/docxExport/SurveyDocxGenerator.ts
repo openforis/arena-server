@@ -3,6 +3,7 @@ import {
   CheckBox,
   Document,
   HeadingLevel,
+  IParagraphOptions,
   ITableBordersOptions,
   ITableWidthProperties,
   Packer,
@@ -270,11 +271,11 @@ const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, no
   // Render each field in a separate row
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
-    ...valueFields.map((valueField, idx) => {
+    ...valueFields.map((valueField) => {
       const fieldLabel = labelByField[valueField]
       const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
       return new Paragraph({
-        spacing: { before: idx === 0 ? 0 : 40, after: 0 },
+        spacing: { before: 0, after: 0 },
         indent: { left: 360 },
         children: [
           new TextRun({ text: `${fieldLabel}: `, bold: true }),
@@ -293,28 +294,42 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
   const taxonCode = taxon ? (Taxa.getCode(taxon) ?? '') : EMPTY_SHORT
   const sciName = taxon ? Taxa.getScientificName(taxon) : EMPTY_FIELD
   const vernacularNameVisible = NodeDefs.isFieldVisible(NodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
-  const vernacularName = vernacularNameVisible && hasValue ? NodeValues.getVernacularName(node) : null
+  const vernacularNameUuid = node ? NodeValues.getVernacularNameUuid(node) : undefined
+  const { vernacularName } = vernacularNameUuid && taxon ? Taxa.getVernacularNameAndLang(vernacularNameUuid)(taxon) : {}
 
-  const childrenTextRuns: TextRun[] = [
-    new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
-    hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
-    new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
-    hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
-  ]
-  if (vernacularNameVisible) {
-    childrenTextRuns.push(
-      new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.vernacularName')}: `, bold: true }),
-      vernacularName ? new TextRun({ text: vernacularName }) : inputLine(EMPTY_FIELD)
-    )
+  const fieldCommonProps: IParagraphOptions = {
+    spacing: { before: 0, after: 0 },
+    indent: { left: 360 },
   }
-  return [
+  const rows: Paragraph[] = [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
     new Paragraph({
-      spacing: { before: 0, after: 80 },
-      indent: { left: 360 },
-      children: childrenTextRuns,
+      ...fieldCommonProps,
+      children: [
+        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
+        hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
+      ],
+    }),
+    new Paragraph({
+      ...fieldCommonProps,
+      children: [
+        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
+        hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
+      ],
     }),
   ]
+  if (vernacularNameVisible) {
+    rows.push(
+      new Paragraph({
+        ...fieldCommonProps,
+        children: [
+          new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.vernacularName')}: `, bold: true }),
+          vernacularName ? new TextRun({ text: vernacularName }) : inputLine(EMPTY_FIELD),
+        ],
+      })
+    )
+  }
+  return rows
 }
 
 const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
