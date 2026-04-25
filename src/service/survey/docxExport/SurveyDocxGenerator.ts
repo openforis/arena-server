@@ -175,10 +175,10 @@ const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: A
 }
 
 const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const { survey } = context
+  const { survey, lang } = context
   const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef }) : []
 
-  const lbl = label(nodeDef, context.lang)
+  const lbl = label(nodeDef, lang)
   const isCheckboxLayout =
     nodeDef.props?.layout && Object.values(nodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
   const selectedItemUuid = node ? NodeValues.getItemUuid(node) : undefined
@@ -187,7 +187,7 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
   if (showAsCheckboxes) {
     const optionRuns = items.flatMap((item) => {
       const checked = selectedItemUuid !== undefined && item.uuid === selectedItemUuid
-      return checkboxRun(getCategoryItemLabel(item, context.lang), checked)
+      return checkboxRun(getCategoryItemLabel(item, lang), checked)
     })
     return [
       new Paragraph({
@@ -199,9 +199,9 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
 
   // Large list / dropdown
   if (selectedItemUuid !== undefined) {
-    const selectedItem = items.find((i) => i.uuid === selectedItemUuid)
+    const selectedItem = node?.refData?.categoryItem
     const displayValue = selectedItem
-      ? getCategoryItemLabel(selectedItem, context.lang)
+      ? getCategoryItemLabel(selectedItem, lang)
       : (node?.value?.code ?? selectedItemUuid)
     return [valueRow(lbl, displayValue)]
   }
@@ -245,7 +245,6 @@ const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, no
   const lbl = label(nodeDef, lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const val = hasValue ? (node.value ?? {}) : null
-  const cell = (v: string) => (hasValue ? new TextRun({ text: v }) : inputLine(v))
   const valueFields = [
     NodeValues.ValuePropsCoordinate.srs,
     NodeValues.ValuePropsCoordinate.x,
@@ -268,16 +267,20 @@ const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, no
       labelByField[field] = Strings.padStart(maxLabelLength, ' ')(fieldLabel)
     }
   }
+  // Render each field in a separate row
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
-    new Paragraph({
-      spacing: { before: 0, after: 80 },
-      indent: { left: 360 },
-      children: valueFields.flatMap((valueField) => {
-        const fieldLabel = labelByField[valueField]
-        const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
-        return [new TextRun({ text: `${fieldLabel}: `, bold: true }), cell(fieldValue)]
-      }),
+    ...valueFields.map((valueField, idx) => {
+      const fieldLabel = labelByField[valueField]
+      const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
+      return new Paragraph({
+        spacing: { before: idx === 0 ? 0 : 40, after: 0 },
+        indent: { left: 360 },
+        children: [
+          new TextRun({ text: `${fieldLabel}: `, bold: true }),
+          hasValue ? new TextRun({ text: fieldValue }) : inputLine(fieldValue),
+        ],
+      })
     }),
   ]
 }
@@ -286,19 +289,30 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
   const { i18n, lang } = context
   const lbl = label(nodeDef, lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
-  const taxonCode = hasValue ? (node.value?.code ?? '') : EMPTY_SHORT
-  const sciName = hasValue ? (NodeValues.getScientificName(node) ?? '') : EMPTY_FIELD
+  const taxon = hasValue ? node.refData?.taxon : undefined
+  const taxonCode = taxon ? (Taxa.getCode(taxon) ?? '') : EMPTY_SHORT
+  const sciName = taxon ? Taxa.getScientificName(taxon) : EMPTY_FIELD
+  const vernacularNameVisible = NodeDefs.isFieldVisible(NodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
+  const vernacularName = vernacularNameVisible && hasValue ? NodeValues.getVernacularName(node) : null
+
+  const childrenTextRuns: TextRun[] = [
+    new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
+    hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
+    new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
+    hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
+  ]
+  if (vernacularNameVisible) {
+    childrenTextRuns.push(
+      new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.vernacularName')}: `, bold: true }),
+      vernacularName ? new TextRun({ text: vernacularName }) : inputLine(EMPTY_FIELD)
+    )
+  }
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
     new Paragraph({
       spacing: { before: 0, after: 80 },
       indent: { left: 360 },
-      children: [
-        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
-        hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
-        new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
-        hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
-      ],
+      children: childrenTextRuns,
     }),
   ]
 }
