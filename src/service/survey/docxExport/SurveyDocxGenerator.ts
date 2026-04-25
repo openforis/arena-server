@@ -3,6 +3,8 @@ import {
   CheckBox,
   Document,
   HeadingLevel,
+  ITableBordersOptions,
+  ITableWidthProperties,
   Packer,
   Paragraph,
   Table,
@@ -57,6 +59,17 @@ type DocChild = Paragraph | Table
 
 const EMPTY_FIELD = '________________________________'
 const EMPTY_SHORT = '___________'
+
+const tableMaxAvailableWidth: ITableWidthProperties = { size: 100, type: WidthType.PERCENTAGE }
+
+const tableBordersTransparent: ITableBordersOptions = {
+  top: { style: 'none', size: 0, color: 'FFFFFF' },
+  bottom: { style: 'none', size: 0, color: 'FFFFFF' },
+  left: { style: 'none', size: 0, color: 'FFFFFF' },
+  right: { style: 'none', size: 0, color: 'FFFFFF' },
+  insideHorizontal: { style: 'none', size: 0, color: 'FFFFFF' },
+  insideVertical: { style: 'none', size: 0, color: 'FFFFFF' },
+}
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
 
@@ -429,7 +442,7 @@ const renderEntityAsTable = (
   }
 
   return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: tableMaxAvailableWidth,
     rows: [new TableRow({ children: headerCells, tableHeader: true }), ...dataRows],
   })
 }
@@ -481,7 +494,7 @@ const renderEntityChildrenGrid = (
     maxY = Math.max(maxY, item.y + h)
   }
   // Build grid: grid[y][x] = {item, nodeDef}
-  const grid: Array<Array<{ item: (typeof layoutChildren)[0]; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
+  const grid: Array<Array<{ item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
     Array.from({ length: maxY }, () => Array(maxX).fill(null))
   for (const item of layoutChildren) {
     const nodeDef = childDefByUuid[item.i]
@@ -534,16 +547,9 @@ const renderEntityChildrenGrid = (
   }
   return [
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: tableMaxAvailableWidth,
       rows: tableRows,
-      borders: {
-        top: { style: 'none', size: 0, color: 'FFFFFF' },
-        bottom: { style: 'none', size: 0, color: 'FFFFFF' },
-        left: { style: 'none', size: 0, color: 'FFFFFF' },
-        right: { style: 'none', size: 0, color: 'FFFFFF' },
-        insideHorizontal: { style: 'none', size: 0, color: 'FFFFFF' },
-        insideVertical: { style: 'none', size: 0, color: 'FFFFFF' },
-      },
+      borders: tableBordersTransparent,
     }),
   ]
 }
@@ -584,15 +590,7 @@ const renderEntityChildren = (
   depth: number,
   parentEntityNode?: ArenaNode
 ): DocChild[] => {
-  const layoutChildrenRaw = NodeDefs.getLayoutChildren?.(context.cycle)?.(entityDef as any) ?? []
-  const layoutChildren = layoutChildrenRaw.filter(
-    (item: any): item is { x: number; y: number; w?: number; h?: number; i: string } =>
-      typeof item === 'object' &&
-      item !== null &&
-      typeof item.x === 'number' &&
-      typeof item.y === 'number' &&
-      typeof item.i === 'string'
-  )
+  const layoutChildren = NodeDefs.getLayoutChildren(context.cycle)(entityDef)
   if (layoutChildren.length > 0) {
     return renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
   }
@@ -640,7 +638,7 @@ const renderEntityDef = (
   const { record } = context
   const isRoot = NodeDefs.isRoot(entityDef)
   const isMultiple = NodeDefs.isMultiple(entityDef)
-  const layoutRenderType = NodeDefs.getLayoutRenderType(context.cycle)(entityDef as any)
+  const layoutRenderType = NodeDefs.getLayoutRenderType(context.cycle)(entityDef)
   const isTableLayout = layoutRenderType === NodeDefEntityRenderType.table
 
   const entityNodes: ArenaNode[] =
