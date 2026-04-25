@@ -536,6 +536,14 @@ const renderEntityChildrenGrid = (
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: tableRows,
+      borders: {
+        top: { style: 'none', size: 0, color: 'FFFFFF' },
+        bottom: { style: 'none', size: 0, color: 'FFFFFF' },
+        left: { style: 'none', size: 0, color: 'FFFFFF' },
+        right: { style: 'none', size: 0, color: 'FFFFFF' },
+        insideHorizontal: { style: 'none', size: 0, color: 'FFFFFF' },
+        insideVertical: { style: 'none', size: 0, color: 'FFFFFF' },
+      },
     }),
   ]
 }
