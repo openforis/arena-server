@@ -491,6 +491,76 @@ const headingForDepth = (depth: number): (typeof HeadingLevel)[keyof typeof Head
   headingLevels[Math.min(depth, headingLevels.length - 1)]
 
 // Grid layout renderer
+const buildGrid = (
+  layoutChildren: NodeDefEntityChildPosition[],
+  childDefByUuid: Record<string, NodeDef<NodeDefType>>,
+  maxX: number,
+  maxY: number
+) => {
+  const grid: Array<Array<{ item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
+    Array.from({ length: maxY }, () => new Array(maxX).fill(null))
+  for (const item of layoutChildren) {
+    const nodeDef = childDefByUuid[item.i]
+    if (!nodeDef) continue
+    grid[item.y][item.x] = { item, nodeDef }
+  }
+  return grid
+}
+
+const markSpannedCells = (skip: boolean[][], x: number, y: number, w: number, h: number) => {
+  for (let dy = 0; dy < h; dy++) {
+    for (let dx = 0; dx < w; dx++) {
+      if (dy !== 0 || dx !== 0) {
+        skip[y + dy][x + dx] = true
+      }
+    }
+  }
+}
+
+const buildTableRows = (
+  grid: Array<Array<{ item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined } | null>>,
+  skip: boolean[][],
+  maxX: number,
+  maxY: number,
+  context: RenderContext,
+  depth: number,
+  parentEntityNode: ArenaNode | undefined,
+  record: ArenaRecord | undefined
+): TableRow[] => {
+  const tableRows: TableRow[] = []
+  for (let y = 0; y < maxY; y++) {
+    const rowCells: TableCell[] = []
+    for (let x = 0; x < maxX; x++) {
+      if (skip[y][x]) continue
+      const cell = grid[y][x]
+      if (cell?.nodeDef) {
+        const { item, nodeDef } = cell
+        const w = item.w ?? 1
+        const h = item.h ?? 1
+        markSpannedCells(skip, x, y, w, h)
+        let childNode: ArenaNode | undefined
+        if (record && parentEntityNode) {
+          childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
+        }
+        const rendered = NodeDefs.isEntity(nodeDef)
+          ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
+          : renderAttribute(nodeDef, context, depth, childNode)
+        rowCells.push(
+          new TableCell({
+            children: Array.isArray(rendered) ? rendered : [rendered],
+            columnSpan: w > 1 ? w : undefined,
+            rowSpan: h > 1 ? h : undefined,
+          })
+        )
+      } else {
+        rowCells.push(new TableCell({ children: [new Paragraph({ text: '' })] }))
+      }
+    }
+    tableRows.push(new TableRow({ children: rowCells }))
+  }
+  return tableRows
+}
+
 const renderEntityChildrenGrid = (
   entityDef: NodeDefEntity,
   context: RenderContext,
@@ -522,58 +592,12 @@ const renderEntityChildrenGrid = (
     maxX = Math.max(maxX, item.x + w)
     maxY = Math.max(maxY, item.y + h)
   }
-  // Build grid: grid[y][x] = {item, nodeDef}
-  const grid: Array<Array<{ item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
-    Array.from({ length: maxY }, () => Array(maxX).fill(null))
-  for (const item of layoutChildren) {
-    const nodeDef = childDefByUuid[item.i]
-    if (!nodeDef) continue
-    grid[item.y][item.x] = { item, nodeDef }
-  }
+  // Build grid
+  const grid = buildGrid(layoutChildren, childDefByUuid, maxX, maxY)
   // Track merged cells
-  const skip: boolean[][] = Array.from({ length: maxY }, () => Array(maxX).fill(false))
+  const skip: boolean[][] = Array.from({ length: maxY }, () => new Array(maxX).fill(false))
   // Build TableRows
-  const tableRows: TableRow[] = []
-  for (let y = 0; y < maxY; y++) {
-    const rowCells: TableCell[] = []
-    for (let x = 0; x < maxX; x++) {
-      if (skip[y][x]) continue
-      const cell = grid[y][x]
-      if (cell && cell.nodeDef) {
-        const { item, nodeDef } = cell
-        const w = item.w ?? 1
-        const h = item.h ?? 1
-        // Mark spanned cells to skip
-        for (let dy = 0; dy < h; dy++) {
-          for (let dx = 0; dx < w; dx++) {
-            if (dy !== 0 || dx !== 0) {
-              skip[y + dy][x + dx] = true
-            }
-          }
-        }
-        // Get node value if present
-        let childNode: ArenaNode | undefined
-        if (record && parentEntityNode) {
-          childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
-        }
-        // Render attribute/entity
-        const rendered = NodeDefs.isEntity(nodeDef)
-          ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
-          : renderAttribute(nodeDef, context, depth, childNode)
-        rowCells.push(
-          new TableCell({
-            children: Array.isArray(rendered) ? rendered : [rendered],
-            columnSpan: w > 1 ? w : undefined,
-            rowSpan: h > 1 ? h : undefined,
-          })
-        )
-      } else {
-        // Empty cell
-        rowCells.push(new TableCell({ children: [new Paragraph({ text: '' })] }))
-      }
-    }
-    tableRows.push(new TableRow({ children: rowCells }))
-  }
+  const tableRows = buildTableRows(grid, skip, maxX, maxY, context, depth, parentEntityNode, record)
   return [
     new Table({
       width: tableMaxAvailableWidth,
