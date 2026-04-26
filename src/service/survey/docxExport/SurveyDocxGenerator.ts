@@ -97,7 +97,8 @@ const checkboxRun = (text: string, checked = false): [CheckBox, TextRun] => [
 ]
 
 const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string => {
-  return CategoryItems.getLabel(item, lang) ?? CategoryItems.getCode(item)
+  const label = CategoryItems.getLabel(item, lang)
+  return Objects.isEmpty(label) ? CategoryItems.getCode(item) : label
 }
 
 const getCommonLabel = (context: RenderContext, key: string, fallback: string): string => {
@@ -490,15 +491,16 @@ const headingLevels = [
 const headingForDepth = (depth: number): (typeof HeadingLevel)[keyof typeof HeadingLevel] =>
   headingLevels[Math.min(depth, headingLevels.length - 1)]
 
-// Grid layout renderer
+// Grid cell type for layout
+type GridCell = { item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined }
+
 const buildGrid = (
   layoutChildren: NodeDefEntityChildPosition[],
   childDefByUuid: Record<string, NodeDef<NodeDefType>>,
   maxX: number,
   maxY: number
 ) => {
-  const grid: Array<Array<{ item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined } | null>> =
-    Array.from({ length: maxY }, () => new Array(maxX).fill(null))
+  const grid: Array<Array<GridCell | null>> = Array.from({ length: maxY }, () => new Array(maxX).fill(null))
   for (const item of layoutChildren) {
     const nodeDef = childDefByUuid[item.i]
     if (!nodeDef) continue
@@ -517,16 +519,25 @@ const markSpannedCells = (skip: boolean[][], x: number, y: number, w: number, h:
   }
 }
 
-const buildTableRows = (
-  grid: Array<Array<{ item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined } | null>>,
-  skip: boolean[][],
-  maxX: number,
-  maxY: number,
-  context: RenderContext,
-  depth: number,
-  parentEntityNode: ArenaNode | undefined,
+const buildTableRows = ({
+  grid,
+  skip,
+  maxX,
+  maxY,
+  context,
+  depth,
+  parentEntityNode,
+  record,
+}: {
+  grid: Array<Array<GridCell | null>>
+  skip: boolean[][]
+  maxX: number
+  maxY: number
+  context: RenderContext
+  depth: number
+  parentEntityNode: ArenaNode | undefined
   record: ArenaRecord | undefined
-): TableRow[] => {
+}): TableRow[] => {
   const tableRows: TableRow[] = []
   for (let y = 0; y < maxY; y++) {
     const rowCells: TableCell[] = []
@@ -597,7 +608,16 @@ const renderEntityChildrenGrid = (
   // Track merged cells
   const skip: boolean[][] = Array.from({ length: maxY }, () => new Array(maxX).fill(false))
   // Build TableRows
-  const tableRows = buildTableRows(grid, skip, maxX, maxY, context, depth, parentEntityNode, record)
+  const tableRows = buildTableRows({
+    grid,
+    skip,
+    maxX,
+    maxY,
+    context,
+    depth,
+    parentEntityNode,
+    record,
+  })
   return [
     new Table({
       width: tableMaxAvailableWidth,
