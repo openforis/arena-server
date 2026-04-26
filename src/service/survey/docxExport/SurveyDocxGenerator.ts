@@ -3,6 +3,10 @@ import {
   CheckBox,
   Document,
   HeadingLevel,
+  IBorderOptions,
+  IParagraphOptions,
+  ITableBordersOptions,
+  ITableWidthProperties,
   Packer,
   Paragraph,
   Table,
@@ -18,7 +22,8 @@ import type {
   ArenaRecord,
   I18n,
   NodeDefCoordinate,
-  NodeDefProps,
+  NodeDefEntityChildPosition,
+  NodeDefEntity,
 } from '@openforis/arena-core'
 import {
   CategoryItem,
@@ -56,6 +61,17 @@ type DocChild = Paragraph | Table
 
 const EMPTY_FIELD = '________________________________'
 const EMPTY_SHORT = '___________'
+const SPACING_FIELD_ROW = { before: 80, after: 80 }
+const TABLE_MAX_AVAILABLE_WIDTH: ITableWidthProperties = { size: 100, type: WidthType.PERCENTAGE }
+const BORDER_NONE: IBorderOptions = { style: 'none', size: 0, color: 'FFFFFF' }
+const TABLE_BORDERS_NONE: ITableBordersOptions = {
+  top: BORDER_NONE,
+  bottom: BORDER_NONE,
+  left: BORDER_NONE,
+  right: BORDER_NONE,
+  insideHorizontal: BORDER_NONE,
+  insideVertical: BORDER_NONE,
+}
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
 
@@ -64,14 +80,14 @@ const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} }
 /** Blank input field (underlined placeholder). */
 const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
   new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), inputLine(fieldPlaceholder)],
   })
 
 /** Field showing an actual data value (no underline). */
 const valueRow = (fieldLabel: string, value: string): Paragraph =>
   new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), new TextRun({ text: value })],
   })
 
@@ -82,7 +98,8 @@ const checkboxRun = (text: string, checked = false): [CheckBox, TextRun] => [
 ]
 
 const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string => {
-  return CategoryItems.getLabel(item, lang) ?? CategoryItems.getCode(item)
+  const label = CategoryItems.getLabel(item, lang)
+  return Objects.isEmpty(label) ? CategoryItems.getCode(item) : label
 }
 
 const getCommonLabel = (context: RenderContext, key: string, fallback: string): string => {
@@ -151,7 +168,7 @@ const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: A
   const yesLabel = getBooleanValueLabel(context, nodeDef, true)
   const noLabel = getBooleanValueLabel(context, nodeDef, false)
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       ...checkboxRun(yesLabel, hasValue ? isTrue : false),
@@ -161,10 +178,10 @@ const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: A
 }
 
 const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const { survey } = context
+  const { survey, lang } = context
   const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef }) : []
 
-  const lbl = label(nodeDef, context.lang)
+  const lbl = label(nodeDef, lang)
   const isCheckboxLayout =
     nodeDef.props?.layout && Object.values(nodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
   const selectedItemUuid = node ? NodeValues.getItemUuid(node) : undefined
@@ -173,11 +190,11 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
   if (showAsCheckboxes) {
     const optionRuns = items.flatMap((item) => {
       const checked = selectedItemUuid !== undefined && item.uuid === selectedItemUuid
-      return checkboxRun(getCategoryItemLabel(item, context.lang), checked)
+      return checkboxRun(getCategoryItemLabel(item, lang), checked)
     })
     return [
       new Paragraph({
-        spacing: { before: 80, after: 80 },
+        spacing: SPACING_FIELD_ROW,
         children: [new TextRun({ text: `${lbl}: `, bold: true }), ...optionRuns],
       }),
     ]
@@ -185,9 +202,9 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
 
   // Large list / dropdown
   if (selectedItemUuid !== undefined) {
-    const selectedItem = items.find((i) => i.uuid === selectedItemUuid)
+    const selectedItem = node?.refData?.categoryItem
     const displayValue = selectedItem
-      ? getCategoryItemLabel(selectedItem, context.lang)
+      ? getCategoryItemLabel(selectedItem, lang)
       : (node?.value?.code ?? selectedItemUuid)
     return [valueRow(lbl, displayValue)]
   }
@@ -200,7 +217,7 @@ const renderDate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   const lbl = label(nodeDef, context.lang)
   if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: 'DD', underline: {} }),
@@ -216,7 +233,7 @@ const renderTime = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   const lbl = label(nodeDef, context.lang)
   if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: 'HH', underline: {} }),
@@ -231,7 +248,6 @@ const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, no
   const lbl = label(nodeDef, lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const val = hasValue ? (node.value ?? {}) : null
-  const cell = (v: string) => (hasValue ? new TextRun({ text: v }) : inputLine(v))
   const valueFields = [
     NodeValues.ValuePropsCoordinate.srs,
     NodeValues.ValuePropsCoordinate.x,
@@ -254,16 +270,20 @@ const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, no
       labelByField[field] = Strings.padStart(maxLabelLength, ' ')(fieldLabel)
     }
   }
+  // Render each field in a separate row
   return [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
-    new Paragraph({
-      spacing: { before: 0, after: 80 },
-      indent: { left: 360 },
-      children: valueFields.flatMap((valueField) => {
-        const fieldLabel = labelByField[valueField]
-        const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
-        return [new TextRun({ text: `${fieldLabel}: `, bold: true }), cell(fieldValue)]
-      }),
+    ...valueFields.map((valueField) => {
+      const fieldLabel = labelByField[valueField]
+      const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
+      return new Paragraph({
+        spacing: { before: 0, after: 0 },
+        indent: { left: 360 },
+        children: [
+          new TextRun({ text: `${fieldLabel}: `, bold: true }),
+          hasValue ? new TextRun({ text: fieldValue }) : inputLine(fieldValue),
+        ],
+      })
     }),
   ]
 }
@@ -272,21 +292,46 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
   const { i18n, lang } = context
   const lbl = label(nodeDef, lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
-  const taxonCode = hasValue ? (node.value?.code ?? '') : EMPTY_SHORT
-  const sciName = hasValue ? (NodeValues.getScientificName(node) ?? '') : EMPTY_FIELD
-  return [
+  const taxon = hasValue ? node.refData?.taxon : undefined
+  const taxonCode = taxon ? (Taxa.getCode(taxon) ?? '') : EMPTY_SHORT
+  const sciName = taxon ? Taxa.getScientificName(taxon) : EMPTY_FIELD
+  const vernacularNameVisible = NodeDefs.isFieldVisible(NodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
+  const vernacularNameUuid = node ? NodeValues.getVernacularNameUuid(node) : undefined
+  const { vernacularName } = vernacularNameUuid && taxon ? Taxa.getVernacularNameAndLang(vernacularNameUuid)(taxon) : {}
+
+  const fieldCommonProps: IParagraphOptions = {
+    spacing: { before: 0, after: 0 },
+    indent: { left: 360 },
+  }
+  const rows: Paragraph[] = [
     new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
     new Paragraph({
-      spacing: { before: 0, after: 80 },
-      indent: { left: 360 },
+      ...fieldCommonProps,
       children: [
         new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
         hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
-        new TextRun({ text: `   ${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
+      ],
+    }),
+    new Paragraph({
+      ...fieldCommonProps,
+      children: [
+        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
         hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
       ],
     }),
   ]
+  if (vernacularNameVisible) {
+    rows.push(
+      new Paragraph({
+        ...fieldCommonProps,
+        children: [
+          new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.vernacularName')}: `, bold: true }),
+          vernacularName ? new TextRun({ text: vernacularName }) : inputLine(EMPTY_FIELD),
+        ],
+      })
+    )
+  }
+  return rows
 }
 
 const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
@@ -295,7 +340,7 @@ const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
     return valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')
   }
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
@@ -309,7 +354,7 @@ const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?:
     return valueRow(lbl, '[geometry data]')
   }
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: '[geometry]', italics: true, color: '888888' }),
@@ -389,7 +434,13 @@ const renderEntityAsTable = (
   parentEntityNode?: ArenaNode
 ): Table => {
   const { survey, lang, cycle, record } = context
-  const children = Surveys.getNodeDefChildrenSorted({ survey, nodeDef: entityDef, cycle, includeAnalysis: false })
+  const children = Surveys.getNodeDefChildrenSorted({
+    survey,
+    nodeDef: entityDef,
+    cycle,
+    includeAnalysis: false,
+    includeLayoutElements: true,
+  })
   const attrDefs = children.filter(NodeDefs.isAttribute)
 
   const headerCells = attrDefs.map(
@@ -422,7 +473,7 @@ const renderEntityAsTable = (
   }
 
   return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: TABLE_MAX_AVAILABLE_WIDTH,
     rows: [new TableRow({ children: headerCells, tableHeader: true }), ...dataRows],
   })
 }
@@ -441,11 +492,144 @@ const headingLevels = [
 const headingForDepth = (depth: number): (typeof HeadingLevel)[keyof typeof HeadingLevel] =>
   headingLevels[Math.min(depth, headingLevels.length - 1)]
 
-/**
- * Renders the attribute and entity children of a given entity definition,
- * optionally bound to a specific entity node from the record.
- */
-const renderEntityChildren = (
+// Grid cell type for layout
+type GridCell = { item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined }
+
+const buildGrid = (
+  layoutChildren: NodeDefEntityChildPosition[],
+  childDefByUuid: Record<string, NodeDef<NodeDefType>>,
+  maxX: number,
+  maxY: number
+) => {
+  const grid: Array<Array<GridCell | null>> = Array.from({ length: maxY }, () => new Array(maxX).fill(null))
+  for (const item of layoutChildren) {
+    const nodeDef = childDefByUuid[item.i]
+    if (!nodeDef) continue
+    grid[item.y][item.x] = { item, nodeDef }
+  }
+  return grid
+}
+
+const markSpannedCells = (skip: boolean[][], x: number, y: number, w: number, h: number) => {
+  for (let dy = 0; dy < h; dy++) {
+    for (let dx = 0; dx < w; dx++) {
+      if (dy !== 0 || dx !== 0) {
+        skip[y + dy][x + dx] = true
+      }
+    }
+  }
+}
+
+const buildTableRows = ({
+  grid,
+  skip,
+  maxX,
+  maxY,
+  context,
+  depth,
+  parentEntityNode,
+  record,
+}: {
+  grid: Array<Array<GridCell | null>>
+  skip: boolean[][]
+  maxX: number
+  maxY: number
+  context: RenderContext
+  depth: number
+  parentEntityNode: ArenaNode | undefined
+  record: ArenaRecord | undefined
+}): TableRow[] => {
+  const renderCell = (cell: GridCell | null, x: number, y: number): TableCell => {
+    if (!cell?.nodeDef) {
+      return new TableCell({ children: [new Paragraph({ text: '' })] })
+    }
+    const { item, nodeDef } = cell
+    const w = item.w ?? 1
+    const h = item.h ?? 1
+    markSpannedCells(skip, x, y, w, h)
+    let childNode: ArenaNode | undefined
+    if (record && parentEntityNode) {
+      childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
+    }
+    const rendered = NodeDefs.isEntity(nodeDef)
+      ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
+      : renderAttribute(nodeDef, context, depth, childNode)
+    return new TableCell({
+      children: Array.isArray(rendered) ? rendered : [rendered],
+      columnSpan: w > 1 ? w : undefined,
+      rowSpan: h > 1 ? h : undefined,
+    })
+  }
+
+  const tableRows: TableRow[] = []
+  for (let y = 0; y < maxY; y++) {
+    const rowCells: TableCell[] = []
+    for (let x = 0; x < maxX; x++) {
+      if (skip[y][x]) continue
+      rowCells.push(renderCell(grid[y][x], x, y))
+    }
+    tableRows.push(new TableRow({ children: rowCells }))
+  }
+  return tableRows
+}
+
+const renderEntityChildrenGrid = (
+  entityDef: NodeDefEntity,
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode
+): DocChild[] => {
+  const { survey, cycle, record } = context
+  const layoutChildren: NodeDefEntityChildPosition[] = NodeDefs.getLayoutChildren(cycle)(
+    entityDef
+  ) as NodeDefEntityChildPosition[]
+  // Map child uuid to nodeDef
+  const childDefByUuid: Record<string, NodeDef<NodeDefType>> = {}
+  const childDefs = Surveys.getNodeDefChildrenSorted({
+    survey,
+    nodeDef: entityDef,
+    cycle,
+    includeAnalysis: false,
+    includeLayoutElements: true,
+  })
+  for (const def of childDefs) {
+    childDefByUuid[def.uuid] = def
+  }
+  // Determine grid size
+  let maxX = 0,
+    maxY = 0
+  for (const item of layoutChildren) {
+    const w = item.w ?? 1
+    const h = item.h ?? 1
+    maxX = Math.max(maxX, item.x + w)
+    maxY = Math.max(maxY, item.y + h)
+  }
+  // Build grid
+  const grid = buildGrid(layoutChildren, childDefByUuid, maxX, maxY)
+  // Track merged cells
+  const skip: boolean[][] = Array.from({ length: maxY }, () => new Array(maxX).fill(false))
+  // Build TableRows
+  const tableRows = buildTableRows({
+    grid,
+    skip,
+    maxX,
+    maxY,
+    context,
+    depth,
+    parentEntityNode,
+    record,
+  })
+  return [
+    new Table({
+      width: TABLE_MAX_AVAILABLE_WIDTH,
+      rows: tableRows,
+      borders: TABLE_BORDERS_NONE,
+    }),
+  ]
+}
+
+// Default flat renderer
+const renderEntityChildrenDefault = (
   entityDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
@@ -459,12 +643,10 @@ const renderEntityChildren = (
     includeAnalysis: false,
     includeLayoutElements: true,
   })
-
   const result: DocChild[] = []
-
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
-      result.push(...renderEntityDef(child, context, depth + 1, parentEntityNode))
+      result.push(...renderEntityDef(child as NodeDefEntity, context, depth + 1, parentEntityNode))
     } else {
       let childNode: ArenaNode | undefined
       if (record && parentEntityNode) {
@@ -473,7 +655,40 @@ const renderEntityChildren = (
       result.push(...renderAttribute(child, context, depth, childNode))
     }
   }
+  return result
+}
 
+const renderEntityChildren = (
+  entityDef: NodeDefEntity,
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode
+): DocChild[] => {
+  const { survey, cycle } = context
+  const childDefs = Surveys.getNodeDefChildrenSorted({
+    survey,
+    nodeDef: entityDef,
+    cycle,
+    includeAnalysis: false,
+    includeLayoutElements: true,
+  })
+  const currentPageUuid = NodeDefs.getPageUuid(cycle)(entityDef)
+  const entityDefsInOwnPage = childDefs.filter(
+    (def) => NodeDefs.isEntity(def) && NodeDefs.getPageUuid(cycle)(def as NodeDefEntity) !== currentPageUuid
+  ) as NodeDefEntity[]
+
+  const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef)
+  let result: DocChild[]
+  if (layoutChildren.length > 0) {
+    result = renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
+  } else {
+    result = renderEntityChildrenDefault(entityDef, context, depth, parentEntityNode)
+  }
+
+  // Render each entityDefInOwnPage in a separate page with a title
+  for (const childEntityDef of entityDefsInOwnPage) {
+    result.push(...renderEntityDef(childEntityDef, context, depth + 1, parentEntityNode))
+  }
   return result
 }
 
@@ -482,7 +697,7 @@ const renderEntityChildren = (
  */
 const renderEntityNodes = (
   entityNodes: ArenaNode[],
-  entityDef: NodeDef<NodeDefType, NodeDefProps>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number
 ) => {
@@ -510,7 +725,7 @@ const renderEntityNodes = (
  * (table layout).
  */
 const renderEntityDef = (
-  entityDef: NodeDef<NodeDefType>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
@@ -518,7 +733,7 @@ const renderEntityDef = (
   const { record } = context
   const isRoot = NodeDefs.isRoot(entityDef)
   const isMultiple = NodeDefs.isMultiple(entityDef)
-  const layoutRenderType = NodeDefs.getLayoutRenderType(context.cycle)(entityDef as any)
+  const layoutRenderType = NodeDefs.getLayoutRenderType(context.cycle)(entityDef)
   const isTableLayout = layoutRenderType === NodeDefEntityRenderType.table
 
   const entityNodes: ArenaNode[] =
@@ -581,17 +796,33 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
   const context: RenderContext = { survey, lang, cycle: cycleResolved, i18n, record }
 
   const surveyName = Surveys.getName(survey)
+  const surveyLabel = Surveys.getLabel(lang)(survey)
+  const surveyDescription = Surveys.getDescription(lang)(survey)
+
   const rootDef = Surveys.getNodeDefRoot({ survey })
   const rootEntityNode = record ? Records.getRoot(record) : undefined
 
-  const bodyChildren: DocChild[] = [
+  const bodyChildren: DocChild[] = []
+  // Title
+  bodyChildren.push(
     new Paragraph({
-      text: surveyName,
+      text: surveyLabel ?? surveyName,
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
-      spacing: { after: 400 },
-    }),
-  ]
+      spacing: { after: surveyDescription ? 100 : 400 },
+    })
+  )
+  // Subtitle (description)
+  if (surveyDescription) {
+    bodyChildren.push(
+      new Paragraph({
+        text: surveyDescription,
+        heading: HeadingLevel.HEADING_2,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 300 },
+      })
+    )
+  }
 
   bodyChildren.push(...renderEntityChildren(rootDef, context, 0, rootEntityNode))
 
