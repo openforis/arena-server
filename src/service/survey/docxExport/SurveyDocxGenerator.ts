@@ -664,11 +664,32 @@ const renderEntityChildren = (
   depth: number,
   parentEntityNode?: ArenaNode
 ): DocChild[] => {
-  const layoutChildren = NodeDefs.getLayoutChildren(context.cycle)(entityDef)
+  const { survey, cycle } = context
+  const childDefs = Surveys.getNodeDefChildrenSorted({
+    survey,
+    nodeDef: entityDef,
+    cycle,
+    includeAnalysis: false,
+    includeLayoutElements: true,
+  })
+  const currentPageUuid = NodeDefs.getPageUuid(cycle)(entityDef)
+  const entityDefsInOwnPage = childDefs.filter(
+    (def) => NodeDefs.isEntity(def) && NodeDefs.getPageUuid(cycle)(def as NodeDefEntity) !== currentPageUuid
+  ) as NodeDefEntity[]
+
+  const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef)
+  let result: DocChild[]
   if (layoutChildren.length > 0) {
-    return renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
+    result = renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
+  } else {
+    result = renderEntityChildrenDefault(entityDef, context, depth, parentEntityNode)
   }
-  return renderEntityChildrenDefault(entityDef, context, depth, parentEntityNode)
+
+  // Render each entityDefInOwnPage in a separate page with a title
+  for (const childEntityDef of entityDefsInOwnPage) {
+    result.push(...renderEntityDef(childEntityDef, context, depth + 1, parentEntityNode))
+  }
+  return result
 }
 
 /**
