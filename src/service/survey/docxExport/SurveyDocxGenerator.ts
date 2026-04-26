@@ -3,6 +3,7 @@ import {
   CheckBox,
   Document,
   HeadingLevel,
+  IBorderOptions,
   IParagraphOptions,
   ITableBordersOptions,
   ITableWidthProperties,
@@ -60,16 +61,16 @@ type DocChild = Paragraph | Table
 
 const EMPTY_FIELD = '________________________________'
 const EMPTY_SHORT = '___________'
-
-const tableMaxAvailableWidth: ITableWidthProperties = { size: 100, type: WidthType.PERCENTAGE }
-
-const tableBordersTransparent: ITableBordersOptions = {
-  top: { style: 'none', size: 0, color: 'FFFFFF' },
-  bottom: { style: 'none', size: 0, color: 'FFFFFF' },
-  left: { style: 'none', size: 0, color: 'FFFFFF' },
-  right: { style: 'none', size: 0, color: 'FFFFFF' },
-  insideHorizontal: { style: 'none', size: 0, color: 'FFFFFF' },
-  insideVertical: { style: 'none', size: 0, color: 'FFFFFF' },
+const SPACING_FIELD_ROW = { before: 80, after: 80 }
+const TABLE_MAX_AVAILABLE_WIDTH: ITableWidthProperties = { size: 100, type: WidthType.PERCENTAGE }
+const BORDER_NONE: IBorderOptions = { style: 'none', size: 0, color: 'FFFFFF' }
+const TABLE_BORDERS_NONE: ITableBordersOptions = {
+  top: BORDER_NONE,
+  bottom: BORDER_NONE,
+  left: BORDER_NONE,
+  right: BORDER_NONE,
+  insideHorizontal: BORDER_NONE,
+  insideVertical: BORDER_NONE,
 }
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
@@ -79,14 +80,14 @@ const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} }
 /** Blank input field (underlined placeholder). */
 const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
   new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), inputLine(fieldPlaceholder)],
   })
 
 /** Field showing an actual data value (no underline). */
 const valueRow = (fieldLabel: string, value: string): Paragraph =>
   new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), new TextRun({ text: value })],
   })
 
@@ -167,7 +168,7 @@ const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: A
   const yesLabel = getBooleanValueLabel(context, nodeDef, true)
   const noLabel = getBooleanValueLabel(context, nodeDef, false)
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       ...checkboxRun(yesLabel, hasValue ? isTrue : false),
@@ -193,7 +194,7 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
     })
     return [
       new Paragraph({
-        spacing: { before: 80, after: 80 },
+        spacing: SPACING_FIELD_ROW,
         children: [new TextRun({ text: `${lbl}: `, bold: true }), ...optionRuns],
       }),
     ]
@@ -216,7 +217,7 @@ const renderDate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   const lbl = label(nodeDef, context.lang)
   if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: 'DD', underline: {} }),
@@ -232,7 +233,7 @@ const renderTime = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   const lbl = label(nodeDef, context.lang)
   if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: 'HH', underline: {} }),
@@ -339,7 +340,7 @@ const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
     return valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')
   }
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
@@ -353,7 +354,7 @@ const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?:
     return valueRow(lbl, '[geometry data]')
   }
   return new Paragraph({
-    spacing: { before: 80, after: 80 },
+    spacing: SPACING_FIELD_ROW,
     children: [
       new TextRun({ text: `${lbl}: `, bold: true }),
       new TextRun({ text: '[geometry]', italics: true, color: '888888' }),
@@ -472,7 +473,7 @@ const renderEntityAsTable = (
   }
 
   return new Table({
-    width: tableMaxAvailableWidth,
+    width: TABLE_MAX_AVAILABLE_WIDTH,
     rows: [new TableRow({ children: headerCells, tableHeader: true }), ...dataRows],
   })
 }
@@ -620,9 +621,9 @@ const renderEntityChildrenGrid = (
   })
   return [
     new Table({
-      width: tableMaxAvailableWidth,
+      width: TABLE_MAX_AVAILABLE_WIDTH,
       rows: tableRows,
-      borders: tableBordersTransparent,
+      borders: TABLE_BORDERS_NONE,
     }),
   ]
 }
