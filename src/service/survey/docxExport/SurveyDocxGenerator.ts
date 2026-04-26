@@ -539,34 +539,34 @@ const buildTableRows = ({
   parentEntityNode: ArenaNode | undefined
   record: ArenaRecord | undefined
 }): TableRow[] => {
+  const renderCell = (cell: GridCell | null, x: number, y: number): TableCell => {
+    if (!cell || !cell.nodeDef) {
+      return new TableCell({ children: [new Paragraph({ text: '' })] })
+    }
+    const { item, nodeDef } = cell
+    const w = item.w ?? 1
+    const h = item.h ?? 1
+    markSpannedCells(skip, x, y, w, h)
+    let childNode: ArenaNode | undefined
+    if (record && parentEntityNode) {
+      childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
+    }
+    const rendered = NodeDefs.isEntity(nodeDef)
+      ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
+      : renderAttribute(nodeDef, context, depth, childNode)
+    return new TableCell({
+      children: Array.isArray(rendered) ? rendered : [rendered],
+      columnSpan: w > 1 ? w : undefined,
+      rowSpan: h > 1 ? h : undefined,
+    })
+  }
+
   const tableRows: TableRow[] = []
   for (let y = 0; y < maxY; y++) {
     const rowCells: TableCell[] = []
     for (let x = 0; x < maxX; x++) {
       if (skip[y][x]) continue
-      const cell = grid[y][x]
-      if (cell?.nodeDef) {
-        const { item, nodeDef } = cell
-        const w = item.w ?? 1
-        const h = item.h ?? 1
-        markSpannedCells(skip, x, y, w, h)
-        let childNode: ArenaNode | undefined
-        if (record && parentEntityNode) {
-          childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
-        }
-        const rendered = NodeDefs.isEntity(nodeDef)
-          ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
-          : renderAttribute(nodeDef, context, depth, childNode)
-        rowCells.push(
-          new TableCell({
-            children: Array.isArray(rendered) ? rendered : [rendered],
-            columnSpan: w > 1 ? w : undefined,
-            rowSpan: h > 1 ? h : undefined,
-          })
-        )
-      } else {
-        rowCells.push(new TableCell({ children: [new Paragraph({ text: '' })] }))
-      }
+      rowCells.push(renderCell(grid[y][x], x, y))
     }
     tableRows.push(new TableRow({ children: rowCells }))
   }
