@@ -540,7 +540,7 @@ const buildTableRows = ({
   record: ArenaRecord | undefined
 }): TableRow[] => {
   const renderCell = (cell: GridCell | null, x: number, y: number): TableCell => {
-    if (!cell || !cell.nodeDef) {
+    if (!cell?.nodeDef) {
       return new TableCell({ children: [new Paragraph({ text: '' })] })
     }
     const { item, nodeDef } = cell
