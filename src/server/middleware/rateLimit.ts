@@ -8,8 +8,7 @@ import { Logger } from '../../log'
 
 const logger = new Logger('RateLimitMiddleware')
 
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const toExactPathRegExp = (path: string): RegExp => new RegExp(`^${escapeRegExp(path)}$`)
+const toExactPathRegExp = (path: string): RegExp => new RegExp(`^${path}$`)
 
 const rateLimitedPaths = [
   toExactPathRegExp(ApiEndpoint.auth.login()),
