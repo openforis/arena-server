@@ -44,9 +44,5 @@ export const RateLimitMiddleware: ExpressInitializer = {
       const proxies = 1 // number of proxies between user and server
       express.set('trust proxy', proxies)
     }
-    // Endpoint to get client IP address (for testing purposes)
-    express.get('/ip', (request, response) => {
-      response.send(request.ip)
-    })
   },
 }
