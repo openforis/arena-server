@@ -3,12 +3,19 @@ import rateLimit from 'express-rate-limit'
 
 import { ExpressInitializer } from '../expressInitializer'
 import { ProcessEnv } from '../../processEnv'
-import { ApiEndpoint } from '../../api'
+import { ApiEndpoint } from '../../api/endpoint'
 import { Logger } from '../../log'
 
 const logger = new Logger('RateLimitMiddleware')
 
-const rateLimitedPaths = [ApiEndpoint.auth.login(), ApiEndpoint.auth.loginTemp(), ApiEndpoint.auth.tokenRefresh()]
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const toExactPathRegExp = (path: string): RegExp => new RegExp(`^${escapeRegExp(path)}$`)
+
+const rateLimitedPaths = [
+  toExactPathRegExp(ApiEndpoint.auth.login()),
+  toExactPathRegExp(ApiEndpoint.auth.loginTemp()),
+  toExactPathRegExp(ApiEndpoint.auth.tokenRefresh()),
+]
 
 export const RateLimitMiddleware: ExpressInitializer = {
   init(express: Express): void {
