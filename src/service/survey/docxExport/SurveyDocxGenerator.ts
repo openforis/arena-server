@@ -46,6 +46,14 @@ import {
   Taxa,
 } from '@openforis/arena-core'
 
+import {
+  VALID_IMAGE_TYPES,
+  MAX_IMAGE_WIDTH,
+  MAX_IMAGE_HEIGHT,
+  getImageDimensions,
+  calculateScaledDimensions,
+} from './ImageUtils'
+
 // ─── types ────────────────────────────────────────────────────────────────────
 
 interface RenderContext {
@@ -59,6 +67,7 @@ interface RenderContext {
 }
 
 type DocChild = Paragraph | Table
+type RenderLimits = { maxImageWidth?: number; maxImageHeight?: number }
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -75,7 +84,22 @@ const TABLE_BORDERS_NONE: ITableBordersOptions = {
   insideHorizontal: BORDER_NONE,
   insideVertical: BORDER_NONE,
 }
-const VALID_IMAGE_TYPES = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg']
+const DOC_PAGE_WIDTH_TWIPS = 12240
+const DOC_HORIZONTAL_MARGINS_TWIPS = 1080 + 1080
+const TWIPS_PER_INCH = 1440
+const PX_PER_INCH = 96
+const DOC_CONTENT_WIDTH_PX = Math.floor(
+  ((DOC_PAGE_WIDTH_TWIPS - DOC_HORIZONTAL_MARGINS_TWIPS) / TWIPS_PER_INCH) * PX_PER_INCH
+)
+const MIN_CELL_IMAGE_WIDTH = 80
+const CELL_IMAGE_PADDING_PX = 12
+
+const getMaxImageWidthForGridCell = (gridColumns: number, columnSpan: number): number => {
+  const columns = Math.max(gridColumns, 1)
+  const span = Math.max(columnSpan, 1)
+  const estimatedCellWidth = Math.floor((DOC_CONTENT_WIDTH_PX / columns) * span) - CELL_IMAGE_PADDING_PX
+  return Math.max(MIN_CELL_IMAGE_WIDTH, Math.min(MAX_IMAGE_WIDTH, estimatedCellWidth))
+}
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
 
@@ -338,10 +362,41 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
   return rows
 }
 
+const renderImage = (fileName: string, label: string, buffer: Buffer<ArrayBufferLike>, limits?: RenderLimits) => {
+  const ext = fileName.split('.').pop()?.toLowerCase() || 'jpeg'
+  const imgType = VALID_IMAGE_TYPES.includes(ext) ? ext : 'jpeg'
+  const maxWidth = limits?.maxImageWidth ?? MAX_IMAGE_WIDTH
+  const maxHeight = limits?.maxImageHeight ?? MAX_IMAGE_HEIGHT
+
+  // Get actual image dimensions and calculate scaled dimensions
+  const dims = getImageDimensions(buffer as Buffer)
+  const transformation = dims
+    ? calculateScaledDimensions(dims.width, dims.height, maxWidth, maxHeight)
+    : { width: maxWidth, height: maxHeight }
+
+  return [
+    new Paragraph({
+      spacing: { before: 80, after: 80 },
+      children: [new TextRun({ text: `${label}: `, bold: true })],
+    }),
+    new Paragraph({
+      spacing: SPACING_FIELD_ROW,
+      children: [
+        new ImageRun({
+          data: buffer,
+          type: imgType as any,
+          transformation,
+        }),
+      ],
+    }),
+  ]
+}
+
 const renderFile = async (
   nodeDef: NodeDef<NodeDefType>,
   context: RenderContext,
-  node?: ArenaNode
+  node?: ArenaNode,
+  limits?: RenderLimits
 ): Promise<Paragraph[]> => {
   const { fileProvider, lang } = context
   const lbl = label(nodeDef, lang)
@@ -358,28 +413,7 @@ const renderFile = async (
         const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
         // Infer image type from file extension or default to jpeg
         const fileName = NodeValues.getFileName(node) ?? fileUuid
-        const ext = fileName.split('.').pop()?.toLowerCase() || 'jpeg'
-        const imgType = VALID_IMAGE_TYPES.includes(ext) ? ext : 'jpeg'
-
-        return [
-          new Paragraph({
-            spacing: { before: 80, after: 80 },
-            children: [new TextRun({ text: `${lbl}: `, bold: true })],
-          }),
-          new Paragraph({
-            spacing: SPACING_FIELD_ROW,
-            children: [
-              new ImageRun({
-                data: buffer,
-                type: imgType as any,
-                transformation: {
-                  width: 300,
-                  height: 300,
-                },
-              }),
-            ],
-          }),
-        ]
+        return renderImage(fileName, lbl, buffer, limits)
       } catch {
         // Fall back to displaying filename if image retrieval fails
         return [valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')]
@@ -436,7 +470,8 @@ const renderAttribute = async (
   nodeDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
-  node?: ArenaNode
+  node?: ArenaNode,
+  limits?: RenderLimits
 ): Promise<DocChild[]> => {
   switch (nodeDef.type) {
     case NodeDefType.boolean:
@@ -452,7 +487,7 @@ const renderAttribute = async (
     case NodeDefType.taxon:
       return renderTaxon(nodeDef, context, node)
     case NodeDefType.file:
-      return await renderFile(nodeDef, context, node)
+      return renderFile(nodeDef, context, node, limits)
     case NodeDefType.geo:
       return [renderGeo(nodeDef, context, node)]
     case NodeDefType.formHeader:
@@ -600,6 +635,10 @@ const buildTableRows = async ({
     const { item, nodeDef } = cell
     const w = item.w ?? 1
     const h = item.h ?? 1
+    const limits: RenderLimits = {
+      maxImageWidth: getMaxImageWidthForGridCell(maxX, w),
+      maxImageHeight: MAX_IMAGE_HEIGHT,
+    }
     markSpannedCells(skip, x, y, w, h)
     let childNode: ArenaNode | undefined
     if (record && parentEntityNode) {
@@ -607,7 +646,7 @@ const buildTableRows = async ({
     }
     const rendered = NodeDefs.isEntity(nodeDef)
       ? await renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
-      : await renderAttribute(nodeDef, context, depth, childNode)
+      : await renderAttribute(nodeDef, context, depth, childNode, limits)
     return new TableCell({
       children: Array.isArray(rendered) ? rendered : [rendered],
       columnSpan: w > 1 ? w : undefined,
