@@ -46,13 +46,7 @@ import {
   Taxa,
 } from '@openforis/arena-core'
 
-import {
-  VALID_IMAGE_TYPES,
-  MAX_IMAGE_WIDTH,
-  MAX_IMAGE_HEIGHT,
-  getImageDimensions,
-  calculateScaledDimensions,
-} from './ImageUtils'
+import { MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, getImageDimensions, calculateScaledDimensions } from './ImageUtils'
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -62,7 +56,7 @@ interface RenderContext {
   cycle: string
   i18n: I18n
   record?: ArenaRecord
-  /** Async function to retrieve file data by UUID. Returns Buffer or file path for rendering. */
+  /** Async function to retrieve file data by UUID. Returns Buffer or file data as string for rendering. */
   fileProvider?: (fileUuid: string) => Promise<Buffer | string>
 }
 
@@ -94,12 +88,26 @@ const DOC_CONTENT_WIDTH_PX = Math.floor(
 )
 const MIN_CELL_IMAGE_WIDTH = 80
 const CELL_IMAGE_PADDING_PX = 12
+type DocxImageType = 'jpg' | 'png' | 'gif' | 'bmp'
+
+const DOCX_IMAGE_TYPE_BY_EXTENSION: Record<string, DocxImageType> = {
+  jpg: 'jpg',
+  jpeg: 'jpg',
+  png: 'png',
+  gif: 'gif',
+  bmp: 'bmp',
+}
 
 const getMaxImageWidthForGridCell = (gridColumns: number, columnSpan: number): number => {
   const columns = Math.max(gridColumns, 1)
   const span = Math.max(columnSpan, 1)
   const estimatedCellWidth = Math.floor((DOC_CONTENT_WIDTH_PX / columns) * span) - CELL_IMAGE_PADDING_PX
   return Math.max(MIN_CELL_IMAGE_WIDTH, Math.min(MAX_IMAGE_WIDTH, estimatedCellWidth))
+}
+
+const getDocxImageTypeFromFileName = (fileName: string): DocxImageType | undefined => {
+  const extension = fileName.split('.').pop()?.toLowerCase()
+  return extension ? DOCX_IMAGE_TYPE_BY_EXTENSION[extension] : undefined
 }
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
@@ -363,9 +371,16 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
   return rows
 }
 
-const renderImage = (fileName: string, label: string, buffer: Buffer<ArrayBufferLike>, limits?: RenderLimits) => {
-  const ext = fileName.split('.').pop()?.toLowerCase() || 'jpeg'
-  const imgType = VALID_IMAGE_TYPES.includes(ext) ? ext : 'jpeg'
+const renderImage = (
+  fileName: string,
+  label: string,
+  buffer: Buffer<ArrayBufferLike>,
+  limits?: RenderLimits
+): Paragraph[] | null => {
+  const imgType = getDocxImageTypeFromFileName(fileName)
+  if (!imgType) {
+    return null
+  }
   const maxWidth = limits?.maxImageWidth ?? MAX_IMAGE_WIDTH
   const maxHeight = limits?.maxImageHeight ?? MAX_IMAGE_HEIGHT
 
@@ -385,7 +400,7 @@ const renderImage = (fileName: string, label: string, buffer: Buffer<ArrayBuffer
       children: [
         new ImageRun({
           data: buffer,
-          type: imgType as any,
+          type: imgType,
           transformation,
         }),
       ],
@@ -416,9 +431,12 @@ const renderFile = async (
       try {
         const fileData = await fileProvider(fileUuid)
         const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
-        // Infer image type from file extension or default to jpeg
         const fileName = NodeValues.getFileName(node) ?? fileUuid
-        return renderImage(fileName, lbl, buffer, limits)
+        const imageParagraphs = renderImage(fileName, lbl, buffer, limits)
+        if (imageParagraphs) {
+          return imageParagraphs
+        }
+        return [valueRow(lbl, fileNameToDisplay)]
       } catch {
         // Fall back to displaying filename if image retrieval fails
         return [valueRow(lbl, fileNameToDisplay)]
