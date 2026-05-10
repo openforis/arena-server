@@ -16,7 +16,8 @@ export const MAX_IMAGE_HEIGHT = 500
 export const getImageDimensions = (buffer: Buffer): { width: number; height: number } | null => {
   try {
     const result = sizeOf(buffer)
-    return result && result.width && result.height ? { width: result.width, height: result.height } : null
+    const { width, height } = result ?? {}
+    return width && height ? { width, height } : null
   } catch {
     return null
   }
