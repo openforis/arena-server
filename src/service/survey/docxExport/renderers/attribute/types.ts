@@ -16,7 +16,7 @@ export interface RenderContext {
   cycle: string
   i18n: I18n
   record?: ArenaRecord
-  fileProvider?: (fileUuid: string) => Promise<Buffer | string>
+  fileProvider?: (fileUuid: string) => Promise<Buffer>
 }
 
 export type DocChild = Paragraph | Table

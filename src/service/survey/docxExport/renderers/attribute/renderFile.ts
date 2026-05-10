@@ -35,10 +35,10 @@ const tryRenderImageFile = async ({
   node: NonNullable<Parameters<AttributeRenderer>[0]['node']>
   limits: Parameters<AttributeRenderer>[0]['limits']
 }): Promise<Paragraph[] | null> => {
-  const lbl = label(nodeDef, context.lang)
+  const { fileProvider, lang } = context
+  const lbl = label(nodeDef, lang)
 
   const fileNameToDisplay = getFileNameToDisplay(node)
-  const fileProvider = context.fileProvider
   if (!fileProvider) return null
 
   const fileUuid = NodeValues.getFileUuid(node)
@@ -46,9 +46,8 @@ const tryRenderImageFile = async ({
 
   try {
     const fileData = await fileProvider(fileUuid)
-    const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
     const fileName = NodeValues.getFileName(node) ?? fileUuid
-    const imageParagraphs = renderImage(fileName, lbl, buffer, limits)
+    const imageParagraphs = renderImage(fileName, lbl, fileData, limits)
     return imageParagraphs ?? [valueRow(lbl, fileNameToDisplay)]
   } catch {
     return [valueRow(lbl, fileNameToDisplay)]

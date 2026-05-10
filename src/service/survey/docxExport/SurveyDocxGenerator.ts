@@ -436,8 +436,8 @@ export interface SurveyDocxOptions {
   i18n: I18n
   /** When provided, the document is filled with the record's data instead of blank input fields. */
   record?: ArenaRecord
-  /** Async function to retrieve file data by UUID for rendering images. Returns Buffer or file path. */
-  fileProvider?: (fileUuid: string) => Promise<Buffer | string>
+  /** Async function to retrieve file data by UUID for rendering images. Returns Buffer. */
+  fileProvider?: (fileUuid: string) => Promise<Buffer>
 }
 
 export interface SurveyDocxResult {
