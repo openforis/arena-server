@@ -219,11 +219,12 @@ const buildTableRows = async ({
 
   const tableRows: TableRow[] = []
   for (let y = 0; y < maxY; y++) {
-    const rowCells: TableCell[] = []
+    const rowCellPromises: Promise<TableCell>[] = []
     for (let x = 0; x < maxX; x++) {
       if (skip[y][x]) continue
-      rowCells.push(await renderCell(grid[y][x], x, y))
+      rowCellPromises.push(renderCell(grid[y][x], x, y))
     }
+    const rowCells = await Promise.all(rowCellPromises)
     tableRows.push(new TableRow({ children: rowCells }))
   }
   return tableRows
