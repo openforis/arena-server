@@ -398,11 +398,15 @@ const renderFile = async (
   node?: ArenaNode,
   limits?: RenderLimits
 ): Promise<Paragraph[]> => {
-  const { fileProvider, lang } = context
+  const { fileProvider, lang, record } = context
   const lbl = label(nodeDef, lang)
   const nodeDefFile = nodeDef as NodeDef<NodeDefType> & { props?: { fileType?: string } }
   const isImageType = nodeDefFile.props?.fileType === 'image'
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
+
+  const fileNameToDisplay = node
+    ? (NodeValues.getFileNameCalculated(node) ?? NodeValues.getFileName(node) ?? '[attached file]')
+    : '[attached file]'
 
   if (hasValue && isImageType && fileProvider) {
     // Try to render the image if fileProvider is available
@@ -416,15 +420,21 @@ const renderFile = async (
         return renderImage(fileName, lbl, buffer, limits)
       } catch {
         // Fall back to displaying filename if image retrieval fails
-        return [valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')]
+        return [valueRow(lbl, fileNameToDisplay)]
       }
     }
   }
 
   // Non-image file or no fileProvider: display filename only
   if (hasValue) {
-    return [valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')]
+    return [valueRow(lbl, fileNameToDisplay)]
   }
+
+  // In data-filled mode, keep missing file values blank instead of showing placeholders.
+  if (record) {
+    return [valueRow(lbl, '')]
+  }
+
   return [
     new Paragraph({
       spacing: SPACING_FIELD_ROW,
