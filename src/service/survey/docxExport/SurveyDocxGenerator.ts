@@ -74,6 +74,7 @@ type RenderLimits = { maxImageWidth?: number; maxImageHeight?: number }
 const EMPTY_FIELD = '________________________________'
 const EMPTY_SHORT = '___________'
 const SPACING_FIELD_ROW = { before: 80, after: 80 }
+const SPACING_COMPOSITE_LABEL_ROW = { before: 80, after: 40 }
 const TABLE_MAX_AVAILABLE_WIDTH: ITableWidthProperties = { size: 100, type: WidthType.PERCENTAGE }
 const BORDER_NONE: IBorderOptions = { style: 'none', size: 0, color: 'FFFFFF' }
 const TABLE_BORDERS_NONE: ITableBordersOptions = {
@@ -102,6 +103,10 @@ const getMaxImageWidthForGridCell = (gridColumns: number, columnSpan: number): n
 }
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
+const formItemLabelRun = (labelText: string, trailingSpace = true): TextRun =>
+  new TextRun({ text: `${labelText}:${trailingSpace ? ' ' : ''}`, bold: true })
+const nodeDefFormItemLabelRun = (nodeDef: NodeDef<NodeDefType>, context: RenderContext): TextRun =>
+  formItemLabelRun(label(nodeDef, context.lang))
 
 const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} })
 
@@ -109,14 +114,14 @@ const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} }
 const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
   new Paragraph({
     spacing: SPACING_FIELD_ROW,
-    children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), inputLine(fieldPlaceholder)],
+    children: [formItemLabelRun(fieldLabel), inputLine(fieldPlaceholder)],
   })
 
 /** Field showing an actual data value (no underline). */
 const valueRow = (fieldLabel: string, value: string): Paragraph =>
   new Paragraph({
     spacing: SPACING_FIELD_ROW,
-    children: [new TextRun({ text: `${fieldLabel}: `, bold: true }), new TextRun({ text: value })],
+    children: [formItemLabelRun(fieldLabel), new TextRun({ text: value })],
   })
 
 /** Checkbox run – supports checked/unchecked state for data-filled rendering. */
@@ -190,7 +195,6 @@ const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, 
 // ─── per-type renderers ──────────────────────────────────────────────────────
 
 const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: ArenaNode): Paragraph => {
-  const lbl = label(nodeDef, context.lang)
   const hasValue = node !== undefined && !Nodes.isValueBlank(node)
   const isTrue = hasValue && (node.value === true || node.value === 'true')
   const yesLabel = getBooleanValueLabel(context, nodeDef, true)
@@ -198,7 +202,7 @@ const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: A
   return new Paragraph({
     spacing: SPACING_FIELD_ROW,
     children: [
-      new TextRun({ text: `${lbl}: `, bold: true }),
+      nodeDefFormItemLabelRun(nodeDef, context),
       ...checkboxRun(yesLabel, hasValue ? isTrue : false),
       ...checkboxRun(noLabel, hasValue ? !isTrue : false),
     ],
@@ -223,7 +227,7 @@ const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNo
     return [
       new Paragraph({
         spacing: SPACING_FIELD_ROW,
-        children: [new TextRun({ text: `${lbl}: `, bold: true }), ...optionRuns],
+        children: [nodeDefFormItemLabelRun(nodeDef, context), ...optionRuns],
       }),
     ]
   }
@@ -247,7 +251,7 @@ const renderDate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   return new Paragraph({
     spacing: SPACING_FIELD_ROW,
     children: [
-      new TextRun({ text: `${lbl}: `, bold: true }),
+      nodeDefFormItemLabelRun(nodeDef, context),
       new TextRun({ text: 'DD', underline: {} }),
       new TextRun({ text: ' / ' }),
       new TextRun({ text: 'MM', underline: {} }),
@@ -263,7 +267,7 @@ const renderTime = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?
   return new Paragraph({
     spacing: SPACING_FIELD_ROW,
     children: [
-      new TextRun({ text: `${lbl}: `, bold: true }),
+      nodeDefFormItemLabelRun(nodeDef, context),
       new TextRun({ text: 'HH', underline: {} }),
       new TextRun({ text: ' : ' }),
       new TextRun({ text: 'MM', underline: {} }),
@@ -300,17 +304,14 @@ const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, no
   }
   // Render each field in a separate row
   return [
-    new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
+    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, children: [formItemLabelRun(lbl, false)] }),
     ...valueFields.map((valueField) => {
       const fieldLabel = labelByField[valueField]
       const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
       return new Paragraph({
         spacing: { before: 0, after: 0 },
         indent: { left: 360 },
-        children: [
-          new TextRun({ text: `${fieldLabel}: `, bold: true }),
-          hasValue ? new TextRun({ text: fieldValue }) : inputLine(fieldValue),
-        ],
+        children: [formItemLabelRun(fieldLabel), hasValue ? new TextRun({ text: fieldValue }) : inputLine(fieldValue)],
       })
     }),
   ]
@@ -332,18 +333,18 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
     indent: { left: 360 },
   }
   const rows: Paragraph[] = [
-    new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `${lbl}:`, bold: true })] }),
+    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, children: [formItemLabelRun(lbl, false)] }),
     new Paragraph({
       ...fieldCommonProps,
       children: [
-        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.code')}: `, bold: true }),
+        formItemLabelRun(i18n.t('surveyForm:nodeDefTaxon.code')),
         hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
       ],
     }),
     new Paragraph({
       ...fieldCommonProps,
       children: [
-        new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.scientificName')}: `, bold: true }),
+        formItemLabelRun(i18n.t('surveyForm:nodeDefTaxon.scientificName')),
         hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
       ],
     }),
@@ -353,7 +354,7 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
       new Paragraph({
         ...fieldCommonProps,
         children: [
-          new TextRun({ text: `${i18n.t('surveyForm:nodeDefTaxon.vernacularName')}: `, bold: true }),
+          formItemLabelRun(i18n.t('surveyForm:nodeDefTaxon.vernacularName')),
           vernacularName ? new TextRun({ text: vernacularName }) : inputLine(EMPTY_FIELD),
         ],
       })
@@ -377,7 +378,7 @@ const renderImage = (fileName: string, label: string, buffer: Buffer<ArrayBuffer
   return [
     new Paragraph({
       spacing: { before: 80, after: 80 },
-      children: [new TextRun({ text: `${label}: `, bold: true })],
+      children: [formItemLabelRun(label)],
     }),
     new Paragraph({
       spacing: SPACING_FIELD_ROW,
@@ -439,7 +440,7 @@ const renderFile = async (
     new Paragraph({
       spacing: SPACING_FIELD_ROW,
       children: [
-        new TextRun({ text: `${lbl}: `, bold: true }),
+        nodeDefFormItemLabelRun(nodeDef, context),
         new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
       ],
     }),
@@ -454,7 +455,7 @@ const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?:
   return new Paragraph({
     spacing: SPACING_FIELD_ROW,
     children: [
-      new TextRun({ text: `${lbl}: `, bold: true }),
+      nodeDefFormItemLabelRun(nodeDef, context),
       new TextRun({ text: '[geometry]', italics: true, color: '888888' }),
     ],
   })
