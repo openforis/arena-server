@@ -1,7 +1,14 @@
 import type { Paragraph, Table } from 'docx'
 
-import type { Node as ArenaNode, ArenaRecord, I18n, NodeDef, NodeDefType, Survey } from '@openforis/arena-core'
-import type { LanguageCode } from '@openforis/arena-core'
+import type {
+  Node as ArenaNode,
+  ArenaRecord,
+  I18n,
+  LanguageCode,
+  NodeDef,
+  NodeDefType,
+  Survey,
+} from '@openforis/arena-core'
 
 export interface RenderContext {
   survey: Survey

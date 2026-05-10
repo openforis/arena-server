@@ -67,8 +67,7 @@ export const renderFile: AttributeRenderer = async ({ nodeDef, context, node, li
 
   const nodeDefFile = nodeDef as typeof nodeDef & { props?: { fileType?: string } }
   if (nodeDefFile.props?.fileType === 'image') {
-    const nodeValue = node as NonNullable<typeof node>
-    const imageParagraphs = await tryRenderImageFile({ nodeDef, context, node: nodeValue, limits })
+    const imageParagraphs = await tryRenderImageFile({ nodeDef, context, node: node!, limits })
     if (imageParagraphs) {
       return imageParagraphs
     }
