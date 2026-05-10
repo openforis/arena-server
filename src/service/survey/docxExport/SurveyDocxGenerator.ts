@@ -1,11 +1,8 @@
 import {
   AlignmentType,
-  CheckBox,
   Document,
   HeadingLevel,
   IBorderOptions,
-  ImageRun,
-  IParagraphOptions,
   ITableBordersOptions,
   ITableWidthProperties,
   Packer,
@@ -19,56 +16,28 @@ import {
 
 import type {
   Node as ArenaNode,
-  NodeDefBoolean,
   ArenaRecord,
   I18n,
-  NodeDefCoordinate,
   NodeDefEntityChildPosition,
   NodeDefEntity,
 } from '@openforis/arena-core'
 import {
-  CategoryItem,
-  CategoryItems,
   LanguageCode,
   NodeDef,
-  NodeDefCode,
   NodeDefEntityRenderType,
   NodeDefType,
   NodeDefs,
-  NodeValueFormatter,
-  NodeValues,
-  Nodes,
-  Objects,
   Records,
-  Strings,
   Survey,
   Surveys,
-  Taxa,
 } from '@openforis/arena-core'
 
-import { MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, getImageDimensions, calculateScaledDimensions } from './ImageUtils'
-
-// ─── types ────────────────────────────────────────────────────────────────────
-
-interface RenderContext {
-  survey: Survey
-  lang: LanguageCode
-  cycle: string
-  i18n: I18n
-  record?: ArenaRecord
-  /** Async function to retrieve file data by UUID. Returns Buffer or file data as string for rendering. */
-  fileProvider?: (fileUuid: string) => Promise<Buffer | string>
-}
-
-type DocChild = Paragraph | Table
-type RenderLimits = { maxImageWidth?: number; maxImageHeight?: number }
+import { MAX_IMAGE_HEIGHT, MAX_IMAGE_WIDTH } from './ImageUtils'
+import { renderAttributeByType, type DocChild, type RenderContext, type RenderLimits } from './renderers/attribute'
+import { formatNodeValue, label } from './renderers/attribute/common'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-const EMPTY_FIELD = '________________________________'
-const EMPTY_SHORT = '___________'
-const SPACING_FIELD_ROW = { before: 80, after: 80 }
-const SPACING_COMPOSITE_LABEL_ROW = { before: 80, after: 40 }
 const TABLE_MAX_AVAILABLE_WIDTH: ITableWidthProperties = { size: 100, type: WidthType.PERCENTAGE }
 const BORDER_NONE: IBorderOptions = { style: 'none', size: 0, color: 'FFFFFF' }
 const TABLE_BORDERS_NONE: ITableBordersOptions = {
@@ -88,15 +57,6 @@ const DOC_CONTENT_WIDTH_PX = Math.floor(
 )
 const MIN_CELL_IMAGE_WIDTH = 80
 const CELL_IMAGE_PADDING_PX = 12
-type DocxImageType = 'jpg' | 'png' | 'gif' | 'bmp'
-
-const DOCX_IMAGE_TYPE_BY_EXTENSION: Record<string, DocxImageType> = {
-  jpg: 'jpg',
-  jpeg: 'jpg',
-  png: 'png',
-  gif: 'gif',
-  bmp: 'bmp',
-}
 
 const getMaxImageWidthForGridCell = (gridColumns: number, columnSpan: number): number => {
   const columns = Math.max(gridColumns, 1)
@@ -104,465 +64,13 @@ const getMaxImageWidthForGridCell = (gridColumns: number, columnSpan: number): n
   const estimatedCellWidth = Math.floor((DOC_CONTENT_WIDTH_PX / columns) * span) - CELL_IMAGE_PADDING_PX
   return Math.max(MIN_CELL_IMAGE_WIDTH, Math.min(MAX_IMAGE_WIDTH, estimatedCellWidth))
 }
-
-const getDocxImageTypeFromFileName = (fileName: string): DocxImageType | undefined => {
-  const extension = fileName.split('.').pop()?.toLowerCase()
-  return extension ? DOCX_IMAGE_TYPE_BY_EXTENSION[extension] : undefined
-}
-
-const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
-const formItemLabelRun = (labelText: string, trailingSpace = true): TextRun =>
-  new TextRun({ text: `${labelText}:${trailingSpace ? ' ' : ''}`, bold: true })
-const nodeDefFormItemLabelRun = (nodeDef: NodeDef<NodeDefType>, context: RenderContext): TextRun =>
-  formItemLabelRun(label(nodeDef, context.lang))
-
-const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} })
-
-/** Blank input field (underlined placeholder). */
-const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
-  new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [formItemLabelRun(fieldLabel), inputLine(fieldPlaceholder)],
-  })
-
-/** Field showing an actual data value (no underline). */
-const valueRow = (fieldLabel: string, value: string): Paragraph =>
-  new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [formItemLabelRun(fieldLabel), new TextRun({ text: value })],
-  })
-
-/** Checkbox run – supports checked/unchecked state for data-filled rendering. */
-const checkboxRun = (text: string, checked = false): [CheckBox, TextRun] => [
-  new CheckBox({ checked }),
-  new TextRun({ text: ` ${text}    ` }),
-]
-
-const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string => {
-  const label = CategoryItems.getLabel(item, lang)
-  return Objects.isEmpty(label) ? CategoryItems.getCode(item) : label
-}
-
-const getCommonLabel = (context: RenderContext, key: string, fallback: string): string => {
-  const translationKey = `common.${key}`
-  return context.i18n?.exists(translationKey) ? context.i18n.t(translationKey) : fallback
-}
-
-const getBooleanValueLabel = (context: RenderContext, nodeDef: NodeDefBoolean, value: boolean): string => {
-  const labelType = nodeDef.props.labelValue
-  if (labelType === 'trueFalse') {
-    return value ? getCommonLabel(context, 'true', 'True') : getCommonLabel(context, 'false', 'False')
-  }
-  return value ? getCommonLabel(context, 'yes', 'Yes') : getCommonLabel(context, 'no', 'No')
-}
-
-/**
- * Formats a node's value as a display string.
- * Used for table cells and simple inline value rendering.
- */
-const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node: ArenaNode): string => {
-  if (Nodes.isValueBlank(node)) return ''
-  const { survey, lang, cycle } = context
-  switch (nodeDef.type) {
-    case NodeDefType.boolean: {
-      const boolDef = nodeDef as NodeDefBoolean
-      return getBooleanValueLabel(context, boolDef, node.value === true || node.value === 'true')
-    }
-    case NodeDefType.taxon: {
-      const { refData } = node
-      const taxon = refData?.taxon
-      if (!taxon) {
-        return ''
-      }
-      const code = Taxa.getCode(taxon)
-      const sciName = Taxa.getScientificName(taxon)
-      return `${sciName} (${code})`
-    }
-    case NodeDefType.file:
-      return NodeValues.getFileName(node) ?? ''
-    case NodeDefType.code: {
-      const refItem = node.refData?.categoryItem
-      if (refItem) return getCategoryItemLabel(refItem, lang)
-      return NodeValues.getValueCode(node.value) ?? ''
-    }
-    default: {
-      const formatted = NodeValueFormatter.format({
-        survey,
-        cycle,
-        nodeDef,
-        node,
-        value: node.value,
-        lang,
-        showLabel: true,
-      })
-      return Objects.isNil(formatted) ? '' : String(formatted)
-    }
-  }
-}
-
-// ─── per-type renderers ──────────────────────────────────────────────────────
-
-const renderBoolean = (nodeDef: NodeDefBoolean, context: RenderContext, node?: ArenaNode): Paragraph => {
-  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
-  const isTrue = hasValue && (node.value === true || node.value === 'true')
-  const yesLabel = getBooleanValueLabel(context, nodeDef, true)
-  const noLabel = getBooleanValueLabel(context, nodeDef, false)
-  return new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [
-      nodeDefFormItemLabelRun(nodeDef, context),
-      ...checkboxRun(yesLabel, hasValue ? isTrue : false),
-      ...checkboxRun(noLabel, hasValue ? !isTrue : false),
-    ],
-  })
-}
-
-const renderCode = (nodeDef: NodeDefCode, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const { survey, lang } = context
-  const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef }) : []
-
-  const lbl = label(nodeDef, lang)
-  const isCheckboxLayout =
-    nodeDef.props?.layout && Object.values(nodeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
-  const selectedItemUuid = node ? NodeValues.getItemUuid(node) : undefined
-  const showAsCheckboxes = (isCheckboxLayout || items.length <= 8) && items.length > 0
-
-  if (showAsCheckboxes) {
-    const optionRuns = items.flatMap((item) => {
-      const checked = selectedItemUuid !== undefined && item.uuid === selectedItemUuid
-      return checkboxRun(getCategoryItemLabel(item, lang), checked)
-    })
-    return [
-      new Paragraph({
-        spacing: SPACING_FIELD_ROW,
-        children: [nodeDefFormItemLabelRun(nodeDef, context), ...optionRuns],
-      }),
-    ]
-  }
-
-  // Large list / dropdown
-  if (selectedItemUuid !== undefined) {
-    const selectedItem = node?.refData?.categoryItem
-    const displayValue = selectedItem
-      ? getCategoryItemLabel(selectedItem, lang)
-      : (node?.value?.code ?? selectedItemUuid)
-    return [valueRow(lbl, displayValue)]
-  }
-  const size = items.length
-  const sizeLabel = size > 0 ? ` (${size} options)` : ''
-  return [fieldRow(lbl, `[select${sizeLabel}]`)]
-}
-
-const renderDate = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
-  const lbl = label(nodeDef, context.lang)
-  if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
-  return new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [
-      nodeDefFormItemLabelRun(nodeDef, context),
-      new TextRun({ text: 'DD', underline: {} }),
-      new TextRun({ text: ' / ' }),
-      new TextRun({ text: 'MM', underline: {} }),
-      new TextRun({ text: ' / ' }),
-      new TextRun({ text: 'YYYY', underline: {} }),
-    ],
-  })
-}
-
-const renderTime = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
-  const lbl = label(nodeDef, context.lang)
-  if (node !== undefined && !Nodes.isValueBlank(node)) return valueRow(lbl, formatNodeValue(nodeDef, context, node))
-  return new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [
-      nodeDefFormItemLabelRun(nodeDef, context),
-      new TextRun({ text: 'HH', underline: {} }),
-      new TextRun({ text: ' : ' }),
-      new TextRun({ text: 'MM', underline: {} }),
-    ],
-  })
-}
-
-const renderCoordinate = (nodeDef: NodeDefCoordinate, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const { i18n, lang } = context
-  const lbl = label(nodeDef, lang)
-  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
-  const val = hasValue ? (node.value ?? {}) : null
-  const valueFields = [
-    NodeValues.ValuePropsCoordinate.srs,
-    NodeValues.ValuePropsCoordinate.x,
-    NodeValues.ValuePropsCoordinate.y,
-    ...NodeDefs.getCoordinateAdditionalFields(nodeDef),
-  ]
-  const labelByField = valueFields.reduce(
-    (acc, field) => {
-      const labelKey = `surveyForm:nodeDefCoordinate.${field}`
-      const fieldLabel = i18n.exists(labelKey) ? i18n.t(labelKey) : field
-      acc[field] = fieldLabel
-      return acc
-    },
-    {} as Record<string, string>
-  )
-  const maxLabelLength = Math.max(...valueFields.map((f) => labelByField[f].length))
-  for (const field of valueFields) {
-    const fieldLabel = labelByField[field]
-    if (fieldLabel.length < maxLabelLength) {
-      labelByField[field] = Strings.padStart(maxLabelLength, ' ')(fieldLabel)
-    }
-  }
-  // Render each field in a separate row
-  return [
-    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, children: [formItemLabelRun(lbl, false)] }),
-    ...valueFields.map((valueField) => {
-      const fieldLabel = labelByField[valueField]
-      const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
-      return new Paragraph({
-        spacing: { before: 0, after: 0 },
-        indent: { left: 360 },
-        children: [formItemLabelRun(fieldLabel), hasValue ? new TextRun({ text: fieldValue }) : inputLine(fieldValue)],
-      })
-    }),
-  ]
-}
-
-const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph[] => {
-  const { i18n, lang } = context
-  const lbl = label(nodeDef, lang)
-  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
-  const taxon = hasValue ? node.refData?.taxon : undefined
-  const taxonCode = taxon ? (Taxa.getCode(taxon) ?? '') : EMPTY_SHORT
-  const sciName = taxon ? Taxa.getScientificName(taxon) : EMPTY_FIELD
-  const vernacularNameVisible = NodeDefs.isFieldVisible(NodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
-  const vernacularNameUuid = node ? NodeValues.getVernacularNameUuid(node) : undefined
-  const { vernacularName } = vernacularNameUuid && taxon ? Taxa.getVernacularNameAndLang(vernacularNameUuid)(taxon) : {}
-
-  const fieldCommonProps: IParagraphOptions = {
-    spacing: { before: 0, after: 0 },
-    indent: { left: 360 },
-  }
-  const rows: Paragraph[] = [
-    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, children: [formItemLabelRun(lbl, false)] }),
-    new Paragraph({
-      ...fieldCommonProps,
-      children: [
-        formItemLabelRun(i18n.t('surveyForm:nodeDefTaxon.code')),
-        hasValue ? new TextRun({ text: taxonCode }) : inputLine(EMPTY_SHORT),
-      ],
-    }),
-    new Paragraph({
-      ...fieldCommonProps,
-      children: [
-        formItemLabelRun(i18n.t('surveyForm:nodeDefTaxon.scientificName')),
-        hasValue ? new TextRun({ text: sciName }) : inputLine(EMPTY_FIELD),
-      ],
-    }),
-  ]
-  if (vernacularNameVisible) {
-    rows.push(
-      new Paragraph({
-        ...fieldCommonProps,
-        children: [
-          formItemLabelRun(i18n.t('surveyForm:nodeDefTaxon.vernacularName')),
-          vernacularName ? new TextRun({ text: vernacularName }) : inputLine(EMPTY_FIELD),
-        ],
-      })
-    )
-  }
-  return rows
-}
-
-const renderImage = (
-  fileName: string,
-  label: string,
-  buffer: Buffer<ArrayBufferLike>,
-  limits?: RenderLimits
-): Paragraph[] | null => {
-  const imgType = getDocxImageTypeFromFileName(fileName)
-  if (!imgType) {
-    return null
-  }
-  const maxWidth = limits?.maxImageWidth ?? MAX_IMAGE_WIDTH
-  const maxHeight = limits?.maxImageHeight ?? MAX_IMAGE_HEIGHT
-
-  // Get actual image dimensions and calculate scaled dimensions
-  const dims = getImageDimensions(buffer as Buffer)
-  const transformation = dims
-    ? calculateScaledDimensions(dims.width, dims.height, maxWidth, maxHeight)
-    : { width: maxWidth, height: maxHeight }
-
-  return [
-    new Paragraph({
-      spacing: { before: 80, after: 80 },
-      children: [formItemLabelRun(label)],
-    }),
-    new Paragraph({
-      spacing: SPACING_FIELD_ROW,
-      children: [
-        new ImageRun({
-          data: buffer,
-          type: imgType,
-          transformation,
-        }),
-      ],
-    }),
-  ]
-}
-
-const getFileNameToDisplay = (node?: ArenaNode): string =>
-  node
-    ? (NodeValues.getFileNameCalculated(node) ?? NodeValues.getFileName(node) ?? '[attached file]')
-    : '[attached file]'
-
-const renderFilePlaceholder = (nodeDef: NodeDef<NodeDefType>, context: RenderContext): Paragraph[] => [
-  new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [
-      nodeDefFormItemLabelRun(nodeDef, context),
-      new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
-    ],
-  }),
-]
-
-const tryRenderImageFile = async ({
-  context,
-  node,
-  label,
-  limits,
-  fallbackFileName,
-}: {
-  context: RenderContext
-  node: ArenaNode
-  label: string
-  limits?: RenderLimits
-  fallbackFileName: string
-}): Promise<Paragraph[] | null> => {
-  const { fileProvider } = context
-  if (!fileProvider) return null
-
-  const fileUuid = NodeValues.getFileUuid(node)
-  if (!fileUuid) return null
-
-  try {
-    const fileData = await fileProvider(fileUuid)
-    const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
-    const fileName = NodeValues.getFileName(node) ?? fileUuid
-    const imageParagraphs = renderImage(fileName, label, buffer, limits)
-    return imageParagraphs ?? [valueRow(label, fallbackFileName)]
-  } catch {
-    return [valueRow(label, fallbackFileName)]
-  }
-}
-
-const renderFile = async (
-  nodeDef: NodeDef<NodeDefType>,
-  context: RenderContext,
-  node?: ArenaNode,
-  limits?: RenderLimits
-): Promise<Paragraph[]> => {
-  const { lang, record } = context
-  const lbl = label(nodeDef, lang)
-  if (!node || Nodes.isValueBlank(node)) {
-    if (record) {
-      return [valueRow(lbl, '')]
-    }
-    return renderFilePlaceholder(nodeDef, context)
-  }
-
-  const fileNameToDisplay = getFileNameToDisplay(node)
-  const nodeDefFile = nodeDef as NodeDef<NodeDefType> & { props?: { fileType?: string } }
-  if (nodeDefFile.props?.fileType === 'image') {
-    const imageParagraphs = await tryRenderImageFile({
-      context,
-      node,
-      label: lbl,
-      limits,
-      fallbackFileName: fileNameToDisplay,
-    })
-    if (imageParagraphs) {
-      return imageParagraphs
-    }
-  }
-
-  // Non-image file or image without retrievable data: display filename only.
-  if (!Nodes.isValueBlank(node)) {
-    return [valueRow(lbl, fileNameToDisplay)]
-  }
-
-  return renderFilePlaceholder(nodeDef, context)
-}
-
-const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
-  const lbl = label(nodeDef, context.lang)
-  if (node !== undefined && !Nodes.isValueBlank(node)) {
-    return valueRow(lbl, '[geometry data]')
-  }
-  return new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [
-      nodeDefFormItemLabelRun(nodeDef, context),
-      new TextRun({ text: '[geometry]', italics: true, color: '888888' }),
-    ],
-  })
-}
-
-const renderFormHeader = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, depth: number): Paragraph => {
-  const lbl = label(nodeDef, context.lang)
-  const headingMap: Record<number, (typeof HeadingLevel)[keyof typeof HeadingLevel]> = {
-    0: HeadingLevel.HEADING_3,
-    1: HeadingLevel.HEADING_4,
-    2: HeadingLevel.HEADING_5,
-  }
-  return new Paragraph({
-    text: lbl,
-    heading: headingMap[Math.min(depth, 2)] ?? HeadingLevel.HEADING_5,
-    spacing: { before: 200, after: 100 },
-  })
-}
-
-// ─── attribute renderer ──────────────────────────────────────────────────────
-
 const renderAttribute = async (
   nodeDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
   node?: ArenaNode,
   limits?: RenderLimits
-): Promise<DocChild[]> => {
-  switch (nodeDef.type) {
-    case NodeDefType.boolean:
-      return [renderBoolean(nodeDef as NodeDefBoolean, context, node)]
-    case NodeDefType.code:
-      return renderCode(nodeDef as NodeDefCode, context, node)
-    case NodeDefType.date:
-      return [renderDate(nodeDef, context, node)]
-    case NodeDefType.time:
-      return [renderTime(nodeDef, context, node)]
-    case NodeDefType.coordinate:
-      return renderCoordinate(nodeDef as NodeDefCoordinate, context, node)
-    case NodeDefType.taxon:
-      return renderTaxon(nodeDef, context, node)
-    case NodeDefType.file:
-      return renderFile(nodeDef, context, node, limits)
-    case NodeDefType.geo:
-      return [renderGeo(nodeDef, context, node)]
-    case NodeDefType.formHeader:
-      return [renderFormHeader(nodeDef, context, depth)]
-    case NodeDefType.integer:
-    case NodeDefType.decimal: {
-      const lbl = label(nodeDef, context.lang)
-      if (node !== undefined && !Nodes.isValueBlank(node))
-        return [valueRow(lbl, formatNodeValue(nodeDef, context, node))]
-      return [fieldRow(lbl, EMPTY_SHORT)]
-    }
-    case NodeDefType.text:
-    default: {
-      const lbl = label(nodeDef, context.lang)
-      if (node !== undefined && !Nodes.isValueBlank(node))
-        return [valueRow(lbl, formatNodeValue(nodeDef, context, node))]
-      return [fieldRow(lbl, EMPTY_FIELD)]
-    }
-  }
-}
+): Promise<DocChild[]> => renderAttributeByType({ nodeDef, context, depth, node, limits })
 
 // ─── table renderer (for multiple entities with table layout) ─────────────────
 
