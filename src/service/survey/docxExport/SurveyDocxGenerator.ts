@@ -4,6 +4,7 @@ import {
   Document,
   HeadingLevel,
   IBorderOptions,
+  ImageRun,
   IParagraphOptions,
   ITableBordersOptions,
   ITableWidthProperties,
@@ -53,6 +54,8 @@ interface RenderContext {
   cycle: string
   i18n: I18n
   record?: ArenaRecord
+  /** Async function to retrieve file data by UUID. Returns Buffer or file path for rendering. */
+  fileProvider?: (fileUuid: string) => Promise<Buffer | string>
 }
 
 type DocChild = Paragraph | Table
@@ -72,6 +75,7 @@ const TABLE_BORDERS_NONE: ITableBordersOptions = {
   insideHorizontal: BORDER_NONE,
   insideVertical: BORDER_NONE,
 }
+const VALID_IMAGE_TYPES = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg']
 
 const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
 
@@ -334,18 +338,68 @@ const renderTaxon = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node
   return rows
 }
 
-const renderFile = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
-  const lbl = label(nodeDef, context.lang)
-  if (node !== undefined && !Nodes.isValueBlank(node)) {
-    return valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')
+const renderFile = async (
+  nodeDef: NodeDef<NodeDefType>,
+  context: RenderContext,
+  node?: ArenaNode
+): Promise<Paragraph[]> => {
+  const { fileProvider, lang } = context
+  const lbl = label(nodeDef, lang)
+  const nodeDefFile = nodeDef as NodeDef<NodeDefType> & { props?: { fileType?: string } }
+  const isImageType = nodeDefFile.props?.fileType === 'image'
+  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
+
+  if (hasValue && isImageType && fileProvider) {
+    // Try to render the image if fileProvider is available
+    const fileUuid = NodeValues.getFileUuid(node)
+    if (fileUuid) {
+      try {
+        const fileData = await fileProvider(fileUuid)
+        const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
+        // Infer image type from file extension or default to jpeg
+        const fileName = NodeValues.getFileName(node) ?? fileUuid
+        const ext = fileName.split('.').pop()?.toLowerCase() || 'jpeg'
+        const imgType = VALID_IMAGE_TYPES.includes(ext) ? ext : 'jpeg'
+
+        return [
+          new Paragraph({
+            spacing: { before: 80, after: 80 },
+            children: [new TextRun({ text: `${lbl}: `, bold: true })],
+          }),
+          new Paragraph({
+            spacing: SPACING_FIELD_ROW,
+            children: [
+              new ImageRun({
+                data: buffer,
+                type: imgType as any,
+                transformation: {
+                  width: 300,
+                  height: 300,
+                },
+              }),
+            ],
+          }),
+        ]
+      } catch {
+        // Fall back to displaying filename if image retrieval fails
+        return [valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')]
+      }
+    }
   }
-  return new Paragraph({
-    spacing: SPACING_FIELD_ROW,
-    children: [
-      new TextRun({ text: `${lbl}: `, bold: true }),
-      new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
-    ],
-  })
+
+  // Non-image file or no fileProvider: display filename only
+  if (hasValue) {
+    return [valueRow(lbl, NodeValues.getFileName(node) ?? '[attached file]')]
+  }
+  return [
+    new Paragraph({
+      spacing: SPACING_FIELD_ROW,
+      children: [
+        new TextRun({ text: `${lbl}: `, bold: true }),
+        new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
+      ],
+    }),
+  ]
 }
 
 const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
@@ -378,12 +432,12 @@ const renderFormHeader = (nodeDef: NodeDef<NodeDefType>, context: RenderContext,
 
 // ─── attribute renderer ──────────────────────────────────────────────────────
 
-const renderAttribute = (
+const renderAttribute = async (
   nodeDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
   node?: ArenaNode
-): DocChild[] => {
+): Promise<DocChild[]> => {
   switch (nodeDef.type) {
     case NodeDefType.boolean:
       return [renderBoolean(nodeDef as NodeDefBoolean, context, node)]
@@ -398,7 +452,7 @@ const renderAttribute = (
     case NodeDefType.taxon:
       return renderTaxon(nodeDef, context, node)
     case NodeDefType.file:
-      return [renderFile(nodeDef, context, node)]
+      return await renderFile(nodeDef, context, node)
     case NodeDefType.geo:
       return [renderGeo(nodeDef, context, node)]
     case NodeDefType.formHeader:
@@ -520,7 +574,7 @@ const markSpannedCells = (skip: boolean[][], x: number, y: number, w: number, h:
   }
 }
 
-const buildTableRows = ({
+const buildTableRows = async ({
   grid,
   skip,
   maxX,
@@ -538,8 +592,8 @@ const buildTableRows = ({
   depth: number
   parentEntityNode: ArenaNode | undefined
   record: ArenaRecord | undefined
-}): TableRow[] => {
-  const renderCell = (cell: GridCell | null, x: number, y: number): TableCell => {
+}): Promise<TableRow[]> => {
+  const renderCell = async (cell: GridCell | null, x: number, y: number): Promise<TableCell> => {
     if (!cell?.nodeDef) {
       return new TableCell({ children: [new Paragraph({ text: '' })] })
     }
@@ -552,8 +606,8 @@ const buildTableRows = ({
       childNode = Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
     }
     const rendered = NodeDefs.isEntity(nodeDef)
-      ? renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
-      : renderAttribute(nodeDef, context, depth, childNode)
+      ? await renderEntityDef(nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
+      : await renderAttribute(nodeDef, context, depth, childNode)
     return new TableCell({
       children: Array.isArray(rendered) ? rendered : [rendered],
       columnSpan: w > 1 ? w : undefined,
@@ -566,19 +620,19 @@ const buildTableRows = ({
     const rowCells: TableCell[] = []
     for (let x = 0; x < maxX; x++) {
       if (skip[y][x]) continue
-      rowCells.push(renderCell(grid[y][x], x, y))
+      rowCells.push(await renderCell(grid[y][x], x, y))
     }
     tableRows.push(new TableRow({ children: rowCells }))
   }
   return tableRows
 }
 
-const renderEntityChildrenGrid = (
+const renderEntityChildrenGrid = async (
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
-): DocChild[] => {
+): Promise<DocChild[]> => {
   const { survey, cycle, record } = context
   const layoutChildren: NodeDefEntityChildPosition[] = NodeDefs.getLayoutChildren(cycle)(
     entityDef
@@ -609,7 +663,7 @@ const renderEntityChildrenGrid = (
   // Track merged cells
   const skip: boolean[][] = Array.from({ length: maxY }, () => new Array(maxX).fill(false))
   // Build TableRows
-  const tableRows = buildTableRows({
+  const tableRows = await buildTableRows({
     grid,
     skip,
     maxX,
@@ -629,12 +683,12 @@ const renderEntityChildrenGrid = (
 }
 
 // Default flat renderer
-const renderEntityChildrenDefault = (
+const renderEntityChildrenDefault = async (
   entityDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
-): DocChild[] => {
+): Promise<DocChild[]> => {
   const { survey, cycle, record } = context
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
@@ -646,24 +700,24 @@ const renderEntityChildrenDefault = (
   const result: DocChild[] = []
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
-      result.push(...renderEntityDef(child as NodeDefEntity, context, depth + 1, parentEntityNode))
+      result.push(...(await renderEntityDef(child as NodeDefEntity, context, depth + 1, parentEntityNode)))
     } else {
       let childNode: ArenaNode | undefined
       if (record && parentEntityNode) {
         childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
       }
-      result.push(...renderAttribute(child, context, depth, childNode))
+      result.push(...(await renderAttribute(child, context, depth, childNode)))
     }
   }
   return result
 }
 
-const renderEntityChildren = (
+const renderEntityChildren = async (
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
-): DocChild[] => {
+): Promise<DocChild[]> => {
   const { survey, cycle } = context
   const childDefs = Surveys.getNodeDefChildrenSorted({
     survey,
@@ -680,14 +734,14 @@ const renderEntityChildren = (
   const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef)
   let result: DocChild[]
   if (layoutChildren.length > 0) {
-    result = renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
+    result = await renderEntityChildrenGrid(entityDef, context, depth, parentEntityNode)
   } else {
-    result = renderEntityChildrenDefault(entityDef, context, depth, parentEntityNode)
+    result = await renderEntityChildrenDefault(entityDef, context, depth, parentEntityNode)
   }
 
   // Render each entityDefInOwnPage in a separate page with a title
   for (const childEntityDef of entityDefsInOwnPage) {
-    result.push(...renderEntityDef(childEntityDef, context, depth + 1, parentEntityNode))
+    result.push(...(await renderEntityDef(childEntityDef, context, depth + 1, parentEntityNode)))
   }
   return result
 }
@@ -695,12 +749,12 @@ const renderEntityChildren = (
 /**
  * Renders multiple entity nodes, adding a heading for each instance if there are multiple nodes.
  */
-const renderEntityNodes = (
+const renderEntityNodes = async (
   entityNodes: ArenaNode[],
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number
-) => {
+): Promise<DocChild[]> => {
   const result: DocChild[] = []
   for (let index = 0; index < entityNodes.length; index++) {
     const entityNode = entityNodes[index]
@@ -713,7 +767,7 @@ const renderEntityNodes = (
         })
       )
     }
-    result.push(...renderEntityChildren(entityDef, context, depth + 1, entityNode))
+    result.push(...(await renderEntityChildren(entityDef, context, depth + 1, entityNode)))
   }
   return result
 }
@@ -724,12 +778,12 @@ const renderEntityNodes = (
  * and renders one section per instance (form layout) or one row per instance
  * (table layout).
  */
-const renderEntityDef = (
+const renderEntityDef = async (
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode
-): DocChild[] => {
+): Promise<DocChild[]> => {
   const { record } = context
   const isRoot = NodeDefs.isRoot(entityDef)
   const isMultiple = NodeDefs.isMultiple(entityDef)
@@ -758,14 +812,14 @@ const renderEntityDef = (
   } else if (isMultiple) {
     // Multiple entity with form layout → one section per record instance
     if (entityNodes.length > 0) {
-      result.push(...renderEntityNodes(entityNodes, entityDef, context, depth))
+      result.push(...(await renderEntityNodes(entityNodes, entityDef, context, depth)))
     } else {
       // No record data: render a single blank form section
-      result.push(...renderEntityChildren(entityDef, context, depth))
+      result.push(...(await renderEntityChildren(entityDef, context, depth)))
     }
   } else {
     // Single entity
-    result.push(...renderEntityChildren(entityDef, context, depth, entityNodes[0]))
+    result.push(...(await renderEntityChildren(entityDef, context, depth, entityNodes[0])))
   }
 
   return result
@@ -780,6 +834,8 @@ export interface SurveyDocxOptions {
   i18n: I18n
   /** When provided, the document is filled with the record's data instead of blank input fields. */
   record?: ArenaRecord
+  /** Async function to retrieve file data by UUID for rendering images. Returns Buffer or file path. */
+  fileProvider?: (fileUuid: string) => Promise<Buffer | string>
 }
 
 export interface SurveyDocxResult {
@@ -788,12 +844,12 @@ export interface SurveyDocxResult {
 }
 
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
-  const { survey, cycle, i18n, record } = options
+  const { survey, cycle, i18n, record, fileProvider } = options
 
   const lang: LanguageCode = options.lang ?? Surveys.getDefaultLanguage(survey)
   const cycleResolved: string = cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
 
-  const context: RenderContext = { survey, lang, cycle: cycleResolved, i18n, record }
+  const context: RenderContext = { survey, lang, cycle: cycleResolved, i18n, record, fileProvider }
 
   const surveyName = Surveys.getName(survey)
   const surveyLabel = Surveys.getLabel(lang)(survey)
@@ -824,7 +880,7 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
     )
   }
 
-  bodyChildren.push(...renderEntityChildren(rootDef, context, 0, rootEntityNode))
+  bodyChildren.push(...(await renderEntityChildren(rootDef, context, 0, rootEntityNode)))
 
   const doc = new Document({
     styles: {
