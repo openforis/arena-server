@@ -408,61 +408,87 @@ const renderImage = (
   ]
 }
 
+const getFileNameToDisplay = (node?: ArenaNode): string =>
+  node
+    ? (NodeValues.getFileNameCalculated(node) ?? NodeValues.getFileName(node) ?? '[attached file]')
+    : '[attached file]'
+
+const renderFilePlaceholder = (nodeDef: NodeDef<NodeDefType>, context: RenderContext): Paragraph[] => [
+  new Paragraph({
+    spacing: SPACING_FIELD_ROW,
+    children: [
+      nodeDefFormItemLabelRun(nodeDef, context),
+      new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
+    ],
+  }),
+]
+
+const tryRenderImageFile = async ({
+  context,
+  node,
+  label,
+  limits,
+  fallbackFileName,
+}: {
+  context: RenderContext
+  node: ArenaNode
+  label: string
+  limits?: RenderLimits
+  fallbackFileName: string
+}): Promise<Paragraph[] | null> => {
+  const { fileProvider } = context
+  if (!fileProvider) return null
+
+  const fileUuid = NodeValues.getFileUuid(node)
+  if (!fileUuid) return null
+
+  try {
+    const fileData = await fileProvider(fileUuid)
+    const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
+    const fileName = NodeValues.getFileName(node) ?? fileUuid
+    const imageParagraphs = renderImage(fileName, label, buffer, limits)
+    return imageParagraphs ?? [valueRow(label, fallbackFileName)]
+  } catch {
+    return [valueRow(label, fallbackFileName)]
+  }
+}
+
 const renderFile = async (
   nodeDef: NodeDef<NodeDefType>,
   context: RenderContext,
   node?: ArenaNode,
   limits?: RenderLimits
 ): Promise<Paragraph[]> => {
-  const { fileProvider, lang, record } = context
+  const { lang, record } = context
   const lbl = label(nodeDef, lang)
+  if (!node || Nodes.isValueBlank(node)) {
+    if (record) {
+      return [valueRow(lbl, '')]
+    }
+    return renderFilePlaceholder(nodeDef, context)
+  }
+
+  const fileNameToDisplay = getFileNameToDisplay(node)
   const nodeDefFile = nodeDef as NodeDef<NodeDefType> & { props?: { fileType?: string } }
-  const isImageType = nodeDefFile.props?.fileType === 'image'
-  const hasValue = node !== undefined && !Nodes.isValueBlank(node)
-
-  const fileNameToDisplay = node
-    ? (NodeValues.getFileNameCalculated(node) ?? NodeValues.getFileName(node) ?? '[attached file]')
-    : '[attached file]'
-
-  if (hasValue && isImageType && fileProvider) {
-    // Try to render the image if fileProvider is available
-    const fileUuid = NodeValues.getFileUuid(node)
-    if (fileUuid) {
-      try {
-        const fileData = await fileProvider(fileUuid)
-        const buffer = typeof fileData === 'string' ? Buffer.from(fileData) : fileData
-        const fileName = NodeValues.getFileName(node) ?? fileUuid
-        const imageParagraphs = renderImage(fileName, lbl, buffer, limits)
-        if (imageParagraphs) {
-          return imageParagraphs
-        }
-        return [valueRow(lbl, fileNameToDisplay)]
-      } catch {
-        // Fall back to displaying filename if image retrieval fails
-        return [valueRow(lbl, fileNameToDisplay)]
-      }
+  if (nodeDefFile.props?.fileType === 'image') {
+    const imageParagraphs = await tryRenderImageFile({
+      context,
+      node,
+      label: lbl,
+      limits,
+      fallbackFileName: fileNameToDisplay,
+    })
+    if (imageParagraphs) {
+      return imageParagraphs
     }
   }
 
-  // Non-image file or no fileProvider: display filename only
-  if (hasValue) {
+  // Non-image file or image without retrievable data: display filename only.
+  if (!Nodes.isValueBlank(node)) {
     return [valueRow(lbl, fileNameToDisplay)]
   }
 
-  // In data-filled mode, keep missing file values blank instead of showing placeholders.
-  if (record) {
-    return [valueRow(lbl, '')]
-  }
-
-  return [
-    new Paragraph({
-      spacing: SPACING_FIELD_ROW,
-      children: [
-        nodeDefFormItemLabelRun(nodeDef, context),
-        new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),
-      ],
-    }),
-  ]
+  return renderFilePlaceholder(nodeDef, context)
 }
 
 const renderGeo = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node?: ArenaNode): Paragraph => {
