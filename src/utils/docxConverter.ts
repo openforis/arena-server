@@ -9,7 +9,9 @@ import { ProcessEnv } from '../processEnv'
 const pdfPageFormat = 'A4'
 const pdfPageMargin = { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' }
 const pageLoadTimeoutMs = 15000
-const maxPdfConversionsInParallel = 2
+const parsedMaxConcurrency = Number(process.env.DOCX_PDF_MAX_CONCURRENCY ?? 2)
+const maxPdfConversionsInParallel =
+  Number.isFinite(parsedMaxConcurrency) && parsedMaxConcurrency > 0 ? Math.floor(parsedMaxConcurrency) : 2
 
 let runningPdfConversions = 0
 const pendingPdfConversions: Array<() => void> = []

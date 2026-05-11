@@ -104,3 +104,57 @@ By default, migrations are applied to the `public` schema; if you need to update
 ```shell
 yarn dbmigrate:create --name=add-table-to-survey-schema-db-table --schema=survey
 ```
+
+### DOCX to PDF conversion runtime notes
+
+The DOCX to PDF helper uses `mammoth` + `puppeteer` at runtime. This has deployment implications:
+
+- Installing `puppeteer` runs a postinstall step that downloads a Chromium build.
+- Install time and artifact size increase significantly compared with typical Node.js dependencies.
+- In restricted CI/CD or production networks, browser download can fail unless proxy/mirror settings are configured.
+
+#### Linux runtime requirements
+
+When using bundled Chromium, make sure your runtime image/host includes common Chromium libraries.
+Typical Debian/Ubuntu packages include:
+
+```shell
+sudo apt-get update && sudo apt-get install -y \
+	ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 libatk1.0-0 \
+	libc6 libcairo2 libcups2t64 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 \
+	libglib2.0-0 libgtk-3-0t64 libnspr4 libnss3 libpango-1.0-0 libx11-6 \
+	libx11-xcb1 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 \
+	xdg-utils
+```
+
+If your distro enforces sandbox restrictions (for example Ubuntu with AppArmor userns restrictions), you may need to configure the host sandbox appropriately. As a last resort, set:
+
+```shell
+PUPPETEER_NO_SANDBOX=true
+```
+
+This is less secure and should be used only in trusted environments.
+
+#### Cache, proxies, and download controls
+
+Useful environment variables:
+
+- `PUPPETEER_CACHE_DIR`: where Chromium binaries are cached.
+- `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY`: proxy configuration for download/runtime network.
+- `PUPPETEER_SKIP_DOWNLOAD=true`: skip bundled Chromium download (requires a system Chromium + executable path).
+- `PUPPETEER_EXECUTABLE_PATH`: path to a managed system Chromium/Chrome executable.
+
+#### Concurrency control
+
+DOCX to PDF conversion is CPU/memory intensive. The converter uses an internal queue with bounded concurrency.
+Tune it with:
+
+```shell
+DOCX_PDF_MAX_CONCURRENCY=2
+```
+
+#### Should you use puppeteer-core instead?
+
+- Use `puppeteer` when you want dependency-managed Chromium and simpler setup.
+- Use `puppeteer-core` when production images already provide Chromium/Chrome and you want smaller/faster installs.
+- If you switch to `puppeteer-core`, make `PUPPETEER_EXECUTABLE_PATH` (or an equivalent app-specific env var) mandatory in deployment.
