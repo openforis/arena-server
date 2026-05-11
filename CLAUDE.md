@@ -119,7 +119,7 @@ Start PostgreSQL with PostGIS:
 ```bash
 sudo docker run -d --name arena-db -p 5444:5432 \
   -e POSTGRES_DB=arena -e POSTGRES_PASSWORD=arena -e POSTGRES_USER=arena \
-  postgis/postgis:12-3.0
+  postgis/postgis:17-3.5
 ```
 
 Restart database:
