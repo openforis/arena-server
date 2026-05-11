@@ -171,7 +171,7 @@ const convertDocxToPdf = async (inputBuffer: Buffer, outputPath?: string): Promi
     )
   } finally {
     if (page) {
-      await page.close()
+      await page.close().catch(() => undefined)
     }
     releaseConversionSlot()
   }
