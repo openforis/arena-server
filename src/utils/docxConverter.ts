@@ -8,6 +8,10 @@ import { ProcessEnv } from '../processEnv'
 
 const pdfPageFormat = 'A4'
 const pdfPageMargin = { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' }
+const pageLoadTimeoutMs = 15000
+
+const isAllowedRequestUrl = (url: string): boolean =>
+  url.startsWith('data:') || url === 'about:blank' || url.startsWith('blob:')
 
 const isSandboxLaunchError = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error)
@@ -78,12 +82,25 @@ const convertDocxToPdf = async (inputBuffer: Buffer, outputPath?: string): Promi
 
     browser = await launchBrowser()
     const page = await browser.newPage()
-    await page.setContent(printableHtml, { waitUntil: 'load' })
+    // Hardening: abort non-local requests to avoid SSRF/network egress and flaky remote fetches.
+    await page.setRequestInterception(true)
+    page.on('request', (request) => {
+      if (isAllowedRequestUrl(request.url())) {
+        request.continue().catch(() => undefined)
+      } else {
+        request.abort().catch(() => undefined)
+      }
+    })
+
+    page.setDefaultNavigationTimeout(pageLoadTimeoutMs)
+    page.setDefaultTimeout(pageLoadTimeoutMs)
+    await page.setContent(printableHtml, { waitUntil: 'domcontentloaded', timeout: pageLoadTimeoutMs })
     await page.pdf({
       path: resolvedOutputPath,
       format: pdfPageFormat,
       printBackground: true,
       margin: pdfPageMargin,
+      timeout: pageLoadTimeoutMs,
     })
 
     return resolvedOutputPath
