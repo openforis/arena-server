@@ -9,6 +9,32 @@ import { ProcessEnv } from '../processEnv'
 const pdfPageFormat = 'A4'
 const pdfPageMargin = { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' }
 const pageLoadTimeoutMs = 15000
+const maxPdfConversionsInParallel = 2
+
+let runningPdfConversions = 0
+const pendingPdfConversions: Array<() => void> = []
+let sharedBrowser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null
+let sharedBrowserPromise: Promise<Awaited<ReturnType<typeof puppeteer.launch>>> | null = null
+
+const acquireConversionSlot = async (): Promise<() => void> =>
+  new Promise((resolve) => {
+    const grantSlot = () => {
+      runningPdfConversions += 1
+      resolve(() => {
+        runningPdfConversions -= 1
+        const next = pendingPdfConversions.shift()
+        if (next) {
+          next()
+        }
+      })
+    }
+
+    if (runningPdfConversions < maxPdfConversionsInParallel) {
+      grantSlot()
+    } else {
+      pendingPdfConversions.push(grantSlot)
+    }
+  })
 
 const isAllowedRequestUrl = (url: string): boolean =>
   url.startsWith('data:') || url === 'about:blank' || url.startsWith('blob:')
@@ -40,6 +66,32 @@ const launchBrowser = async (): Promise<Awaited<ReturnType<typeof puppeteer.laun
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     })
   }
+}
+
+const getSharedBrowser = async (): Promise<Awaited<ReturnType<typeof puppeteer.launch>>> => {
+  if (sharedBrowser) {
+    return sharedBrowser
+  }
+
+  if (sharedBrowserPromise) {
+    return sharedBrowserPromise
+  }
+
+  sharedBrowserPromise = launchBrowser()
+    .then((browser) => {
+      sharedBrowser = browser
+      sharedBrowserPromise = null
+      browser.on('disconnected', () => {
+        sharedBrowser = null
+      })
+      return browser
+    })
+    .catch((error) => {
+      sharedBrowserPromise = null
+      throw error
+    })
+
+  return sharedBrowserPromise
 }
 
 const toPrintableHtml = (bodyHtml: string): string => `
@@ -74,14 +126,15 @@ const convertDocxToPdf = async (inputBuffer: Buffer, outputPath?: string): Promi
   const outputDir = path.dirname(resolvedOutputPath)
   fs.mkdirSync(outputDir, { recursive: true })
 
-  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null
+  const releaseConversionSlot = await acquireConversionSlot()
+  let page: Awaited<ReturnType<Awaited<ReturnType<typeof puppeteer.launch>>['newPage']>> | null = null
 
   try {
     const conversion = await mammoth.convertToHtml({ buffer: inputBuffer })
     const printableHtml = toPrintableHtml(conversion.value)
 
-    browser = await launchBrowser()
-    const page = await browser.newPage()
+    const browser = await getSharedBrowser()
+    page = await browser.newPage()
     // Hardening: abort non-local requests to avoid SSRF/network egress and flaky remote fetches.
     await page.setRequestInterception(true)
     page.on('request', (request) => {
@@ -117,9 +170,10 @@ const convertDocxToPdf = async (inputBuffer: Buffer, outputPath?: string): Promi
       }
     )
   } finally {
-    if (browser) {
-      await browser.close()
+    if (page) {
+      await page.close()
     }
+    releaseConversionSlot()
   }
 }
 
