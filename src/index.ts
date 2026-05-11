@@ -43,4 +43,4 @@ export type { WorkerErrorMessage, WorkerMessage } from './thread'
 
 export { WebSocketEvent, WebSocketServer } from './webSocket'
 
-export { Requests, Responses } from './utils'
+export { DocxConverter, Requests, Responses } from './utils'
