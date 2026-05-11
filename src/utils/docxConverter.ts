@@ -1,6 +1,6 @@
-import path from 'path'
-import fs from 'fs'
-import { randomUUID } from 'crypto'
+import path from 'node:path'
+import fs from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import mammoth from 'mammoth'
 import puppeteer from 'puppeteer'
 
