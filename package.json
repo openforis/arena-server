@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^4.12.1",
-    "@openforis/arena-core": "^1.1.8",
+    "@openforis/arena-core": "^1.2.1",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -56,6 +56,7 @@
     "express-rate-limit": "^8.5.1",
     "image-size": "^2.0.2",
     "jsonwebtoken": "^9.0.3",
+    "jszip": "^3.10.1",
     "lodash.throttle": "^4.1.1",
     "log4js": "^6.9.1",
     "otplib": "^13.4.0",
@@ -97,7 +98,7 @@
     "url": "https://github.com/openforis/arena-server/issues"
   },
   "homepage": "https://github.com/openforis/arena-server#readme",
-  "packageManager": "yarn@4.13.0",
+  "packageManager": "yarn@4.14.1",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   }
