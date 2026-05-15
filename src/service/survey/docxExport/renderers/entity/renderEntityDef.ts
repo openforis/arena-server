@@ -1,6 +1,6 @@
 import { HeadingLevel, Paragraph, Table, TableCell, TableRow } from 'docx'
 
-import type { Node as ArenaNode, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
+import type { Node as ArenaNode, ArenaRecord, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
 import { NodeDef, NodeDefEntityRenderType, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { MAX_IMAGE_HEIGHT } from '../../ImageUtils'
@@ -85,7 +85,7 @@ const buildTableRows = async ({
   context: RenderContext
   depth: number
   parentEntityNode: ArenaNode | undefined
-  record: any
+  record?: ArenaRecord
 }): Promise<TableRow[]> => {
   const renderCell = async (cell: GridCell | null, x: number, y: number): Promise<TableCell> => {
     if (!cell?.nodeDef) {

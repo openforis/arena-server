@@ -10,7 +10,7 @@ import {
   WidthType,
 } from 'docx'
 
-import type { Node as ArenaNode } from '@openforis/arena-core'
+import type { Node as ArenaNode, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
 import { NodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { MAX_IMAGE_WIDTH } from '../../ImageUtils'
@@ -64,7 +64,7 @@ export const emptyTableRows = (attrDefs: NodeDef<NodeDefType>[], count = 3): Tab
  * Includes header row with attribute labels and data rows from the record.
  */
 export const renderEntityAsTable = (
-  entityDef: NodeDef<NodeDefType>,
+  entityDef: NodeDefEntity,
   context: RenderContext,
   parentEntityNode?: ArenaNode
 ): Table => {
@@ -115,4 +115,4 @@ export const renderEntityAsTable = (
 
 // ─── Grid Cell Type ────────────────────────────────────────────────────────
 
-export type GridCell = { item: any; nodeDef: NodeDef<NodeDefType> | undefined }
+export type GridCell = { item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined }
