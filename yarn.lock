@@ -1090,6 +1090,7 @@ __metadata:
     image-size: "npm:^2.0.2"
     jest: "npm:^30.4.2"
     jsonwebtoken: "npm:^9.0.3"
+    jszip: "npm:^3.10.1"
     lint-staged: "npm:^17.0.4"
     lodash.throttle: "npm:^4.1.1"
     log4js: "npm:^6.9.1"

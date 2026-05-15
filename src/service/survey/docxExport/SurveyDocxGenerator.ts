@@ -5,6 +5,7 @@ import { LanguageCode, Records, Survey, Surveys } from '@openforis/arena-core'
 
 import type { DocChild, RenderContext } from './renderers/attribute'
 import { renderEntityChildren } from './renderers/entity'
+import { convertDocxToReadOnly } from './docxReadOnlyConverter'
 
 // ─── public API ──────────────────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export interface SurveyDocxOptions {
   record?: ArenaRecord
   /** Async function to retrieve file data by UUID for rendering images. Returns Buffer. */
   fileProvider?: (fileUuid: string) => Promise<Buffer>
+  readOnly?: boolean
 }
 
 export interface SurveyDocxResult {
@@ -25,7 +27,7 @@ export interface SurveyDocxResult {
 }
 
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
-  const { survey, cycle, i18n, record, fileProvider } = options
+  const { survey, cycle, i18n, record, fileProvider, readOnly } = options
 
   const lang: LanguageCode = options.lang ?? Surveys.getDefaultLanguage(survey)
   const cycleResolved: string = cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
@@ -85,10 +87,13 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
     ],
   })
 
-  return {
-    buffer: await Packer.toBuffer(doc),
-    surveyName,
+  let buffer = await Packer.toBuffer(doc)
+
+  if (readOnly) {
+    buffer = await convertDocxToReadOnly(buffer)
   }
+
+  return { buffer, surveyName }
 }
 
 export const SurveyDocxGenerator = {
