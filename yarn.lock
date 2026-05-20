@@ -1030,12 +1030,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@openforis/arena-core@npm:1.2.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F1.2.1%2F2d2707f8022f6af7612cb0d34fbff0c4a064d215"
+"@openforis/arena-core@npm:^1.2.4":
+  version: 1.2.4
+  resolution: "@openforis/arena-core@npm:1.2.4::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F1.2.4%2Fbf1752b4feaaa63df98c8dd7f3f70f52f6791147"
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
+    "@turf/bearing": "npm:^7.3.5"
     "@turf/destination": "npm:^7.3.5"
+    "@turf/distance": "npm:^7.3.5"
     bignumber.js: "npm:^11.1.1"
     change-case: "npm:^5.4.4"
     jsep: "npm:^1.4.0"
@@ -1046,7 +1048,7 @@ __metadata:
     moment: "npm:^2.30.1"
     proj4: "npm:^2.20.8"
     uuid: "npm:^14.0.0"
-  checksum: 10c0/d0eeaa3f2cdb7730c6bcaac0f3a357e4aff2148f9bba49982f8b65d63267ff2906bffb64f3c0d4879eaf41ad197978e29786733f847a3dbcb9990f113f851c23
+  checksum: 10c0/c55be7d0a412cda8cbc4b0c464fad92431fc12b6e9e3d657db1261edd3652c96fdce4affd6fbd65b92941c460f202b112f4dfb731373abc612f7cdc22789e37d
   languageName: node
   linkType: hard
 
@@ -1057,7 +1059,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^1.2.1"
+    "@openforis/arena-core": "npm:^1.2.4"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
@@ -1258,6 +1260,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@turf/bearing@npm:^7.3.5":
+  version: 7.3.5
+  resolution: "@turf/bearing@npm:7.3.5"
+  dependencies:
+    "@turf/helpers": "npm:7.3.5"
+    "@turf/invariant": "npm:7.3.5"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/fe494a2601d752142616bc0af4b2b02a77e81f6ea35233ffa91a6d205a2b95674a9c23cf4639ac7f6fe3e0ac87a1c5ca87ca08b52e856f1b9814352d4107c579
+  languageName: node
+  linkType: hard
+
 "@turf/destination@npm:^7.3.5":
   version: 7.3.5
   resolution: "@turf/destination@npm:7.3.5"
@@ -1267,6 +1281,18 @@ __metadata:
     "@types/geojson": "npm:^7946.0.10"
     tslib: "npm:^2.8.1"
   checksum: 10c0/3d0ba945cd1b81f3c636e343fe4d57f0ce8d57d7e07e1e481a81aebe83f0500ef68aa6ce1a13eaf2500a1582efdcac1126a5b1098e33f9139a4e993c5cea8435
+  languageName: node
+  linkType: hard
+
+"@turf/distance@npm:^7.3.5":
+  version: 7.3.5
+  resolution: "@turf/distance@npm:7.3.5"
+  dependencies:
+    "@turf/helpers": "npm:7.3.5"
+    "@turf/invariant": "npm:7.3.5"
+    "@types/geojson": "npm:^7946.0.10"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/4f9881f8ec4030878a1b456ec73adc81098a8fd2986e095ebeee9d5f52f5501084ced41bded873bb90626b2a72a1eea187887d6def67134b3c86934ae8b57c28
   languageName: node
   linkType: hard
 
