@@ -10,7 +10,7 @@ const [pgUser, pgPassword, pgHost, pgPort, pgDatabase] = dbUrlMatch
 
 const isTrue = (val: any): boolean => String(val).toLocaleLowerCase() === 'true' || String(val) === '1'
 
-const getJson = (val: unknown): unknown => {
+const getJson = (val: string | undefined): unknown => {
   if (!val) return undefined
   try {
     return JSON.parse(String(val))
