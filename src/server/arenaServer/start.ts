@@ -13,7 +13,7 @@ const logger: Logger = new Logger('Arena server')
 export const start = (app: ArenaApp): Promise<Server> => {
   return new Promise<Server>((resolve, reject) => {
     logger.info(`server starting`)
-    const port = ProcessEnv.port
+    const port = ProcessEnv.arenaPort
 
     const server: Server = app.express.listen(port)
 
