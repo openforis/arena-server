@@ -53,6 +53,19 @@ export const ProcessEnv = {
   useHttps: isTrue(process.env.USE_HTTPS),
   fileUploadLimit: Number(process.env.FILE_UPLOAD_LIMIT) || 1024 ** 3, // 1GB
 
+  // Email
+  emailService: process.env.EMAIL_SERVICE || 'sendgrid',
+  emailFrom: process.env.EMAIL_FROM,
+  emailAuthUser: process.env.EMAIL_AUTH_USER,
+  emailAuthPassword: process.env.EMAIL_AUTH_PASSWORD,
+  emailTransportOptions: getJson(process.env.EMAIL_TRANSPORT_OPTIONS),
+  sendGridApiKey: process.env.SENDGRID_API_KEY,
+  emailAmazonSESHost: process.env.EMAIL_AMAZON_SES_HOST,
+  emailAmazonSESPort: Number(process.env.EMAIL_AMAZON_SES_PORT) || 465,
+
+  // Analysis
+  analysisOutputDir: process.env.ANALYSIS_OUTPUT_DIR,
+
   // Rate limiting
   rateLimitEnabled: isTrue(process.env.RATE_LIMIT_ENABLED),
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
@@ -88,18 +101,22 @@ export const ProcessEnv = {
   adminPassword: process.env.ADMIN_PASSWORD,
   allowUserAccessRequest: isTrue(process.env.ALLOW_USER_ACCESS_REQUEST ?? 'true'),
 
-  // FILE STORAGE
+  // File storage
   fileStoragePath: process.env.FILE_STORAGE_PATH,
   fileStorageAwsAccessKey: process.env.FILE_STORAGE_AWS_ACCESS_KEY,
   fileStorageAwsSecretAccessKey: process.env.FILE_STORAGE_AWS_SECRET_ACCESS_KEY,
   fileStorageAwsS3BucketName: process.env.FILE_STORAGE_AWS_S3_BUCKET_NAME,
   fileStorageAwsS3BucketRegion: process.env.FILE_STORAGE_AWS_S3_BUCKET_REGION,
+
   // Job queue
   jobQueueConcurrency: process.env.JOB_QUEUE_CONCURRENCY || 3,
+
   // WHISP
   whispApiKey: process.env.WHISP_API_KEY,
+
   // Activity log
   activityLogDisabled: isTrue(process.env.ACTIVITY_LOG_DISABLED),
+
   // Experimental features
   experimentalFeatures: isTrue(process.env.EXPERIMENTAL_FEATURES),
 
