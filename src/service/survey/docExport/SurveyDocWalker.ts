@@ -1,9 +1,14 @@
-import type { Node as ArenaNode, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
+import type { ArenaRecord, Node as ArenaNode, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
 import { NodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { formatNodeValue, getIsTableLayout, label } from './common'
 import type { GridRow, SurveyDocRenderer } from './SurveyDocRenderer'
 import type { RenderContext, SurveyDocOptions } from './types'
+
+// ─── Relevance / Visibility Helper ───────────────────────────────────────────
+
+const isNodeRelevantAndVisible = (record: ArenaRecord, node: ArenaNode): boolean =>
+  Records.isNodeApplicable({ record, node }) && Records.isNodeVisible({ record, node })
 
 // ─── Grid Helpers (shared with docx) ────────────────────────────────────────
 
@@ -60,6 +65,7 @@ const renderGridCellContent = async <T>(
   const limits = renderer.getGridCellLimits?.(maxX, item.w ?? 1)
   const childNode =
     record && parentEntityNode ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0] : undefined
+  if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef, context, depth, node: childNode, limits })
 }
 
@@ -136,6 +142,7 @@ const walkEntityChildrenDefault = async <T>(
       if (record && parentEntityNode) {
         childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
       }
+      if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) continue
       result.push(...(await renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })))
     }
   }
@@ -163,7 +170,10 @@ const walkEntityAsTable = <T>(
 
   let rows: string[][] = []
   if (record && parentEntityNode) {
-    const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(record)
+    const entityNodes = Records.getChildren(
+      parentEntityNode,
+      entityDef.uuid
+    )(record).filter((node) => isNodeRelevantAndVisible(record, node))
     if (entityNodes.length > 0) {
       rows = entityNodes.map((entityNode) =>
         attrDefs.map((attrDef) => {
@@ -220,10 +230,12 @@ const walkEntityNodes = async <T>(
   context: RenderContext,
   depth: number
 ): Promise<T[]> => {
+  const { record } = context
+  const visibleNodes = record ? entityNodes.filter((node) => isNodeRelevantAndVisible(record, node)) : entityNodes
   const result: T[] = []
-  for (let index = 0; index < entityNodes.length; index++) {
-    const entityNode = entityNodes[index]
-    if (entityNodes.length > 1) {
+  for (let index = 0; index < visibleNodes.length; index++) {
+    const entityNode = visibleNodes[index]
+    if (visibleNodes.length > 1) {
       result.push(...renderer.renderEntityInstanceHeading(`${label(entityDef, context.lang)} #${index + 1}`, depth))
     }
     result.push(...(await walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode)))
@@ -247,6 +259,10 @@ export const walkEntityDef = async <T>(
 
   const entityNodes: ArenaNode[] =
     record && parentEntityNode ? Records.getChildren(parentEntityNode, entityDef.uuid)(record) : []
+
+  if (!isRoot && record && entityNodes.length > 0 && !isMultiple && !isNodeRelevantAndVisible(record, entityNodes[0])) {
+    return []
+  }
 
   const result: T[] = []
 
