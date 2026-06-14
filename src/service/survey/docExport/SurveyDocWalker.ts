@@ -61,6 +61,7 @@ const renderGridCellContent = async <T>(
   if (NodeDefs.isEntity(nodeDef)) {
     return walkEntityDef(renderer, nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
   }
+  if (NodeDefs.isHidden(nodeDef)) return []
   const { record } = context
   const limits = renderer.getGridCellLimits?.(maxX, item.w ?? 1)
   const childNode =
@@ -138,6 +139,7 @@ const walkEntityChildrenDefault = async <T>(
     if (NodeDefs.isEntity(child)) {
       result.push(...(await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode)))
     } else {
+      if (NodeDefs.isHidden(child)) continue
       let childNode: ArenaNode | undefined
       if (record && parentEntityNode) {
         childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
@@ -164,7 +166,7 @@ const walkEntityAsTable = <T>(
     cycle,
     includeAnalysis: false,
     includeLayoutElements: true,
-  }).filter(NodeDefs.isAttribute)
+  }).filter((def) => NodeDefs.isAttribute(def) && !NodeDefs.isHidden(def))
 
   const headers = attrDefs.map((attr) => label(attr, lang))
 
