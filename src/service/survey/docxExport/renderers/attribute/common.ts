@@ -59,7 +59,7 @@ export const nodeDefFormItemLabelRun = (nodeDef: NodeDef<NodeDefType>, context: 
 
 export const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} })
 
-export const fieldRow = (fieldLabel: string, fieldPlaceholder = '________________________________'): Paragraph =>
+export const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
   new Paragraph({
     spacing: SPACING_FIELD_ROW,
     children: [formItemLabelRun(fieldLabel), inputLine(fieldPlaceholder)],

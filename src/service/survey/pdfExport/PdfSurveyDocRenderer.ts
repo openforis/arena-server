@@ -24,7 +24,7 @@ const MAX_IMAGE_HEIGHT = 500
 export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
   // ─── Document-level ───────────────────────────────────────────────────────
 
-  renderTitle(text: string): PdfElement[] {
+  renderTitle(text: string, _hasSubtitle: boolean): PdfElement[] {
     return [{ kind: 'title', text }]
   }
 
