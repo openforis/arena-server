@@ -3,8 +3,14 @@ import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } fr
 import { getAllIds } from './getAllIds'
 import { get } from './get'
 
+export type { SurveyDocOptions, RenderContext, SurveyDocRenderer } from './docExport'
+export { walkSurvey, walkEntityDef, walkEntityChildren } from './docExport'
+
 export type { SurveyDocxOptions } from './docxExport'
-export { SurveyDocxGenerator } from './docxExport'
+export { DocxSurveyDocRenderer, SurveyDocxGenerator } from './docxExport'
+
+export type { SurveyPdfOptions, SurveyPdfResult, PdfElement } from './pdfExport'
+export { SurveyPdfGenerator, PdfSurveyDocRenderer } from './pdfExport'
 
 export const SurveyServiceServer: SurveyService = {
   // @ts-ignore

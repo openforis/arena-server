@@ -24,6 +24,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
+    "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
@@ -63,6 +64,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pdfkit": "^0.19.1",
     "pg-promise": "^12.6.2",
     "socket.io": "^4.8.3"
   },
@@ -98,7 +100,7 @@
     "url": "https://github.com/openforis/arena-server/issues"
   },
   "homepage": "https://github.com/openforis/arena-server#readme",
-  "packageManager": "yarn@4.14.1",
+  "packageManager": "yarn@4.16.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   }
