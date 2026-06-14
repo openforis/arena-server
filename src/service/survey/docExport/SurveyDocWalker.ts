@@ -94,24 +94,30 @@ const walkEntityChildrenGrid = async <T>(
   const grid = buildGrid(layoutChildren, childDefByUuid, maxX, maxY)
   const skip: boolean[][] = Array.from({ length: maxY }, () => new Array(maxX).fill(false))
 
+  type PendingCell = { promise: Promise<T[]>; colSpan?: number; rowSpan?: number }
+
   const gridRows: Array<GridRow<T>> = []
   for (let y = 0; y < maxY; y++) {
-    const row: GridRow<T> = []
+    const pending: PendingCell[] = []
     for (let x = 0; x < maxX; x++) {
       if (skip[y][x]) continue
       const cell = grid[y][x]
       if (!cell?.nodeDef) {
-        row.push({ content: [] })
+        pending.push({ promise: Promise.resolve([]) })
         continue
       }
       const { item, nodeDef } = cell
       const w = item.w ?? 1
       const h = item.h ?? 1
       markSpannedCells(skip, x, y, w, h)
-      const content = await renderGridCellContent(renderer, nodeDef, item, context, depth, parentEntityNode, maxX)
-      row.push({ content, colSpan: w > 1 ? w : undefined, rowSpan: h > 1 ? h : undefined })
+      pending.push({
+        promise: renderGridCellContent(renderer, nodeDef, item, context, depth, parentEntityNode, maxX),
+        colSpan: w > 1 ? w : undefined,
+        rowSpan: h > 1 ? h : undefined,
+      })
     }
-    gridRows.push(row)
+    const contents = await Promise.all(pending.map((p) => p.promise))
+    gridRows.push(contents.map((content, i) => ({ content, colSpan: pending[i].colSpan, rowSpan: pending[i].rowSpan })))
   }
 
   return renderer.renderGridTable(gridRows, maxX)
