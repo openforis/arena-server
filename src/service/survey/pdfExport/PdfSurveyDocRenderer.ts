@@ -43,11 +43,28 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
   // ─── Layout ───────────────────────────────────────────────────────────────
 
   renderGridTable(rows: Array<GridRow<PdfElement>>, columnCount: number): PdfElement[] {
-    return rows.map((row) => ({
-      kind: 'gridRow' as const,
-      columnCount,
-      cells: row.map((cell) => ({ content: cell.content, colSpan: cell.colSpan ?? 1 })),
-    }))
+    // occupied[c] = remaining rows column c is blocked by a rowSpan from a previous row
+    const occupied = new Array<number>(columnCount).fill(0)
+    const result: PdfElement[] = []
+
+    for (const row of rows) {
+      let col = 0
+      const cells = row.map((cell) => {
+        while (col < columnCount && occupied[col] > 0) col++
+        const colSpan = cell.colSpan ?? 1
+        const rowSpan = cell.rowSpan ?? 1
+        if (rowSpan > 1) {
+          for (let s = 0; s < colSpan; s++) occupied[col + s] = rowSpan
+        }
+        const columnIndex = col
+        col += colSpan
+        return { content: cell.content, colSpan, columnIndex }
+      })
+      result.push({ kind: 'gridRow' as const, columnCount, cells })
+      for (let c = 0; c < columnCount; c++) if (occupied[c] > 0) occupied[c]--
+    }
+
+    return result
   }
 
   renderEntityTable(headers: string[], rows: string[][]): PdfElement[] {

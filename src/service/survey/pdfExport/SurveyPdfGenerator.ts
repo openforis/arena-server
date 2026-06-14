@@ -178,15 +178,14 @@ const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 
   const rowStartY = doc.y
   let maxEndY = rowStartY
 
-  let colX = MARGIN
   for (const cell of cells) {
+    const colX = MARGIN + baseColWidth * cell.columnIndex
     const cellContentWidth = Math.max(40, baseColWidth * cell.colSpan - GRID_CELL_PAD)
     doc.y = rowStartY
     for (const elem of cell.content) {
       serializeElement(doc, elem, { x: colX, width: cellContentWidth })
     }
     maxEndY = Math.max(maxEndY, doc.y)
-    colX += baseColWidth * cell.colSpan
   }
 
   doc.y = maxEndY
