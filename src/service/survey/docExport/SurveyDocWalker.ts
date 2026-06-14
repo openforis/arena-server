@@ -107,7 +107,7 @@ const walkEntityChildrenGrid = async <T>(
     gridRows.push(row)
   }
 
-  return renderer.renderGridTable(gridRows)
+  return renderer.renderGridTable(gridRows, maxX)
 }
 
 // ─── Default (flat) Walker ────────────────────────────────────────────────────

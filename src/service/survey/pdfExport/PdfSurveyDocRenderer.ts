@@ -42,8 +42,12 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
 
   // ─── Layout ───────────────────────────────────────────────────────────────
 
-  renderGridTable(rows: Array<GridRow<PdfElement>>): PdfElement[] {
-    return rows.flatMap((row) => row.flatMap((cell) => cell.content))
+  renderGridTable(rows: Array<GridRow<PdfElement>>, columnCount: number): PdfElement[] {
+    return rows.map((row) => ({
+      kind: 'gridRow' as const,
+      columnCount,
+      cells: row.map((cell) => ({ content: cell.content, colSpan: cell.colSpan ?? 1 })),
+    }))
   }
 
   renderEntityTable(headers: string[], rows: string[][]): PdfElement[] {

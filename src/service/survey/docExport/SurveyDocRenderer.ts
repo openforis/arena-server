@@ -14,7 +14,7 @@ export interface SurveyDocRenderer<T> {
   renderEntityHeading(text: string, depth: number, pageBreak: boolean): T[]
   renderEntityInstanceHeading(text: string, depth: number): T[]
   renderAttribute(args: AttributeRendererArgs): Promise<T[]>
-  renderGridTable(rows: Array<GridRow<T>>): T[]
+  renderGridTable(rows: Array<GridRow<T>>, columnCount: number): T[]
   renderEntityTable(headers: string[], rows: string[][]): T[]
   getGridCellLimits?(columnCount: number, columnSpan: number): RenderLimits | undefined
 }

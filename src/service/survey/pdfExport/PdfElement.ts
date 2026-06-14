@@ -7,4 +7,5 @@ export type PdfElement =
   | { kind: 'compositeBlock'; label: string; subFields: Array<{ label: string; value?: string; placeholder?: string }> }
   | { kind: 'image'; label: string; buffer: Buffer; width: number; height: number }
   | { kind: 'table'; headers: string[]; rows: string[][] }
+  | { kind: 'gridRow'; cells: Array<{ content: PdfElement[]; colSpan: number }>; columnCount: number }
   | { kind: 'spacer' }

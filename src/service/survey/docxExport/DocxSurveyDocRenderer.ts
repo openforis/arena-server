@@ -118,7 +118,7 @@ export class DocxSurveyDocRenderer implements SurveyDocRenderer<DocChild> {
     return renderAttributeByType(args)
   }
 
-  renderGridTable(rows: Array<GridRow<DocChild>>): DocChild[] {
+  renderGridTable(rows: Array<GridRow<DocChild>>, _columnCount: number): DocChild[] {
     const tableRows = rows.map(
       (row) =>
         new TableRow({
