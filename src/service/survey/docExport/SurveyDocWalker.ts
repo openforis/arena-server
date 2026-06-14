@@ -218,7 +218,7 @@ export const walkEntityChildren = async <T>(
       : await walkEntityChildrenDefault(renderer, entityDef, context, depth, parentEntityNode)
 
   for (const childEntityDef of entityDefsInOwnPage) {
-    result.push(...(await walkEntityDef(renderer, childEntityDef, context, depth + 1, parentEntityNode)))
+    result.push(...(await walkEntityDef(renderer, childEntityDef, context, depth + 1, parentEntityNode, true)))
   }
   return result
 }
@@ -252,7 +252,8 @@ export const walkEntityDef = async <T>(
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
-  parentEntityNode?: ArenaNode
+  parentEntityNode?: ArenaNode,
+  hasOwnPage?: boolean
 ): Promise<T[]> => {
   const { record } = context
   const isRoot = NodeDefs.isRoot(entityDef)
@@ -269,7 +270,9 @@ export const walkEntityDef = async <T>(
   const result: T[] = []
 
   if (!isRoot) {
-    result.push(...renderer.renderEntityHeading(label(entityDef, context.lang), depth, isMultiple && depth <= 2))
+    result.push(
+      ...renderer.renderEntityHeading(label(entityDef, context.lang), depth, (isMultiple && depth <= 2) || !!hasOwnPage)
+    )
   }
 
   if (isMultiple && isTableLayout) {
