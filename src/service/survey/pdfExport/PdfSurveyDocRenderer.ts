@@ -25,7 +25,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
   // ─── Document-level ───────────────────────────────────────────────────────
 
   renderTitle(text: string, hasSubtitle: boolean): PdfElement[] {
-    return hasSubtitle ? [{ kind: 'title', text }] : [{ kind: 'title', text }, { kind: 'spacer' }]
+    return hasSubtitle ? [{ kind: 'title', text, hasSubtitle: true }] : [{ kind: 'title', text }, { kind: 'spacer' }]
   }
 
   renderSubtitle(text: string): PdfElement[] {

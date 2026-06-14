@@ -23,6 +23,10 @@ const PAGE_WIDTH = 595.28 // A4 points
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
 const EMPTY_FIELD = '________________________________'
 
+const COLOR_DEFAULT = '#000000'
+const COLOR_TITLE = '#1F3864' // dark navy — matches Word Title style
+const COLOR_SUBTITLE = '#2E74B5' // Office blue — matches Word Heading 2 default
+
 const HEADING_SIZES: Record<number, number> = { 1: 18, 2: 16, 3: 14, 4: 12, 5: 11, 6: 10 }
 const TABLE_CELL_PAD = 4
 const TABLE_ROW_HEIGHT = 20
@@ -34,10 +38,12 @@ const renderTitle = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 't
   const x = cell?.x ?? MARGIN
   const width = cell?.width ?? CONTENT_WIDTH
   doc
+    .fillColor(COLOR_TITLE)
     .font(FONT_BOLD)
     .fontSize(24)
     .text(el.text, x, doc.y, { align: cell ? 'left' : 'center', width })
-    .moveDown(0.5)
+    .fillColor(COLOR_DEFAULT)
+    .moveDown(el.hasSubtitle ? 0.2 : 0.5)
 }
 
 const renderSubtitle = (
@@ -48,10 +54,12 @@ const renderSubtitle = (
   const x = cell?.x ?? MARGIN
   const width = cell?.width ?? CONTENT_WIDTH
   doc
-    .font(FONT_NORMAL)
+    .fillColor(COLOR_SUBTITLE)
+    .font(FONT_BOLD)
     .fontSize(14)
     .text(el.text, x, doc.y, { align: cell ? 'left' : 'center', width })
-    .moveDown(0.5)
+    .fillColor(COLOR_DEFAULT)
+    .moveDown(1)
 }
 
 const renderHeading = (

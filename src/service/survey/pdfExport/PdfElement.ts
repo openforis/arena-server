@@ -1,5 +1,5 @@
 export type PdfElement =
-  | { kind: 'title'; text: string }
+  | { kind: 'title'; text: string; hasSubtitle?: boolean }
   | { kind: 'subtitle'; text: string }
   | { kind: 'heading'; text: string; level: number; pageBreak?: boolean }
   | { kind: 'fieldRow'; label: string; value?: string; placeholder?: string }
