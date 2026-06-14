@@ -1,17 +1,15 @@
 import {
-  CategoryItem,
-  LanguageCode,
   Node as ArenaNode,
+  CategoryItem,
+  CategoryItems,
+  LanguageCode,
   NodeDef,
   NodeDefBoolean,
   NodeDefCoordinate,
   NodeDefEntity,
-  NodeDefType,
-} from '@openforis/arena-core'
-import {
-  CategoryItems,
   NodeDefEntityRenderType,
   NodeDefs,
+  NodeDefType,
   Nodes,
   NodeValueFormatter,
   NodeValues,

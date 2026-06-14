@@ -245,11 +245,11 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
           const buffer = await context.fileProvider(fileUuid)
           const maxWidth = limits?.maxImageWidth ?? MAX_IMAGE_WIDTH
           const maxHeight = limits?.maxImageHeight ?? MAX_IMAGE_HEIGHT
-          const dims = getImageDimensions(buffer as Buffer)
+          const dims = getImageDimensions(buffer)
           const { width, height } = dims
             ? calculateScaledDimensions(dims.width, dims.height, maxWidth, maxHeight)
             : { width: maxWidth, height: maxHeight }
-          return [{ kind: 'image', label: lbl, buffer: buffer as Buffer, width, height }]
+          return [{ kind: 'image', label: lbl, buffer, width, height }]
         } catch {
           // fall through to filename
         }
