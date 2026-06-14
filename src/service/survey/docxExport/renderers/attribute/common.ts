@@ -3,8 +3,8 @@ import { CheckBox, HeadingLevel, Paragraph, TextRun, type IParagraphOptions } fr
 import type { NodeDef, NodeDefCoordinate, NodeDefEntity, NodeDefType } from '@openforis/arena-core'
 import { NodeDefs } from '@openforis/arena-core'
 
+import { EMPTY_FIELD } from '../../../docExport/common'
 import type { RenderContext } from './types'
-import { EMPTY_FIELD } from './common'
 
 // ─── Re-export shared format-agnostic helpers ─────────────────────────────────
 export {
