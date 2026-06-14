@@ -4,6 +4,7 @@ import type { NodeDef, NodeDefCoordinate, NodeDefEntity, NodeDefType } from '@op
 import { NodeDefs } from '@openforis/arena-core'
 
 import type { RenderContext } from './types'
+import { EMPTY_FIELD } from './common'
 
 // ─── Re-export shared format-agnostic helpers ─────────────────────────────────
 export {
