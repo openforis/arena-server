@@ -229,7 +229,8 @@ const drawSurveyDocImage = (
   y: number
 ): void => {
   try {
-    doc.image(image.buffer, MARGIN, y, { width: image.width, height: image.height })
+    const x = MARGIN + (CONTENT_WIDTH - image.width) / 2
+    doc.image(image.buffer, x, y, { width: image.width, height: image.height })
   } catch {
     // Ignore unsupported or corrupted image data.
   }
