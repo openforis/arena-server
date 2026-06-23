@@ -15,6 +15,8 @@ export interface SurveyDocOptions {
   i18n: I18n
   record?: ArenaRecord
   fileProvider?: (fileUuid: string) => Promise<Buffer>
+  headerImageFileUuid?: string
+  footerImageFileUuid?: string
 }
 
 export interface RenderContext {

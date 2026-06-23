@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit'
 
+import { fetchSurveyDocImages, type SurveyDocImageData } from '../docExport/surveyDocImages'
 import type { SurveyDocOptions } from '../docExport/types'
 import { walkSurvey } from '../docExport/SurveyDocWalker'
 import type { PdfElement } from './PdfElement'
@@ -21,6 +22,7 @@ const FONT_BOLD = 'Helvetica-Bold'
 const MARGIN = 50
 const PAGE_WIDTH = 595.28 // A4 points
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
+const HEADER_FOOTER_GAP = 10
 const EMPTY_FIELD = '________________________________'
 
 const COLOR_DEFAULT = '#000000'
@@ -221,14 +223,54 @@ const serializeElements = (doc: PDFKit.PDFDocument, elements: PdfElement[]): voi
   for (const el of elements) serializeElement(doc, el)
 }
 
+const drawSurveyDocImage = (
+  doc: PDFKit.PDFDocument,
+  image: SurveyDocImageData,
+  y: number
+): void => {
+  try {
+    doc.image(image.buffer, MARGIN, y, { width: image.width, height: image.height })
+  } catch {
+    // Ignore unsupported or corrupted image data.
+  }
+}
+
+const drawHeaderFooterImages = (
+  doc: PDFKit.PDFDocument,
+  headerImage?: SurveyDocImageData,
+  footerImage?: SurveyDocImageData
+): void => {
+  if (headerImage) {
+    drawSurveyDocImage(doc, headerImage, MARGIN)
+  }
+  if (footerImage) {
+    drawSurveyDocImage(doc, footerImage, doc.page.height - MARGIN - footerImage.height)
+  }
+}
+
 // ─── Generator ────────────────────────────────────────────────────────────────
 
 const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfResult> => {
   const renderer = new PdfSurveyDocRenderer()
   const { elements, surveyName } = await walkSurvey(options, renderer)
+  const { headerImage, footerImage } = await fetchSurveyDocImages(options, { maxWidth: CONTENT_WIDTH })
+
+  const headerHeight = headerImage?.height ?? 0
+  const footerHeight = footerImage?.height ?? 0
+  const topMargin = MARGIN + headerHeight + (headerHeight > 0 ? HEADER_FOOTER_GAP : 0)
+  const bottomMargin = MARGIN + footerHeight + (footerHeight > 0 ? HEADER_FOOTER_GAP : 0)
 
   return new Promise<SurveyPdfResult>((resolve, reject) => {
-    const doc = new PDFDocument({ margin: MARGIN, size: 'A4' })
+    const doc = new PDFDocument({
+      size: 'A4',
+      bufferPages: true,
+      margins: {
+        top: topMargin,
+        bottom: bottomMargin,
+        left: MARGIN,
+        right: MARGIN,
+      },
+    })
     const chunks: Buffer[] = []
 
     doc.on('data', (chunk: Buffer) => chunks.push(chunk))
@@ -236,6 +278,13 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
     doc.on('error', reject)
 
     serializeElements(doc, elements)
+
+    const pageRange = doc.bufferedPageRange()
+    for (let pageIndex = pageRange.start; pageIndex < pageRange.start + pageRange.count; pageIndex++) {
+      doc.switchToPage(pageIndex)
+      drawHeaderFooterImages(doc, headerImage, footerImage)
+    }
+
     doc.end()
   })
 }
