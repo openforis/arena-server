@@ -177,6 +177,15 @@ let serializeElement: (doc: PDFKit.PDFDocument, el: PdfElement, cell?: CellOpts)
 const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'gridRow' }>): void => {
   const { cells, columnCount } = el
   const baseColWidth = CONTENT_WIDTH / columnCount
+
+  // If remaining vertical space on the current page is too small for even one text line,
+  // the first cell would trigger an auto page-break and subsequent cells would restore
+  // doc.y to the old (near-bottom) position on the new page, causing one field per page.
+  const remainingSpace = doc.page.height - doc.page.margins.bottom - doc.y
+  if (remainingSpace < TABLE_ROW_HEIGHT) {
+    doc.addPage()
+  }
+
   const rowStartY = doc.y
   let maxEndY = rowStartY
 
@@ -223,11 +232,7 @@ const serializeElements = (doc: PDFKit.PDFDocument, elements: PdfElement[]): voi
   for (const el of elements) serializeElement(doc, el)
 }
 
-const drawSurveyDocImage = (
-  doc: PDFKit.PDFDocument,
-  image: SurveyDocImageData,
-  y: number
-): void => {
+const drawSurveyDocImage = (doc: PDFKit.PDFDocument, image: SurveyDocImageData, y: number): void => {
   try {
     const x = MARGIN + (CONTENT_WIDTH - image.width) / 2
     doc.image(image.buffer, x, y, { width: image.width, height: image.height })

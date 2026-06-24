@@ -63,16 +63,13 @@ const fetchSurveyDocImage = async (
 
 export const fetchSurveyDocImages = async (
   options: Pick<SurveyDocOptions, 'fileProvider' | 'headerImageFileUuid' | 'footerImageFileUuid'>,
-  limits: { maxWidth: number; maxHeight?: number } = {
-    maxWidth: DOC_CONTENT_MAX_WIDTH,
-    maxHeight: DOC_HEADER_FOOTER_MAX_HEIGHT,
-  }
+  limits: { maxWidth?: number; maxHeight?: number } = {}
 ): Promise<{ headerImage?: SurveyDocImageData; footerImage?: SurveyDocImageData }> => {
   const { fileProvider, headerImageFileUuid, footerImageFileUuid } = options
-  const maxHeight = limits.maxHeight ?? DOC_HEADER_FOOTER_MAX_HEIGHT
+  const { maxWidth = DOC_CONTENT_MAX_WIDTH, maxHeight = DOC_HEADER_FOOTER_MAX_HEIGHT } = limits
   const [headerImage, footerImage] = await Promise.all([
-    fetchSurveyDocImage(headerImageFileUuid, fileProvider, limits.maxWidth, maxHeight),
-    fetchSurveyDocImage(footerImageFileUuid, fileProvider, limits.maxWidth, maxHeight),
+    fetchSurveyDocImage(headerImageFileUuid, fileProvider, maxWidth, maxHeight),
+    fetchSurveyDocImage(footerImageFileUuid, fileProvider, maxWidth, maxHeight),
   ])
 
   return { headerImage, footerImage }
