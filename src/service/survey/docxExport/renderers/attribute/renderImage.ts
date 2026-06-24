@@ -41,6 +41,7 @@ export const renderImage = (
   return [
     new Paragraph({
       spacing: { before: 80, after: 80 },
+      keepNext: true,
       children: [formItemLabelRun(itemLabel)],
     }),
     new Paragraph({

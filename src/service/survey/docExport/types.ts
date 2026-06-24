@@ -15,6 +15,10 @@ export interface SurveyDocOptions {
   i18n: I18n
   record?: ArenaRecord
   fileProvider?: (fileUuid: string) => Promise<Buffer>
+  headerImageFileUuid?: string
+  footerImageFileUuid?: string
+  /** When true (default), the header image appears only on the first page. */
+  headerOnFirstPageOnly?: boolean
 }
 
 export interface RenderContext {

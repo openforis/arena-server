@@ -27,7 +27,7 @@ export const renderTaxon: AttributeRenderer = async ({ nodeDef, context, node })
   const fieldCommonProps = getTaxonFieldCommonProps()
 
   const rows: Paragraph[] = [
-    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, children: [formItemLabelRun(lbl, false)] }),
+    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, keepNext: true, children: [formItemLabelRun(lbl, false)] }),
     new Paragraph({
       ...fieldCommonProps,
       children: [

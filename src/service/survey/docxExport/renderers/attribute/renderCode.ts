@@ -33,6 +33,7 @@ export const renderCode: AttributeRenderer = async ({ nodeDef, context, node }) 
     return [
       new Paragraph({
         spacing: SPACING_FIELD_ROW,
+        keepLines: true,
         children: [nodeDefFormItemLabelRun(codeDef, context), ...optionRuns],
       }),
     ]

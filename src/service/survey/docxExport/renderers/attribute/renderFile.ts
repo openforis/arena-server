@@ -17,6 +17,7 @@ const renderFilePlaceholder = (
 ): Paragraph[] => [
   new Paragraph({
     spacing: SPACING_FIELD_ROW,
+    keepLines: true,
     children: [
       nodeDefFormItemLabelRun(nodeDef, context),
       new TextRun({ text: '[file attachment]', italics: true, color: '888888' }),

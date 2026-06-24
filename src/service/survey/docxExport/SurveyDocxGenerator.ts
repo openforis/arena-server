@@ -1,5 +1,13 @@
-import { Document, Packer } from 'docx'
+import { AlignmentType, Document, Footer, Header, ImageRun, Packer, Paragraph } from 'docx'
 
+import {
+  DOCX_BASE_MARGIN_TWIPS,
+  DOCX_MARGIN_GAP_TWIPS,
+  fetchSurveyDocImages,
+  imageHeightToTwips,
+  isHeaderOnFirstPageOnly,
+  type SurveyDocImageData,
+} from '../docExport/surveyDocImages'
 import type { SurveyDocOptions } from '../docExport/types'
 import { walkSurvey } from '../docExport/SurveyDocWalker'
 import { DocxSurveyDocRenderer } from './DocxSurveyDocRenderer'
@@ -16,10 +24,40 @@ export interface SurveyDocxResult {
   surveyName: string
 }
 
+const buildDocxImageSection = (image: SurveyDocImageData): Paragraph =>
+  new Paragraph({
+    alignment: AlignmentType.CENTER,
+    children: [
+      new ImageRun({
+        data: image.buffer,
+        type: image.docxType,
+        transformation: {
+          width: image.width,
+          height: image.height,
+        },
+      }),
+    ],
+  })
+
+const buildDocxImageHeader = (image: SurveyDocImageData): Header =>
+  new Header({
+    children: [buildDocxImageSection(image)],
+  })
+
+const buildDocxImageFooter = (image: SurveyDocImageData): Footer =>
+  new Footer({
+    children: [buildDocxImageSection(image)],
+  })
+
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
   const { readOnly } = options
   const renderer = new DocxSurveyDocRenderer()
   const { elements, surveyName } = await walkSurvey(options, renderer)
+  const { headerImage, footerImage } = await fetchSurveyDocImages(options)
+  const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
+
+  const headerMarginTwips = headerImage ? imageHeightToTwips(headerImage.height) + DOCX_MARGIN_GAP_TWIPS : 0
+  const footerMarginTwips = footerImage ? imageHeightToTwips(footerImage.height) + DOCX_MARGIN_GAP_TWIPS : 0
 
   const doc = new Document({
     styles: {
@@ -34,10 +72,26 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
     sections: [
       {
         properties: {
+          ...(headerImage && headerOnFirstPageOnly ? { titlePage: true } : {}),
           page: {
-            margin: { top: 720, bottom: 720, left: 1080, right: 1080 },
+            margin: {
+              top: DOCX_BASE_MARGIN_TWIPS + headerMarginTwips,
+              bottom: DOCX_BASE_MARGIN_TWIPS + footerMarginTwips,
+              left: 1080,
+              right: 1080,
+            },
           },
         },
+        ...(headerImage
+          ? headerOnFirstPageOnly
+            ? { headers: { first: buildDocxImageHeader(headerImage) } }
+            : { headers: { default: buildDocxImageHeader(headerImage) } }
+          : {}),
+        ...(footerImage
+          ? headerOnFirstPageOnly
+            ? { footers: { first: buildDocxImageFooter(footerImage), default: buildDocxImageFooter(footerImage) } }
+            : { footers: { default: buildDocxImageFooter(footerImage) } }
+          : {}),
         children: elements,
       },
     ],

@@ -63,12 +63,14 @@ export const inputLine = (text: string): TextRun => new TextRun({ text, underlin
 export const fieldRow = (fieldLabel: string, fieldPlaceholder = EMPTY_FIELD): Paragraph =>
   new Paragraph({
     spacing: SPACING_FIELD_ROW,
+    keepLines: true,
     children: [formItemLabelRun(fieldLabel), inputLine(fieldPlaceholder)],
   })
 
 export const valueRow = (fieldLabel: string, value: string): Paragraph =>
   new Paragraph({
     spacing: SPACING_FIELD_ROW,
+    keepLines: true,
     children: [formItemLabelRun(fieldLabel), new TextRun({ text: value })],
   })
 
@@ -80,6 +82,7 @@ export const checkboxRun = (text: string, checked = false): [CheckBox, TextRun] 
 export const getTaxonFieldCommonProps = (): IParagraphOptions => ({
   spacing: { before: 0, after: 0 },
   indent: { left: 360 },
+  keepLines: true,
 })
 
 // ─── Convenience helpers still used only in docx renderers ────────────────────

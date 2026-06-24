@@ -1,0 +1,88 @@
+import sizeOf from 'image-size'
+
+import { calculateScaledDimensions, getImageDimensions } from '../docxExport/ImageUtils'
+import type { SurveyDocOptions } from './types'
+
+type DocxImageType = 'jpg' | 'png' | 'gif' | 'bmp'
+
+const DOCX_IMAGE_TYPE_BY_FORMAT: Record<string, DocxImageType> = {
+  jpg: 'jpg',
+  jpeg: 'jpg',
+  png: 'png',
+  gif: 'gif',
+  bmp: 'bmp',
+}
+
+export const DOC_CONTENT_MAX_WIDTH = 650
+export const DOC_HEADER_FOOTER_MAX_HEIGHT = 120
+export const DOC_PAGE_EDGE_MARGIN_PT = 36 // outer gap between page edge and header/footer images (shared by PDF and DOCX)
+export const DOC_HEADER_FOOTER_GAP_PT = 6 // gap between header/footer image and body content (shared by PDF and DOCX)
+
+export const PX_TO_TWIPS = 15
+export const PT_TO_TWIPS = 20
+export const DOCX_BASE_MARGIN_TWIPS = DOC_PAGE_EDGE_MARGIN_PT * PT_TO_TWIPS // 720
+export const DOCX_MARGIN_GAP_TWIPS = DOC_HEADER_FOOTER_GAP_PT * PT_TO_TWIPS // 120
+
+export const isHeaderOnFirstPageOnly = (options: Pick<SurveyDocOptions, 'headerOnFirstPageOnly'>): boolean =>
+  options.headerOnFirstPageOnly !== false
+
+export const imageHeightToTwips = (heightPx: number): number => Math.round(heightPx * PX_TO_TWIPS)
+
+export interface SurveyDocImageData {
+  buffer: Buffer
+  width: number
+  height: number
+  docxType: DocxImageType
+}
+
+const getDocxImageTypeFromBuffer = (buffer: Buffer): DocxImageType | undefined => {
+  const format = sizeOf(buffer).type?.toLowerCase()
+  return format ? DOCX_IMAGE_TYPE_BY_FORMAT[format] : undefined
+}
+
+const fetchSurveyDocImage = async (
+  fileUuid: string | undefined,
+  fileProvider: SurveyDocOptions['fileProvider'],
+  maxWidth: number,
+  maxHeight: number
+): Promise<SurveyDocImageData | undefined> => {
+  if (!fileUuid || !fileProvider) {
+    return undefined
+  }
+
+  try {
+    const buffer = await fileProvider(fileUuid)
+    const docxType = getDocxImageTypeFromBuffer(buffer)
+    if (!docxType) {
+      return undefined
+    }
+
+    const dims = getImageDimensions(buffer)
+    const transformation = dims
+      ? calculateScaledDimensions(dims.width, dims.height, maxWidth, maxHeight)
+      : { width: maxWidth, height: maxHeight }
+
+    return {
+      buffer,
+      width: transformation.width,
+      height: transformation.height,
+      docxType,
+    }
+  } catch {
+    return undefined
+  }
+}
+
+export const fetchSurveyDocImages = async (
+  options: Pick<SurveyDocOptions, 'fileProvider' | 'headerImageFileUuid' | 'footerImageFileUuid'>,
+  limits: { maxWidth?: number; maxHeight?: number } = {}
+): Promise<{ headerImage?: SurveyDocImageData; footerImage?: SurveyDocImageData }> => {
+  const { fileProvider, headerImageFileUuid, footerImageFileUuid } = options
+  const { maxWidth = DOC_CONTENT_MAX_WIDTH, maxHeight = DOC_HEADER_FOOTER_MAX_HEIGHT } = limits
+  const [headerImage, footerImage] = await Promise.all([
+    fetchSurveyDocImage(headerImageFileUuid, fileProvider, maxWidth, maxHeight),
+    fetchSurveyDocImage(footerImageFileUuid, fileProvider, maxWidth, maxHeight),
+  ])
+
+  return { headerImage, footerImage }
+}

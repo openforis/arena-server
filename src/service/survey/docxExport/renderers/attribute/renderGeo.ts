@@ -12,6 +12,7 @@ export const renderGeo: AttributeRenderer = async ({ nodeDef, context, node }) =
   return [
     new Paragraph({
       spacing: SPACING_FIELD_ROW,
+      keepLines: true,
       children: [
         nodeDefFormItemLabelRun(nodeDef, context),
         new TextRun({ text: '[geometry]', italics: true, color: '888888' }),
