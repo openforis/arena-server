@@ -1,6 +1,7 @@
 import { AlignmentType, Document, Footer, Header, ImageRun, Packer, Paragraph } from 'docx'
 
 import {
+  DOCX_BASE_MARGIN_TWIPS,
   DOCX_MARGIN_GAP_TWIPS,
   fetchSurveyDocImages,
   imageHeightToTwips,
@@ -22,8 +23,6 @@ export interface SurveyDocxResult {
   buffer: Buffer
   surveyName: string
 }
-
-const DOCX_BASE_MARGIN_TWIPS = 720
 
 const buildDocxImageSection = (image: SurveyDocImageData): Paragraph =>
   new Paragraph({

@@ -15,12 +15,16 @@ const DOCX_IMAGE_TYPE_BY_FORMAT: Record<string, DocxImageType> = {
 
 export const DOC_CONTENT_MAX_WIDTH = 650
 export const DOC_HEADER_FOOTER_MAX_HEIGHT = 120
-export const PX_TO_TWIPS = 15
-export const DOCX_MARGIN_GAP_TWIPS = 120
+export const DOC_PAGE_EDGE_MARGIN_PT = 36 // outer gap between page edge and header/footer images (shared by PDF and DOCX)
+export const DOC_HEADER_FOOTER_GAP_PT = 6 // gap between header/footer image and body content (shared by PDF and DOCX)
 
-export const isHeaderOnFirstPageOnly = (
-  options: Pick<SurveyDocOptions, 'headerOnFirstPageOnly'>
-): boolean => options.headerOnFirstPageOnly !== false
+export const PX_TO_TWIPS = 15
+export const PT_TO_TWIPS = 20
+export const DOCX_BASE_MARGIN_TWIPS = DOC_PAGE_EDGE_MARGIN_PT * PT_TO_TWIPS // 720
+export const DOCX_MARGIN_GAP_TWIPS = DOC_HEADER_FOOTER_GAP_PT * PT_TO_TWIPS // 120
+
+export const isHeaderOnFirstPageOnly = (options: Pick<SurveyDocOptions, 'headerOnFirstPageOnly'>): boolean =>
+  options.headerOnFirstPageOnly !== false
 
 export const imageHeightToTwips = (heightPx: number): number => Math.round(heightPx * PX_TO_TWIPS)
 

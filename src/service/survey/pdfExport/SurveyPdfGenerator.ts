@@ -1,6 +1,12 @@
 import PDFDocument from 'pdfkit'
 
-import { fetchSurveyDocImages, isHeaderOnFirstPageOnly, type SurveyDocImageData } from '../docExport/surveyDocImages'
+import {
+  DOC_HEADER_FOOTER_GAP_PT,
+  DOC_PAGE_EDGE_MARGIN_PT,
+  fetchSurveyDocImages,
+  isHeaderOnFirstPageOnly,
+  type SurveyDocImageData,
+} from '../docExport/surveyDocImages'
 import type { SurveyDocOptions } from '../docExport/types'
 import { walkSurvey } from '../docExport/SurveyDocWalker'
 import type { PdfElement } from './PdfElement'
@@ -22,7 +28,6 @@ const FONT_BOLD = 'Helvetica-Bold'
 const MARGIN = 50
 const PAGE_WIDTH = 595.28 // A4 points
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
-const HEADER_FOOTER_GAP = 10
 const EMPTY_FIELD = '________________________________'
 
 const COLOR_DEFAULT = '#000000'
@@ -290,10 +295,10 @@ const drawPageDecorations = (
   headerOnFirstPageOnly: boolean
 ): void => {
   if (headerImage && (!headerOnFirstPageOnly || pageIndex === 0)) {
-    drawSurveyDocImage(doc, headerImage, MARGIN)
+    drawSurveyDocImage(doc, headerImage, DOC_PAGE_EDGE_MARGIN_PT)
   }
   if (footerImage) {
-    const footerY = doc.page.height - doc.page.margins.bottom - footerImage.height - HEADER_FOOTER_GAP
+    const footerY = doc.page.height - DOC_PAGE_EDGE_MARGIN_PT - footerImage.height
     drawSurveyDocImage(doc, footerImage, footerY)
   }
 }
@@ -308,8 +313,8 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
 
   const headerHeight = headerImage?.height ?? 0
   const footerHeight = footerImage?.height ?? 0
-  const topMargin = MARGIN + headerHeight + (headerHeight > 0 ? HEADER_FOOTER_GAP : 0)
-  const bottomMargin = MARGIN + footerHeight + (footerHeight > 0 ? HEADER_FOOTER_GAP : 0)
+  const topMargin = DOC_PAGE_EDGE_MARGIN_PT + headerHeight + (headerHeight > 0 ? DOC_HEADER_FOOTER_GAP_PT : 0)
+  const bottomMargin = DOC_PAGE_EDGE_MARGIN_PT + footerHeight + (footerHeight > 0 ? DOC_HEADER_FOOTER_GAP_PT : 0)
 
   return new Promise<SurveyPdfResult>((resolve, reject) => {
     const doc = new PDFDocument({
