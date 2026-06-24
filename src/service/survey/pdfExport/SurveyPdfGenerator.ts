@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit'
 
-import { fetchSurveyDocImages, type SurveyDocImageData } from '../docExport/surveyDocImages'
+import { fetchSurveyDocImages, isHeaderOnFirstPageOnly, type SurveyDocImageData } from '../docExport/surveyDocImages'
 import type { SurveyDocOptions } from '../docExport/types'
 import { walkSurvey } from '../docExport/SurveyDocWalker'
 import type { PdfElement } from './PdfElement'
@@ -35,6 +35,28 @@ const TABLE_ROW_HEIGHT = 20
 const GRID_CELL_PAD = 8 // right-side gap between grid columns
 
 type CellOpts = { x: number; width: number }
+
+const getContentBottom = (doc: PDFKit.PDFDocument): number => doc.page.height - doc.page.margins.bottom
+
+const getContentTop = (doc: PDFKit.PDFDocument): number => doc.page.margins.top
+
+const estimateElementHeight = (el: PdfElement): number => {
+  switch (el.kind) {
+    case 'image':
+      return el.height + 24
+    case 'heading':
+      return 16
+    case 'compositeBlock':
+      return 14 + el.subFields.length * 12
+    case 'checkboxRow':
+    case 'fieldRow':
+      return 14
+    case 'spacer':
+      return 8
+    default:
+      return 14
+  }
+}
 
 const renderTitle = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'title' }>, cell?: CellOpts): void => {
   const x = cell?.x ?? MARGIN
@@ -124,7 +146,7 @@ const renderImage = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'i
   try {
     const imgWidth = Math.min(el.width, width)
     const ratio = el.width > 0 ? imgWidth / el.width : 1
-    const contentBottom = doc.page.height - doc.page.margins.bottom
+    const contentBottom = getContentBottom(doc)
     const maxImgHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom
     const imgHeight = Math.min(Math.round(el.height * ratio), maxImgHeight)
     // Estimate the label line height before deciding whether to add a page, so the
@@ -169,9 +191,9 @@ const renderTable = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 't
 
   const displayRows = el.rows.length > 0 ? el.rows : [el.headers.map(() => '')]
   for (const row of displayRows) {
-    if (y + TABLE_ROW_HEIGHT > doc.page.height - MARGIN) {
+    if (y + TABLE_ROW_HEIGHT > getContentBottom(doc)) {
       doc.addPage()
-      y = MARGIN
+      y = getContentTop(doc)
     }
     drawTableRow(doc, row, y, false, colWidth)
     y += TABLE_ROW_HEIGHT
@@ -187,31 +209,31 @@ let serializeElement: (doc: PDFKit.PDFDocument, el: PdfElement, cell?: CellOpts)
 const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'gridRow' }>): void => {
   const { cells, columnCount } = el
   const baseColWidth = CONTENT_WIDTH / columnCount
+  const estimatedRowHeight = Math.max(
+    TABLE_ROW_HEIGHT,
+    ...cells.map((cell) => cell.content.reduce((sum, elem) => sum + estimateElementHeight(elem), 0))
+  )
 
-  // If remaining vertical space on the current page is too small for even one text line,
-  // the first cell would trigger an auto page-break and subsequent cells would restore
-  // doc.y to the old (near-bottom) position on the new page, causing one field per page.
-  const remainingSpace = doc.page.height - doc.page.margins.bottom - doc.y
-  if (remainingSpace < TABLE_ROW_HEIGHT) {
+  // If the row cannot fit on the current page, start it on a fresh page so cells stay
+  // aligned horizontally instead of each cell landing on its own page.
+  if (doc.y + estimatedRowHeight > getContentBottom(doc)) {
     doc.addPage()
   }
 
-  const rowStartY = doc.y
+  let rowStartY = doc.y
   let maxEndY = rowStartY
   let pageBreakOccurred = false
 
   for (const cell of cells) {
     const colX = MARGIN + baseColWidth * cell.columnIndex
     const cellContentWidth = Math.max(40, baseColWidth * cell.colSpan - GRID_CELL_PAD)
-    // After a page break, stack subsequent cells below the previous one on the new
-    // page instead of restoring rowStartY (which belongs to the old page).
     doc.y = pageBreakOccurred ? maxEndY : rowStartY
     for (const elem of cell.content) {
       serializeElement(doc, elem, { x: colX, width: cellContentWidth })
     }
     if (!pageBreakOccurred && doc.y < rowStartY) {
-      // doc.y is now on a new page and lower than rowStartY from the old page.
       pageBreakOccurred = true
+      rowStartY = doc.y
       maxEndY = doc.y
     } else {
       maxEndY = Math.max(maxEndY, doc.y)
@@ -260,16 +282,19 @@ const drawSurveyDocImage = (doc: PDFKit.PDFDocument, image: SurveyDocImageData, 
   }
 }
 
-const drawHeaderFooterImages = (
+const drawPageDecorations = (
   doc: PDFKit.PDFDocument,
-  headerImage?: SurveyDocImageData,
-  footerImage?: SurveyDocImageData
+  pageIndex: number,
+  headerImage: SurveyDocImageData | undefined,
+  footerImage: SurveyDocImageData | undefined,
+  headerOnFirstPageOnly: boolean
 ): void => {
-  if (headerImage) {
+  if (headerImage && (!headerOnFirstPageOnly || pageIndex === 0)) {
     drawSurveyDocImage(doc, headerImage, MARGIN)
   }
   if (footerImage) {
-    drawSurveyDocImage(doc, footerImage, doc.page.height - MARGIN - footerImage.height)
+    const footerY = doc.page.height - doc.page.margins.bottom - footerImage.height - HEADER_FOOTER_GAP
+    drawSurveyDocImage(doc, footerImage, footerY)
   }
 }
 
@@ -279,6 +304,7 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
   const renderer = new PdfSurveyDocRenderer()
   const { elements, surveyName } = await walkSurvey(options, renderer)
   const { headerImage, footerImage } = await fetchSurveyDocImages(options, { maxWidth: CONTENT_WIDTH })
+  const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
 
   const headerHeight = headerImage?.height ?? 0
   const footerHeight = footerImage?.height ?? 0
@@ -288,7 +314,6 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
   return new Promise<SurveyPdfResult>((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
-      bufferPages: true,
       margins: {
         top: topMargin,
         bottom: bottomMargin,
@@ -297,19 +322,18 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
       },
     })
     const chunks: Buffer[] = []
+    let pageIndex = 0
 
     doc.on('data', (chunk: Buffer) => chunks.push(chunk))
     doc.on('end', () => resolve({ buffer: Buffer.concat(chunks), surveyName }))
     doc.on('error', reject)
+    doc.on('pageAdded', () => {
+      pageIndex++
+      drawPageDecorations(doc, pageIndex, headerImage, footerImage, headerOnFirstPageOnly)
+    })
 
+    drawPageDecorations(doc, 0, headerImage, footerImage, headerOnFirstPageOnly)
     serializeElements(doc, elements)
-
-    const pageRange = doc.bufferedPageRange()
-    for (let pageIndex = pageRange.start; pageIndex < pageRange.start + pageRange.count; pageIndex++) {
-      doc.switchToPage(pageIndex)
-      drawHeaderFooterImages(doc, headerImage, footerImage)
-    }
-
     doc.end()
   })
 }

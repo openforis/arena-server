@@ -15,6 +15,14 @@ const DOCX_IMAGE_TYPE_BY_FORMAT: Record<string, DocxImageType> = {
 
 export const DOC_CONTENT_MAX_WIDTH = 650
 export const DOC_HEADER_FOOTER_MAX_HEIGHT = 120
+export const PX_TO_TWIPS = 15
+export const DOCX_MARGIN_GAP_TWIPS = 120
+
+export const isHeaderOnFirstPageOnly = (
+  options: Pick<SurveyDocOptions, 'headerOnFirstPageOnly'>
+): boolean => options.headerOnFirstPageOnly !== false
+
+export const imageHeightToTwips = (heightPx: number): number => Math.round(heightPx * PX_TO_TWIPS)
 
 export interface SurveyDocImageData {
   buffer: Buffer

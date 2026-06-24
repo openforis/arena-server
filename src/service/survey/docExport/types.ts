@@ -17,6 +17,8 @@ export interface SurveyDocOptions {
   fileProvider?: (fileUuid: string) => Promise<Buffer>
   headerImageFileUuid?: string
   footerImageFileUuid?: string
+  /** When true (default), the header image appears only on the first page. */
+  headerOnFirstPageOnly?: boolean
 }
 
 export interface RenderContext {
