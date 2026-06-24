@@ -88,7 +88,11 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
             ? { headers: { first: buildDocxImageHeader(headerImage) } }
             : { headers: { default: buildDocxImageHeader(headerImage) } }
           : {}),
-        ...(footerImage ? { footers: { default: buildDocxImageFooter(footerImage) } } : {}),
+        ...(footerImage
+          ? headerOnFirstPageOnly
+            ? { footers: { first: buildDocxImageFooter(footerImage), default: buildDocxImageFooter(footerImage) } }
+            : { footers: { default: buildDocxImageFooter(footerImage) } }
+          : {}),
         children: elements,
       },
     ],
