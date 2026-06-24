@@ -121,16 +121,26 @@ const renderCompositeBlock = (
 const renderImage = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'image' }>, cell?: CellOpts): void => {
   const x = cell?.x ?? MARGIN
   const width = cell?.width ?? CONTENT_WIDTH
-  doc.font(FONT_BOLD).fontSize(10).text(`${el.label}:`, x, doc.y, { width }).moveDown(0.1)
   try {
     const imgWidth = Math.min(el.width, width)
     const ratio = el.width > 0 ? imgWidth / el.width : 1
-    const imgHeight = Math.round(el.height * ratio)
+    const contentBottom = doc.page.height - doc.page.margins.bottom
+    const maxImgHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom
+    const imgHeight = Math.min(Math.round(el.height * ratio), maxImgHeight)
+    // Estimate the label line height before deciding whether to add a page, so the
+    // label and the image always land on the same page.
+    doc.font(FONT_BOLD).fontSize(10)
+    const labelHeight = doc.currentLineHeight(true) * 1.1
+    if (doc.y + labelHeight + imgHeight > contentBottom) {
+      doc.addPage()
+    }
+    doc.text(`${el.label}:`, x, doc.y, { width }).moveDown(0.1)
     const imageY = doc.y
     doc.image(el.buffer, x, imageY, { width: imgWidth, height: imgHeight })
     doc.y = imageY + imgHeight
   } catch {
-    doc.font(FONT_NORMAL).fontSize(10).text('[image]', x, doc.y, { width })
+    doc.font(FONT_BOLD).fontSize(10).text(`${el.label}:`, x, doc.y, { width })
+    doc.font(FONT_NORMAL).text('[image]', x, doc.y, { width })
   }
   doc.moveDown(0.3)
 }
@@ -188,15 +198,24 @@ const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 
 
   const rowStartY = doc.y
   let maxEndY = rowStartY
+  let pageBreakOccurred = false
 
   for (const cell of cells) {
     const colX = MARGIN + baseColWidth * cell.columnIndex
     const cellContentWidth = Math.max(40, baseColWidth * cell.colSpan - GRID_CELL_PAD)
-    doc.y = rowStartY
+    // After a page break, stack subsequent cells below the previous one on the new
+    // page instead of restoring rowStartY (which belongs to the old page).
+    doc.y = pageBreakOccurred ? maxEndY : rowStartY
     for (const elem of cell.content) {
       serializeElement(doc, elem, { x: colX, width: cellContentWidth })
     }
-    maxEndY = Math.max(maxEndY, doc.y)
+    if (!pageBreakOccurred && doc.y < rowStartY) {
+      // doc.y is now on a new page and lower than rowStartY from the old page.
+      pageBreakOccurred = true
+      maxEndY = doc.y
+    } else {
+      maxEndY = Math.max(maxEndY, doc.y)
+    }
   }
 
   doc.y = maxEndY
