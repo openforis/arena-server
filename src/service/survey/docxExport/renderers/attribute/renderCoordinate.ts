@@ -23,13 +23,14 @@ export const renderCoordinate: AttributeRenderer = async ({ nodeDef, context, no
   const labelByField = getCoordinateLabelByField(coordinateDef, context)
 
   return [
-    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, children: [formItemLabelRun(lbl, false)] }),
+    new Paragraph({ spacing: SPACING_COMPOSITE_LABEL_ROW, keepNext: true, children: [formItemLabelRun(lbl, false)] }),
     ...valueFields.map((valueField) => {
       const fieldLabel = labelByField[valueField]
       const fieldValue = String(val?.[valueField] ?? EMPTY_SHORT)
       return new Paragraph({
         spacing: { before: 0, after: 0 },
         indent: { left: 360 },
+        keepLines: true,
         children: [formItemLabelRun(fieldLabel), hasValue ? new TextRun({ text: fieldValue }) : inputLine(fieldValue)],
       })
     }),

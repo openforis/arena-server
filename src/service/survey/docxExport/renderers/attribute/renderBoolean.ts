@@ -15,6 +15,7 @@ export const renderBoolean: AttributeRenderer = async ({ nodeDef, context, node 
   return [
     new Paragraph({
       spacing: SPACING_FIELD_ROW,
+      keepLines: true,
       children: [
         nodeDefFormItemLabelRun(nodeDef, context),
         ...checkboxRun(yesLabel, hasValue ? isTrue : false),
