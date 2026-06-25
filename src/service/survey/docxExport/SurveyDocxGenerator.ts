@@ -24,9 +24,10 @@ export interface SurveyDocxResult {
   surveyName: string
 }
 
-const buildDocxImageSection = (image: SurveyDocImageData): Paragraph =>
+const buildDocxImageParagraph = (image: SurveyDocImageData, spacingAfter?: number): Paragraph =>
   new Paragraph({
     alignment: AlignmentType.CENTER,
+    ...(spacingAfter !== undefined ? { spacing: { after: spacingAfter } } : {}),
     children: [
       new ImageRun({
         data: image.buffer,
@@ -41,12 +42,12 @@ const buildDocxImageSection = (image: SurveyDocImageData): Paragraph =>
 
 const buildDocxImageHeader = (image: SurveyDocImageData): Header =>
   new Header({
-    children: [buildDocxImageSection(image)],
+    children: [buildDocxImageParagraph(image)],
   })
 
 const buildDocxImageFooter = (image: SurveyDocImageData): Footer =>
   new Footer({
-    children: [buildDocxImageSection(image)],
+    children: [buildDocxImageParagraph(image)],
   })
 
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
@@ -56,8 +57,17 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
   const { headerImage, footerImage } = await fetchSurveyDocImages(options)
   const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
 
-  const headerMarginTwips = headerImage ? imageHeightToTwips(headerImage.height) + DOCX_MARGIN_GAP_TWIPS : 0
+  // When header is first-page-only, embed it as a body paragraph so pages 2+ keep only the
+  // base top margin. When header repeats on all pages, use a DOCX header section with the
+  // extra margin needed to accommodate it.
+  const headerMarginTwips =
+    headerImage && !headerOnFirstPageOnly ? imageHeightToTwips(headerImage.height) + DOCX_MARGIN_GAP_TWIPS : 0
   const footerMarginTwips = footerImage ? imageHeightToTwips(footerImage.height) + DOCX_MARGIN_GAP_TWIPS : 0
+
+  const bodyChildren =
+    headerImage && headerOnFirstPageOnly
+      ? [buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS), ...elements]
+      : elements
 
   const doc = new Document({
     styles: {
@@ -72,7 +82,6 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
     sections: [
       {
         properties: {
-          ...(headerImage && headerOnFirstPageOnly ? { titlePage: true } : {}),
           page: {
             margin: {
               top: DOCX_BASE_MARGIN_TWIPS + headerMarginTwips,
@@ -82,17 +91,9 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
             },
           },
         },
-        ...(headerImage
-          ? headerOnFirstPageOnly
-            ? { headers: { first: buildDocxImageHeader(headerImage) } }
-            : { headers: { default: buildDocxImageHeader(headerImage) } }
-          : {}),
-        ...(footerImage
-          ? headerOnFirstPageOnly
-            ? { footers: { first: buildDocxImageFooter(footerImage), default: buildDocxImageFooter(footerImage) } }
-            : { footers: { default: buildDocxImageFooter(footerImage) } }
-          : {}),
-        children: elements,
+        ...(headerImage && !headerOnFirstPageOnly ? { headers: { default: buildDocxImageHeader(headerImage) } } : {}),
+        ...(footerImage ? { footers: { default: buildDocxImageFooter(footerImage) } } : {}),
+        children: bodyChildren,
       },
     ],
   })
