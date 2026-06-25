@@ -44,7 +44,7 @@ const PAGE_NUMBER_ROW_TWIPS = 240
 const buildDocxImageParagraph = (image: SurveyDocImageData, spacingAfter?: number): Paragraph =>
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    ...(spacingAfter !== undefined ? { spacing: { after: spacingAfter } } : {}),
+    ...(spacingAfter === undefined ? {} : { spacing: { after: spacingAfter } }),
     children: [
       new ImageRun({
         data: image.buffer,
@@ -74,6 +74,11 @@ const buildDocxPageNumberFooter = (): Footer => new Footer({ children: [buildPag
 const buildDocxImageAndPageNumberFooter = (image: SurveyDocImageData): Footer =>
   new Footer({ children: [buildDocxImageParagraph(image), buildPageNumberParagraph()] })
 
+const calcFooterMarginTwips = (footerImage: SurveyDocImageData | undefined, pageNumbering: boolean): number => {
+  const imageHeight = footerImage ? imageHeightToTwips(footerImage.height) + DOCX_MARGIN_GAP_TWIPS : 0
+  return imageHeight + (pageNumbering ? PAGE_NUMBER_ROW_TWIPS : 0)
+}
+
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
   const { readOnly } = options
   const pageNumbering = isPageNumberingEnabled(options)
@@ -87,11 +92,7 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
   // extra margin needed to accommodate it.
   const allPagesImageInHeader = Boolean(headerImage && !headerOnFirstPageOnly)
   const headerMarginTwips = allPagesImageInHeader ? imageHeightToTwips(headerImage!.height) + DOCX_MARGIN_GAP_TWIPS : 0
-  const footerMarginTwips = footerImage
-    ? imageHeightToTwips(footerImage.height) + DOCX_MARGIN_GAP_TWIPS + (pageNumbering ? PAGE_NUMBER_ROW_TWIPS : 0)
-    : pageNumbering
-      ? PAGE_NUMBER_ROW_TWIPS
-      : 0
+  const footerMarginTwips = calcFooterMarginTwips(footerImage, pageNumbering)
 
   const bodyChildren =
     headerImage && headerOnFirstPageOnly
