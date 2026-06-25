@@ -5,6 +5,7 @@ import {
   DOC_PAGE_EDGE_MARGIN_PT,
   fetchSurveyDocImages,
   isHeaderOnFirstPageOnly,
+  isPageNumberingEnabled,
   type SurveyDocImageData,
 } from '../docExport/surveyDocImages'
 import type { SurveyDocOptions } from '../docExport/types'
@@ -26,6 +27,8 @@ export interface SurveyPdfResult {
 const FONT_NORMAL = 'Helvetica'
 const FONT_BOLD = 'Helvetica-Bold'
 const MARGIN = 50
+// pt from page bottom — positions the page number label in the bottom edge margin
+const PAGE_NUMBER_BOTTOM_OFFSET = 20
 const PAGE_WIDTH = 595.28 // A4 points
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
 const EMPTY_FIELD = '________________________________'
@@ -306,6 +309,7 @@ const drawPageDecorations = (
 // ─── Generator ────────────────────────────────────────────────────────────────
 
 const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfResult> => {
+  const pageNumbering = isPageNumberingEnabled(options)
   const renderer = new PdfSurveyDocRenderer()
   const { elements, surveyName } = await walkSurvey(options, renderer)
   const { headerImage, footerImage } = await fetchSurveyDocImages(options, { maxWidth: CONTENT_WIDTH })
@@ -313,7 +317,13 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
 
   const headerHeight = headerImage?.height ?? 0
   const footerHeight = footerImage?.height ?? 0
-  const topMargin = DOC_PAGE_EDGE_MARGIN_PT + headerHeight + (headerHeight > 0 ? DOC_HEADER_FOOTER_GAP_PT : 0)
+  // When the header repeats on every page it must be accommodated by the margin on every page.
+  // When it appears on the first page only, use a base margin for all pages and manually advance
+  // doc.y past the image on page 1 so pages 2+ don't carry the unnecessary extra gap.
+  const topMargin =
+    headerImage && !headerOnFirstPageOnly
+      ? DOC_PAGE_EDGE_MARGIN_PT + headerHeight + DOC_HEADER_FOOTER_GAP_PT
+      : DOC_PAGE_EDGE_MARGIN_PT
   const bottomMargin = DOC_PAGE_EDGE_MARGIN_PT + footerHeight + (footerHeight > 0 ? DOC_HEADER_FOOTER_GAP_PT : 0)
 
   return new Promise<SurveyPdfResult>((resolve, reject) => {
@@ -325,6 +335,8 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
         left: MARGIN,
         right: MARGIN,
       },
+      // Buffer pages so we can go back and stamp page numbers once we know the total.
+      bufferPages: pageNumbering,
     })
     const chunks: Buffer[] = []
     let pageIndex = 0
@@ -338,7 +350,35 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
     })
 
     drawPageDecorations(doc, 0, headerImage, footerImage, headerOnFirstPageOnly)
+    // When the header is first-page-only, advance the cursor past the image so body content
+    // starts below it (the top margin is kept small for all pages, so this is needed on page 1).
+    if (headerImage && headerOnFirstPageOnly) {
+      doc.y = DOC_PAGE_EDGE_MARGIN_PT + headerImage.height + DOC_HEADER_FOOTER_GAP_PT
+    }
     serializeElements(doc, elements)
+
+    if (pageNumbering) {
+      const range = doc.bufferedPageRange()
+      const totalPages = range.count
+      for (let i = 1; i < totalPages; i++) {
+        doc.switchToPage(range.start + i)
+        // Temporarily zero the bottom margin so PDFKit does not auto-add a page
+        // when we stamp text in the footer zone below the content area.
+        const savedBottomMargin = doc.page.margins.bottom
+        doc.page.margins.bottom = 0
+        doc
+          .font(FONT_NORMAL)
+          .fontSize(9)
+          .fillColor(COLOR_DEFAULT)
+          .text(`${i + 1} of ${totalPages}`, MARGIN, doc.page.height - PAGE_NUMBER_BOTTOM_OFFSET, {
+            width: CONTENT_WIDTH,
+            align: 'right',
+          })
+        doc.page.margins.bottom = savedBottomMargin
+      }
+      doc.flushPages()
+    }
+
     doc.end()
   })
 }
