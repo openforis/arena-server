@@ -26,6 +26,9 @@ export const DOCX_MARGIN_GAP_TWIPS = DOC_HEADER_FOOTER_GAP_PT * PT_TO_TWIPS // 1
 export const isHeaderOnFirstPageOnly = (options: Pick<SurveyDocOptions, 'headerOnFirstPageOnly'>): boolean =>
   options.headerOnFirstPageOnly !== false
 
+export const isPageNumberingEnabled = (options: Pick<SurveyDocOptions, 'pageNumbering'>): boolean =>
+  options.pageNumbering !== false
+
 export const imageHeightToTwips = (heightPx: number): number => Math.round(heightPx * PX_TO_TWIPS)
 
 export interface SurveyDocImageData {

@@ -19,6 +19,8 @@ export interface SurveyDocOptions {
   footerImageFileUuid?: string
   /** When true (default), the header image appears only on the first page. */
   headerOnFirstPageOnly?: boolean
+  /** When false, page numbers are suppressed; defaults to true. */
+  pageNumbering?: boolean
 }
 
 export interface RenderContext {
