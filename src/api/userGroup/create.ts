@@ -1,25 +1,13 @@
 import { Express } from 'express'
 
-import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
-
 import { ExpressInitializer } from '../../server'
-import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
-import { UserGroupService } from '../../service'
 import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
+import { getSurveyUuid, getUserGroupService } from './common'
 
 const { requireUserGroupManagePermission } = ApiAuthMiddleware
-
-const getUserGroupService = (): UserGroupService =>
-  ServiceRegistry.getInstance().getService(ServerServiceType.userGroup) as UserGroupService
-
-const getSurveyUuid = async (surveyId: number): Promise<string> => {
-  const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
-  const survey = await surveyService.get({ surveyId })
-  return survey.uuid
-}
 
 export const UserGroupCreate: ExpressInitializer = {
   init: (express: Express): void => {

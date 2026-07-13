@@ -1,19 +1,13 @@
 import { Express } from 'express'
 
-import { ServiceRegistry } from '@openforis/arena-core'
-
 import { ExpressInitializer } from '../../server'
-import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
-import { UserGroupService } from '../../service'
 import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
+import { getUserGroupService } from './common'
 
 const { requireUserGroupManagePermission } = ApiAuthMiddleware
-
-const getUserGroupService = (): UserGroupService =>
-  ServiceRegistry.getInstance().getService(ServerServiceType.userGroup) as UserGroupService
 
 export const UserGroupUpdate: ExpressInitializer = {
   init: (express: Express): void => {
