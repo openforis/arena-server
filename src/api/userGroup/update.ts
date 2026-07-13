@@ -5,7 +5,7 @@ import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
-import { getUserGroupService } from './common'
+import { getUserGroupBelongingToSurvey, getUserGroupService } from './common'
 
 const { requireUserGroupManagePermission } = ApiAuthMiddleware
 
@@ -16,8 +16,10 @@ export const UserGroupUpdate: ExpressInitializer = {
       requireUserGroupManagePermission,
       async (req, res, next) => {
         try {
-          const { groupUuid } = Requests.getParams(req)
+          const { surveyId, groupUuid } = Requests.getParams(req)
           const { props } = req.body
+
+          await getUserGroupBelongingToSurvey({ surveyId, groupUuid })
 
           const service = getUserGroupService()
           const userGroupUpdated = await service.update({ uuid: groupUuid, props })

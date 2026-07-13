@@ -5,7 +5,7 @@ import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
-import { getSurveyUuid, getUserGroupService } from './common'
+import { getSurveyUuid, getUserGroupBelongingToSurvey, getUserGroupService } from './common'
 
 const { requireSurveyViewPermission } = ApiAuthMiddleware
 
@@ -48,10 +48,9 @@ export const UserGroupRead: ExpressInitializer = {
       requireSurveyViewPermission,
       async (req, res, next) => {
         try {
-          const { groupUuid } = Requests.getParams(req)
+          const { surveyId, groupUuid } = Requests.getParams(req)
 
-          const service = getUserGroupService()
-          const userGroup = await service.getByUuid({ uuid: groupUuid })
+          const { userGroup } = await getUserGroupBelongingToSurvey({ surveyId, groupUuid })
 
           res.json(userGroup)
         } catch (error) {
@@ -65,7 +64,9 @@ export const UserGroupRead: ExpressInitializer = {
       requireSurveyViewPermission,
       async (req, res, next) => {
         try {
-          const { groupUuid } = Requests.getParams(req)
+          const { surveyId, groupUuid } = Requests.getParams(req)
+
+          await getUserGroupBelongingToSurvey({ surveyId, groupUuid })
 
           const service = getUserGroupService()
           const list = await service.getMembers({ groupUuid })
