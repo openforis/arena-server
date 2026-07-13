@@ -30,7 +30,7 @@ export const getUserGroupBelongingToSurvey = async (params: {
   const service = getUserGroupService()
   const userGroup = await service.getByUuid({ uuid: groupUuid })
 
-  if (!userGroup || userGroup.surveyUuid !== surveyUuid) {
+  if (userGroup?.surveyUuid !== surveyUuid) {
     throw new ServerError('appErrors.userGroup.notFound', { groupUuid }, ServerErrorCode.NOT_FOUND)
   }
   return { surveyUuid, userGroup }

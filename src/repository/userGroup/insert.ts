@@ -6,7 +6,7 @@ export const insert = (
   client: BaseProtocol = DB
 ): Promise<UserGroup> => {
   const { surveyUuid, item } = params
-  if (!surveyUuid) throw new Error(`missingParams, ${params}`)
+  if (!surveyUuid) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
   const table = new TableUserGroup()
   const values = {

@@ -7,7 +7,7 @@ export const getManyByUser = (
   client: BaseProtocol = DB
 ): Promise<UserGroup[]> => {
   const { userUuid, surveyUuid } = options
-  if (!userUuid) throw new Error(`missingParams, ${options}`)
+  if (!userUuid) throw new Error(`missingParams, ${JSON.stringify(options)}`)
 
   const tableUserGroup = new TableUserGroup()
   const tableUserGroupUser = new TableUserGroupUser()

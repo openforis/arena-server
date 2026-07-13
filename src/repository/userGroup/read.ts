@@ -12,7 +12,7 @@ export const count = (params: { surveyUuid: string }, client: BaseProtocol = DB)
 
 export const getAll = (params: { surveyUuid: string }, client: BaseProtocol = DB): Promise<UserGroup[]> => {
   const { surveyUuid } = params
-  if (!surveyUuid) throw new Error(`missingParams, ${params}`)
+  if (!surveyUuid) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
   const table = new TableUserGroup()
   const sql = new SqlSelectBuilder()
