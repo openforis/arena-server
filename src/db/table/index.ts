@@ -11,6 +11,8 @@ export {
   TableUser2FADevice,
   TableAuthGroup,
   TableAuthGroupUser,
+  TableUserGroup,
+  TableUserGroupUser,
 } from './schemaPublic'
 
 export {

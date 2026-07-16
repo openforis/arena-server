@@ -8,6 +8,7 @@ import { DataQueryApi } from './dataQuery'
 import { InfoApi } from './info'
 import { MessageApi } from './message'
 import { User2FAAuthApi } from './user2FAAuth'
+import { UserGroupApi } from './userGroup'
 
 export const Api: ExpressInitializer = {
   init: (express: Express): void => {
@@ -17,5 +18,6 @@ export const Api: ExpressInitializer = {
     InfoApi.init(express)
     MessageApi.init(express)
     User2FAAuthApi.init(express)
+    UserGroupApi.init(express)
   },
 }
