@@ -1,6 +1,6 @@
+import { UserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, TableUserGroup } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
-import { UserGroup } from './types'
 
 const dateModifiedNow = "(now() AT TIME ZONE 'UTC')"
 

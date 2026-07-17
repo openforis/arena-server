@@ -1,5 +1,5 @@
+import { UserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlDeleteBuilder, TableUserGroup } from '../../db'
-import { UserGroup } from './types'
 
 export const deleteItem = (params: { uuid: string }, client: BaseProtocol = DB): Promise<UserGroup | null> => {
   const { uuid } = params
