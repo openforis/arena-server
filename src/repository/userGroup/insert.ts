@@ -1,5 +1,5 @@
+import { UserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserGroup } from '../../db'
-import { UserGroup } from './types'
 
 export const insert = (
   params: { surveyUuid: string; item: Partial<UserGroup> },

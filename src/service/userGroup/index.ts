@@ -1,6 +1,6 @@
-import { ArenaService } from '@openforis/arena-core'
+import { ArenaService, UserGroup, UserGroupProps } from '@openforis/arena-core'
 import { BaseProtocol } from '../../db'
-import { UserGroup, UserGroupMember, UserGroupProps, UserGroupRepository } from '../../repository/userGroup'
+import { UserGroupMember, UserGroupRepository } from '../../repository/userGroup'
 
 const {
   count,

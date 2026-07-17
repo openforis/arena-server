@@ -1,6 +1,6 @@
+import { UserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserGroup } from '../../db'
 import { SqlSelectCountBuilder } from '../../db/sql'
-import { UserGroup } from './types'
 
 export const count = (params: { surveyUuid: string }, client: BaseProtocol = DB): Promise<number> => {
   const { surveyUuid } = params

@@ -1,6 +1,5 @@
-import { Objects } from '@openforis/arena-core'
+import { Objects, UserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, SqlJoinBuilder, SqlSelectBuilder, TableUserGroup, TableUserGroupUser } from '../../db'
-import { UserGroup } from './types'
 
 export const getManyByUser = (
   options: { userUuid: string; surveyUuid?: string },

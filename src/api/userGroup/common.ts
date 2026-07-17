@@ -1,8 +1,7 @@
-import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, SurveyService, UserGroup } from '@openforis/arena-core'
 
 import { ServerError, ServerErrorCode } from '../../server'
 import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
-import { UserGroup } from '../../repository/userGroup'
 import { UserGroupService } from '../../service'
 
 export const getUserGroupService = (): UserGroupService =>

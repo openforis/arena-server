@@ -19,5 +19,4 @@ export const UserGroupRepository = {
   getMembers,
 }
 
-export type { UserGroup, UserGroupProps, UserGroupQualifier } from './types'
 export type { UserGroupMember } from './members'
