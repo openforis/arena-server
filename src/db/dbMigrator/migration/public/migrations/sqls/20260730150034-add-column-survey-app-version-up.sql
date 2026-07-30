@@ -1,2 +1,2 @@
 ALTER TABLE survey
-    ADD COLUMN app_version varchar(20) NULL;
+    ADD COLUMN app_version text NULL;
