@@ -33,6 +33,8 @@ const sslConfig = ProcessEnv.pgSsl ? { rejectUnauthorized: !ProcessEnv.pgSslAllo
 const configCommon = {
   // How long a client is allowed to remain idle before being closed
   idleTimeoutMillis: 30000,
+  // How long to wait for a connection from the pool (or a new connection to Postgres) before erroring
+  connectionTimeoutMillis: ProcessEnv.pgConnectionTimeoutMillis,
   // Max number of clients in the pool
   max: 30,
   ssl: sslConfig,
