@@ -3,6 +3,9 @@ export type { ArenaApp, ExpressInitializer } from './server'
 
 export { ApiEndpoint, ApiAuthMiddleware } from './api'
 
+export { ClusterBus, runWithClusterLock } from './clusterBus'
+export type { ClusterEvent } from './clusterBus'
+
 export {
   DB,
   DBMigrator,

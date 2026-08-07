@@ -2,6 +2,7 @@ export { Table } from './table'
 
 export {
   TableSchemaPublic,
+  TableConnectedSocket,
   TableInfo,
   TableSurvey,
   TableUser,
@@ -13,6 +14,7 @@ export {
   TableAuthGroupUser,
   TableUserGroup,
   TableUserGroupUser,
+  TableWsRelayMessage,
 } from './schemaPublic'
 
 export {

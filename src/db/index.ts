@@ -17,6 +17,7 @@ export {
   TableChain,
   TableChainNodeDef,
   TableChainNodeDefAggregate,
+  TableConnectedSocket,
   TableDataQuery,
   TableInfo,
   TableNodeDef,
@@ -31,4 +32,5 @@ export {
   TableAuthGroupUser,
   TableUserGroup,
   TableUserGroupUser,
+  TableWsRelayMessage,
 } from './table'
