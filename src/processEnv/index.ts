@@ -47,6 +47,7 @@ export const ProcessEnv = {
   pgDatabase,
   pgSsl: isTrue(process.env.PGSSL),
   pgSslAllowUnauthorized: isTrue(process.env.PGSSL_ALLOW_UNAUTHORIZED),
+  pgConnectionTimeoutMillis: Number(process.env.PG_CONNECTION_TIMEOUT_MILLIS) || 30000,
   disableDbMigrations: isTrue(process.env.DISABLE_DB_MIGRATIONS),
 
   // Express
