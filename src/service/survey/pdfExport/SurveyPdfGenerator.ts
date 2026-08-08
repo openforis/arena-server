@@ -289,10 +289,20 @@ const serializeElements = (doc: PDFKit.PDFDocument, elements: PdfElement[]): voi
   for (const el of elements) serializeElement(doc, el)
 }
 
+const scaledSurveyDocImageSize = (
+  doc: PDFKit.PDFDocument,
+  image: SurveyDocImageData
+): { width: number; height: number } => {
+  const width = Math.min(image.width, contentWidthOf(doc))
+  const height = image.height * (width / image.width)
+  return { width, height }
+}
+
 const drawSurveyDocImage = (doc: PDFKit.PDFDocument, image: SurveyDocImageData, y: number): void => {
   try {
-    const x = MARGIN + (contentWidthOf(doc) - image.width) / 2
-    doc.image(image.buffer, x, y, { width: image.width, height: image.height })
+    const { width, height } = scaledSurveyDocImageSize(doc, image)
+    const x = MARGIN + (contentWidthOf(doc) - width) / 2
+    doc.image(image.buffer, x, y, { width, height })
   } catch {
     // Ignore unsupported or corrupted image data.
   }
@@ -309,7 +319,8 @@ const drawPageDecorations = (
     drawSurveyDocImage(doc, headerImage, DOC_PAGE_EDGE_MARGIN_PT)
   }
   if (footerImage) {
-    const footerY = doc.page.height - DOC_PAGE_EDGE_MARGIN_PT - footerImage.height
+    const { height } = scaledSurveyDocImageSize(doc, footerImage)
+    const footerY = doc.page.height - DOC_PAGE_EDGE_MARGIN_PT - height
     drawSurveyDocImage(doc, footerImage, footerY)
   }
 }
