@@ -186,6 +186,12 @@ const walkEntityChildrenGrid = async <T>(
 
 // ─── Default (flat) Walker ────────────────────────────────────────────────────
 
+const isChildEntityOnOwnPage = (cycle: string, parentEntityDef: NodeDefEntity, childEntityDef: NodeDefEntity): boolean => {
+  const parentPageUuid = NodeDefs.getPageUuid(cycle)(parentEntityDef)
+  const childPageUuid = NodeDefs.getPageUuid(cycle)(childEntityDef)
+  return Boolean(childPageUuid && childPageUuid !== parentPageUuid)
+}
+
 const walkEntityChildrenDefault = async <T>(
   renderer: SurveyDocRenderer<T>,
   entityDef: NodeDef<NodeDefType>,
@@ -195,6 +201,7 @@ const walkEntityChildrenDefault = async <T>(
   walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { survey, cycle, record } = context
+  const parentEntity = entityDef as NodeDefEntity
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
     nodeDef: entityDef,
@@ -205,6 +212,7 @@ const walkEntityChildrenDefault = async <T>(
   const result: T[] = []
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
+      if (isChildEntityOnOwnPage(cycle, parentEntity, child as NodeDefEntity)) continue
       appendElements(
         result,
         await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions),
