@@ -188,8 +188,10 @@ const walkEntityChildrenDefault = async <T>(
   const result: T[] = []
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
-      result.push(
-        ...(await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions))
+      appendElements(
+        result,
+        await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions),
+        walkOptions
       )
     } else {
       if (NodeDefs.isHidden(child)) continue
@@ -198,7 +200,11 @@ const walkEntityChildrenDefault = async <T>(
         childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
       }
       if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) continue
-      result.push(...(await renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })))
+      appendElements(
+        result,
+        await renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode }),
+        walkOptions
+      )
     }
   }
   return result
