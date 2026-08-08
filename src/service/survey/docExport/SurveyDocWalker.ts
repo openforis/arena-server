@@ -267,6 +267,9 @@ export const walkEntityChildren = async <T>(
   }
 
   const documentDefault = walkOptions?.documentDefault ?? DEFAULT_PRINT_ORIENTATION
+  if (walkOptions?.sectionBuilder) {
+    walkOptions.sectionBuilder.push(...result)
+  }
   for (const childEntityDef of entityDefsInOwnPage) {
     const childOrientation = resolvePrintOrientation(childEntityDef, documentDefault)
     walkOptions?.sectionBuilder?.ensureOrientation(childOrientation)
@@ -284,6 +287,9 @@ export const walkEntityChildren = async <T>(
     } else {
       result.push(...childElements)
     }
+  }
+  if (walkOptions?.sectionBuilder) {
+    return []
   }
   return result
 }
@@ -375,6 +381,9 @@ const resolveCurrentPageEntity = (
   const entityNode = Records.getNodeByUuid(entityNodeUuid)(record)
   if (!entityDef || !entityNode || !NodeDefs.isEntity(entityDef)) {
     throw new Error('Entity not found for current-page export')
+  }
+  if (entityNode.nodeDefUuid !== entityDefUuid) {
+    throw new Error('Entity node does not belong to the specified entity definition')
   }
   return { entityDef: entityDef as NodeDefEntity, entityNode }
 }
