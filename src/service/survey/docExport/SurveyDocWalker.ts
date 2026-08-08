@@ -47,6 +47,13 @@ const appendElements = <T>(target: T[], elements: T[], walkOptions?: WalkOptions
   }
 }
 
+/** Grid cells must accumulate content locally; only the finished table joins sectionBuilder. */
+const withoutSectionBuilder = <T>(walkOptions?: WalkOptions<T>): WalkOptions<T> | undefined => {
+  if (!walkOptions?.sectionBuilder) return walkOptions
+  const { sectionBuilder: _sectionBuilder, ...rest } = walkOptions
+  return rest
+}
+
 // ─── Relevance / Visibility Helper ───────────────────────────────────────────
 
 const isNodeRelevantAndVisible = (record: ArenaRecord, node: ArenaNode): boolean =>
@@ -140,6 +147,7 @@ const walkEntityChildrenGrid = async <T>(
 
   type PendingCell = { promise: Promise<T[]>; colSpan?: number; rowSpan?: number }
 
+  const gridCellWalkOptions = withoutSectionBuilder(walkOptions)
   const gridRows: Array<GridRow<T>> = []
   for (let y = 0; y < maxY; y++) {
     const pending: PendingCell[] = []
@@ -155,7 +163,16 @@ const walkEntityChildrenGrid = async <T>(
       const h = item.h ?? 1
       markSpannedCells(skip, x, y, w, h)
       pending.push({
-        promise: renderGridCellContent(renderer, nodeDef, item, context, depth, parentEntityNode, maxX, walkOptions),
+        promise: renderGridCellContent(
+          renderer,
+          nodeDef,
+          item,
+          context,
+          depth,
+          parentEntityNode,
+          maxX,
+          gridCellWalkOptions
+        ),
         colSpan: w > 1 ? w : undefined,
         rowSpan: h > 1 ? h : undefined,
       })
