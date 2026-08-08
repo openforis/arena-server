@@ -38,6 +38,15 @@ interface WalkOptions<T> {
   documentDefault?: PrintOrientation
 }
 
+const appendElements = <T>(target: T[], elements: T[], walkOptions?: WalkOptions<T>): void => {
+  if (elements.length === 0) return
+  if (walkOptions?.sectionBuilder) {
+    walkOptions.sectionBuilder.push(...elements)
+  } else {
+    target.push(...elements)
+  }
+}
+
 // ─── Relevance / Visibility Helper ───────────────────────────────────────────
 
 const isNodeRelevantAndVisible = (record: ArenaRecord, node: ArenaNode): boolean =>
@@ -310,7 +319,11 @@ const walkEntityNodes = async <T>(
   for (let index = 0; index < visibleNodes.length; index++) {
     const entityNode = visibleNodes[index]
     if (visibleNodes.length > 1) {
-      result.push(...renderer.renderEntityInstanceHeading(`${label(entityDef, context.lang)} #${index + 1}`, depth))
+      appendElements(
+        result,
+        renderer.renderEntityInstanceHeading(`${label(entityDef, context.lang)} #${index + 1}`, depth),
+        walkOptions
+      )
     }
     result.push(...(await walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode, walkOptions)))
   }
@@ -343,13 +356,15 @@ export const walkEntityDef = async <T>(
   const result: T[] = []
 
   if (!isRoot) {
-    result.push(
-      ...renderer.renderEntityHeading(label(entityDef, context.lang), depth, (isMultiple && depth <= 2) || !!hasOwnPage)
+    appendElements(
+      result,
+      renderer.renderEntityHeading(label(entityDef, context.lang), depth, (isMultiple && depth <= 2) || !!hasOwnPage),
+      walkOptions
     )
   }
 
   if (isMultiple && isTableLayout) {
-    result.push(...walkEntityAsTable(renderer, entityDef, context, parentEntityNode))
+    appendElements(result, walkEntityAsTable(renderer, entityDef, context, parentEntityNode), walkOptions)
   } else if (isMultiple) {
     if (entityNodes.length > 0) {
       result.push(...(await walkEntityNodes(renderer, entityNodes, entityDef, context, depth, walkOptions)))
