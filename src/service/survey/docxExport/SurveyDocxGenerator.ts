@@ -83,7 +83,8 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
   const { readOnly } = options
   const pageNumbering = isPageNumberingEnabled(options)
   const renderer = new DocxSurveyDocRenderer()
-  const { elements, surveyName } = await walkSurvey(options, renderer)
+  const { sections, surveyName } = await walkSurvey(options, renderer)
+  const elements = sections.flatMap((s) => s.elements)
   const { headerImage, footerImage } = await fetchSurveyDocImages(options)
   const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
 

@@ -311,7 +311,8 @@ const drawPageDecorations = (
 const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfResult> => {
   const pageNumbering = isPageNumberingEnabled(options)
   const renderer = new PdfSurveyDocRenderer()
-  const { elements, surveyName } = await walkSurvey(options, renderer)
+  const { sections, surveyName } = await walkSurvey(options, renderer)
+  const elements = sections.flatMap((s) => s.elements)
   const { headerImage, footerImage } = await fetchSurveyDocImages(options, { maxWidth: CONTENT_WIDTH })
   const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
 
