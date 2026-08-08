@@ -6,6 +6,7 @@ import {
   ImageRun,
   Packer,
   PageNumber,
+  PageOrientation,
   Paragraph,
   Tab,
   TabStopPosition,
@@ -22,9 +23,11 @@ import {
   isPageNumberingEnabled,
   type SurveyDocImageData,
 } from '../docExport/surveyDocImages'
-import type { SurveyDocOptions } from '../docExport/types'
+import { DEFAULT_PRINT_ORIENTATION } from '../docExport/printOrientation'
+import type { PrintOrientation, SurveyDocOptions, SurveyDocSection } from '../docExport/types'
 import { walkSurvey } from '../docExport/SurveyDocWalker'
 import { DocxSurveyDocRenderer } from './DocxSurveyDocRenderer'
+import type { DocChild } from './renderers/attribute'
 import { convertDocxToReadOnly } from './docxReadOnlyConverter'
 
 // ─── public API ───────────────────────────────────────────────────────────────
@@ -79,12 +82,49 @@ const calcFooterMarginTwips = (footerImage: SurveyDocImageData | undefined, page
   return imageHeight + (pageNumbering ? PAGE_NUMBER_ROW_TWIPS : 0)
 }
 
+const toDocxOrientation = (orientation: PrintOrientation): (typeof PageOrientation)[keyof typeof PageOrientation] =>
+  orientation === 'landscape' ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT
+
+const buildHeadersConfig = (
+  headerImage: SurveyDocImageData | undefined,
+  allPagesImageInHeader: boolean
+): { first?: Header; default?: Header } => {
+  if (!allPagesImageInHeader || !headerImage) return {}
+  return { default: buildDocxImageHeader(headerImage) }
+}
+
+/**
+ * Builds footer slots for a DOCX section.
+ * On the first section, page 1 uses the "first" footer (no page number) when numbering is enabled.
+ */
+const buildFootersConfig = (
+  footerImage: SurveyDocImageData | undefined,
+  pageNumbering: boolean,
+  isFirstSection: boolean
+): { first?: Footer; default?: Footer } => {
+  if (pageNumbering) {
+    if (footerImage) {
+      return {
+        ...(isFirstSection ? { first: buildDocxImageFooter(footerImage) } : {}),
+        default: buildDocxImageAndPageNumberFooter(footerImage),
+      }
+    }
+    return { default: buildDocxPageNumberFooter() }
+  }
+  if (footerImage) {
+    return { default: buildDocxImageFooter(footerImage) }
+  }
+  return {}
+}
+
 const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDocxResult> => {
   const { readOnly } = options
   const pageNumbering = isPageNumberingEnabled(options)
   const renderer = new DocxSurveyDocRenderer()
   const { sections, surveyName } = await walkSurvey(options, renderer)
-  const elements = sections.flatMap((s) => s.elements)
+  const documentDefault = options.orientation ?? DEFAULT_PRINT_ORIENTATION
+  const docSections: SurveyDocSection<DocChild>[] =
+    sections.length > 0 ? sections : [{ orientation: documentDefault, elements: [] }]
   const { headerImage, footerImage } = await fetchSurveyDocImages(options)
   const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
 
@@ -94,32 +134,7 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
   const allPagesImageInHeader = Boolean(headerImage && !headerOnFirstPageOnly)
   const headerMarginTwips = allPagesImageInHeader ? imageHeightToTwips(headerImage!.height) + DOCX_MARGIN_GAP_TWIPS : 0
   const footerMarginTwips = calcFooterMarginTwips(footerImage, pageNumbering)
-
-  const bodyChildren =
-    headerImage && headerOnFirstPageOnly
-      ? [buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS), ...elements]
-      : elements
-
-  // Build the headers object for the section.
-  const headersConfig: { first?: Header; default?: Header } = {}
-  if (allPagesImageInHeader) {
-    headersConfig.default = buildDocxImageHeader(headerImage!)
-  }
-
-  // Build the footers object for the section.
-  // titlePage: true gives page 1 its own footer slot; pages 2+ use "default".
-  // This suppresses the page number on page 1 while showing it from page 2 onward.
-  const footersConfig: { first?: Footer; default?: Footer } = {}
-  if (pageNumbering) {
-    if (footerImage) {
-      footersConfig.first = buildDocxImageFooter(footerImage)
-      footersConfig.default = buildDocxImageAndPageNumberFooter(footerImage)
-    } else {
-      footersConfig.default = buildDocxPageNumberFooter()
-    }
-  } else if (footerImage) {
-    footersConfig.default = buildDocxImageFooter(footerImage)
-  }
+  const headersConfig = buildHeadersConfig(headerImage, allPagesImageInHeader)
 
   const doc = new Document({
     styles: {
@@ -131,24 +146,36 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
         },
       ],
     },
-    sections: [
-      {
+    sections: docSections.map((section, index) => {
+      const isFirstSection = index === 0
+      const footersConfig = buildFootersConfig(footerImage, pageNumbering, isFirstSection)
+      const topMargin =
+        DOCX_BASE_MARGIN_TWIPS + (isFirstSection || !headerOnFirstPageOnly ? headerMarginTwips : 0)
+      const sectionChildren =
+        isFirstSection && headerImage && headerOnFirstPageOnly
+          ? [buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS), ...section.elements]
+          : section.elements
+
+      return {
         properties: {
           page: {
+            size: {
+              orientation: toDocxOrientation(section.orientation),
+            },
             margin: {
-              top: DOCX_BASE_MARGIN_TWIPS + headerMarginTwips,
+              top: topMargin,
               bottom: DOCX_BASE_MARGIN_TWIPS + footerMarginTwips,
               left: 1080,
               right: 1080,
             },
           },
-          ...(pageNumbering ? { titlePage: true } : {}),
+          ...(pageNumbering && isFirstSection ? { titlePage: true } : {}),
         },
         ...(Object.keys(headersConfig).length > 0 ? { headers: headersConfig } : {}),
         ...(Object.keys(footersConfig).length > 0 ? { footers: footersConfig } : {}),
-        children: bodyChildren,
-      },
-    ],
+        children: sectionChildren,
+      }
+    }),
   })
 
   let buffer = await Packer.toBuffer(doc)
