@@ -26,6 +26,11 @@ class SectionBuilder<T> {
     this.current = { orientation: next, elements: [] }
   }
 
+  /** A section break already starts a page, so a leading element must not break again. */
+  isCurrentSectionEmpty(): boolean {
+    return this.current.elements.length === 0
+  }
+
   finish(): SurveyDocSection<T>[] {
     if (this.current.elements.length > 0) this.sections.push(this.current)
     return this.sections
@@ -387,11 +392,9 @@ export const walkEntityDef = async <T>(
   const result: T[] = []
 
   if (!isRoot) {
-    appendElements(
-      result,
-      renderer.renderEntityHeading(label(entityDef, context.lang), depth, (isMultiple && depth <= 2) || !!hasOwnPage),
-      walkOptions
-    )
+    const startsSection = walkOptions?.sectionBuilder?.isCurrentSectionEmpty() ?? false
+    const pageBreak = !startsSection && ((isMultiple && depth <= 2) || !!hasOwnPage)
+    appendElements(result, renderer.renderEntityHeading(label(entityDef, context.lang), depth, pageBreak), walkOptions)
   }
 
   if (isMultiple && isTableLayout) {

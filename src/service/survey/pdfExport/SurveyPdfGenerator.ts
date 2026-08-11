@@ -41,6 +41,13 @@ const contentWidthFor = (orientation: PrintOrientation): number => pageSizeFor(o
 const contentWidthOf = (doc: PDFKit.PDFDocument): number =>
   doc.page.width - doc.page.margins.left - doc.page.margins.right
 
+// PDFKit's bare addPage() falls back to the *document* options, which would reset a
+// landscape section back to the document's initial page size. continueOnNewPage reuses
+// the current page's own options instead.
+const addPageSameSize = (doc: PDFKit.PDFDocument): void => {
+  doc.continueOnNewPage()
+}
+
 const COLOR_DEFAULT = '#000000'
 const COLOR_TITLE = '#1F3864' // dark navy — matches Word Title style
 const COLOR_SUBTITLE = '#2E74B5' // Office blue — matches Word Heading 2 default
@@ -107,7 +114,7 @@ const renderHeading = (
   el: Extract<PdfElement, { kind: 'heading' }>,
   cell?: CellOpts
 ): void => {
-  if (el.pageBreak && !cell) doc.addPage()
+  if (el.pageBreak && !cell) addPageSameSize(doc)
   const size = HEADING_SIZES[Math.min(el.level + 1, 6)] ?? 10
   const x = cell?.x ?? MARGIN
   const width = cell?.width ?? contentWidthOf(doc)
@@ -170,7 +177,7 @@ const renderImage = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'i
     doc.font(FONT_BOLD).fontSize(10)
     const labelHeight = doc.currentLineHeight(true) * 1.1
     if (doc.y + labelHeight + imgHeight > contentBottom) {
-      doc.addPage()
+      addPageSameSize(doc)
     }
     doc.text(`${el.label}:`, x, doc.y, { width }).moveDown(0.1)
     const imageY = doc.y
@@ -208,7 +215,7 @@ const renderTable = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 't
   const displayRows = el.rows.length > 0 ? el.rows : [el.headers.map(() => '')]
   for (const row of displayRows) {
     if (y + TABLE_ROW_HEIGHT > getContentBottom(doc)) {
-      doc.addPage()
+      addPageSameSize(doc)
       y = getContentTop(doc)
     }
     drawTableRow(doc, row, y, false, colWidth)
@@ -233,7 +240,7 @@ const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 
   // If the row cannot fit on the current page, start it on a fresh page so cells stay
   // aligned horizontally instead of each cell landing on its own page.
   if (doc.y + estimatedRowHeight > getContentBottom(doc)) {
-    doc.addPage()
+    addPageSameSize(doc)
   }
 
   let rowStartY = doc.y

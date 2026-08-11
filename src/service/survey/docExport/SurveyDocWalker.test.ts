@@ -31,7 +31,7 @@ const i18n: I18n = {
 const stringRenderer: SurveyDocRenderer<string> = {
   renderTitle: (text) => [`TITLE:${text}`],
   renderSubtitle: (text) => [`SUB:${text}`],
-  renderEntityHeading: (text) => [`H:${text}`],
+  renderEntityHeading: (text, _depth, pageBreak) => [`H:${text}${pageBreak ? '|BREAK' : ''}`],
   renderEntityInstanceHeading: (text) => [`IH:${text}`],
   renderAttribute: async ({ nodeDef }) => [`A:${nodeDef.props.name}`],
   renderGridTable: () => [],
@@ -137,6 +137,14 @@ describe('walkSurvey', () => {
     expect(sections[0].orientation).toBe('portrait')
     expect(sections[1].orientation).toBe('landscape')
     expect(sections[1].elements.some((el) => el.includes('plot'))).toBe(true)
+  })
+
+  test('full export: section-opening heading does not request a redundant page break', async () => {
+    const { survey, record } = await buildSurveyWithOwnPagePlot()
+
+    const { sections } = await walkSurvey({ survey, record, i18n, cycle }, stringRenderer)
+
+    expect(sections[1].elements[0]).toBe('H:plot')
   })
 
   test('current page: entity printOrientation overrides document default', async () => {
