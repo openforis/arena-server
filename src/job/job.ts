@@ -42,7 +42,9 @@ export abstract class JobServer<C extends JobContext = JobContext, R = undefined
     }
 
     this.emitSummaryUpdateEvent = throttle(() => this.emit(JobMessageOutType.summaryUpdate, this.summary), 500)
-    this.jobs.forEach((job) => job.on(JobMessageOutType.summaryUpdate, this.onInnerJobSummaryUpdate.bind(this)))
+    for (const job of this.jobs) {
+      job.on(JobMessageOutType.summaryUpdate, this.onInnerJobSummaryUpdate.bind(this))
+    }
   }
 
   async cancel(): Promise<void> {
