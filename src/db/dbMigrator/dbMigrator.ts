@@ -9,6 +9,15 @@ import { DBMigrate } from './dbMigrate'
 
 const logger = new Logger('DBMigrator')
 
+export type SurveySchemaMigrationNotifierParams = {
+  surveyId: number
+  index: number
+  total: number
+}
+
+// invoked after each survey schema migration completes
+export type SurveySchemaMigrationNotifier = (params: SurveySchemaMigrationNotifierParams) => void | Promise<void>
+
 // App versions that require a survey schema migration.
 const APP_VERSIONS_REQUIRING_SURVEY_SCHEMA_MIGRATION = new Set(['2.8.0'])
 
@@ -36,7 +45,9 @@ const migrateSurveySchema = async (surveyId: number): Promise<void> => {
   logger.info(`migrations for survey ${surveyId} - end`)
 }
 
-const migrateSurveySchemas = async (): Promise<void> => {
+const migrateSurveySchemas = async (params: { notifier?: SurveySchemaMigrationNotifier } = {}): Promise<void> => {
+  const { notifier } = params
+
   const surveys = await SurveyRepository.getAllIdsAndAppVersions()
   const surveyIdsToMigrate = surveys
     .filter(({ appVersion }) => surveySchemaMigrationRequired(appVersion))
@@ -44,20 +55,22 @@ const migrateSurveySchemas = async (): Promise<void> => {
 
   logger.info(`starting survey migrations for ${surveyIdsToMigrate.length} out of ${surveys.length} surveys`)
 
-  for (const surveyId of surveyIdsToMigrate) {
+  const total = surveyIdsToMigrate.length
+  for (const [index, surveyId] of surveyIdsToMigrate.entries()) {
     await migrateSurveySchema(surveyId)
+    await notifier?.({ surveyId, index, total })
   }
 
   logger.info('survey migrations completed')
 }
 
-const migrateAll = async (): Promise<void> => {
+const migrateAll = async (params: { notifier?: SurveySchemaMigrationNotifier } = {}): Promise<void> => {
   try {
     logger.info('running database migrations')
 
     await migrateSchema()
 
-    await migrateSurveySchemas()
+    await migrateSurveySchemas(params)
 
     logger.info('database migrations completed')
   } catch (error: any) {

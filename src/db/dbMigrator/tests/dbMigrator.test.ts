@@ -59,4 +59,20 @@ describe('DBMigrator.migrateSurveySchemas', () => {
       '2.9.0': false, // newer than the version requiring migration: does not need migration
     })
   })
+
+  test('notifier is invoked once for every migrated survey, and not for the others', async () => {
+    const notifications: Array<{ surveyId: number; index: number; total: number }> = []
+    const notifier = jest.fn(async (params: { surveyId: number; index: number; total: number }) => {
+      notifications.push(params)
+    })
+
+    await DBMigrator.migrateSurveySchemas({ notifier })
+
+    const expectedSurveyIds = [surveyIdByAppVersion['null'], surveyIdByAppVersion['2.7.0']].sort()
+
+    expect(notifications).toHaveLength(expectedSurveyIds.length)
+    expect(notifications.map(({ surveyId }) => surveyId).sort()).toEqual(expectedSurveyIds)
+    expect(notifications.every(({ total }) => total === expectedSurveyIds.length)).toBe(true)
+    expect(notifications.map(({ index }) => index).sort()).toEqual([0, 1])
+  })
 })
