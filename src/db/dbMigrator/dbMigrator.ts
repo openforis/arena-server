@@ -44,7 +44,7 @@ const migrateSurveySchemas = async (): Promise<void> => {
 
   logger.info(`starting survey migrations for ${surveyIdsToMigrate.length} out of ${surveys.length} surveys`)
 
-  for await (const surveyId of surveyIdsToMigrate) {
+  for (const surveyId of surveyIdsToMigrate) {
     await migrateSurveySchema(surveyId)
   }
 
