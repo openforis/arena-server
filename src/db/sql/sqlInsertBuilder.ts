@@ -34,10 +34,10 @@ export class SqlInsertBuilder extends SqlBuilder {
     const columnNames: string[] = []
     const valuesParams: string[] = []
 
-    Object.keys(this._valuesByColumn).forEach((columnName) => {
+    for (const columnName of Object.keys(this._valuesByColumn)) {
       columnNames.push(columnName)
       valuesParams.push(`$/${columnName}/`)
-    })
+    }
 
     const parts = [`INSERT INTO ${this._table}`, `(${columnNames.join(', ')})`, `VALUES (${valuesParams.join(', ')})`]
 

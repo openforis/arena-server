@@ -23,36 +23,51 @@ const rowPropertyByAdvancedPropKeys: Record<(typeof advancedPropKeysDraftToTrack
     {} as Record<(typeof advancedPropKeysDraftToTrack)[number], string>
   )
 
+export type NodeDefRowTransformOptions = {
+  draft?: boolean
+  advanced?: boolean
+  backup?: boolean
+}
+
+// merges draft advanced props (props_advanced_draft) into props_advanced and tracks which keys changed
+const mergeDraftAdvancedProps = (rowUpdated: any, { draft, backup }: NodeDefRowTransformOptions): void => {
+  if (Objects.isEmpty(rowUpdated.props_advanced_draft)) return
+
+  rowUpdated[Strings.camelCase('draftAdvanced')] = true
+
+  // set updated props flags
+  for (const advancedPropKey of advancedPropKeysDraftToTrack) {
+    if (rowUpdated.props_advanced_draft[advancedPropKey]) {
+      rowUpdated[rowPropertyByAdvancedPropKeys[advancedPropKey]] = true
+    }
+  }
+
+  if (draft && !backup) {
+    // merge props_advanced and props_advanced_draft into props_advanced
+    rowUpdated.props_advanced = {
+      ...rowUpdated.props_advanced,
+      ...rowUpdated.props_advanced_draft,
+    }
+    delete rowUpdated.props_advanced_draft
+  }
+}
+
+const applyAdvancedProps = (rowUpdated: any, { draft, backup }: NodeDefRowTransformOptions): void => {
+  mergeDraftAdvancedProps(rowUpdated, { draft, backup })
+
+  if ((!backup && !draft) || Objects.isEmpty(rowUpdated.props_advanced_draft)) {
+    // ignore props_advanced_draft
+    delete rowUpdated.props_advanced_draft
+  }
+}
+
 export const rowTransformCallback =
-  ({ draft, advanced = false, backup = false }: { draft?: boolean; advanced?: boolean; backup?: boolean }) =>
+  ({ draft, advanced = false, backup = false }: NodeDefRowTransformOptions) =>
   (row: any): any => {
     const rowUpdated = { ...row }
 
     if (advanced || backup) {
-      if (!Objects.isEmpty(rowUpdated.props_advanced_draft)) {
-        // there are draft advanced props to merge with "published" advanced props
-        rowUpdated[Strings.camelCase('draftAdvanced')] = true
-
-        // set updated props flags
-        advancedPropKeysDraftToTrack.forEach((advancedPropKey) => {
-          if (rowUpdated.props_advanced_draft[advancedPropKey]) {
-            rowUpdated[rowPropertyByAdvancedPropKeys[advancedPropKey]] = true
-          }
-        })
-
-        if (draft && !backup) {
-          // merge props_advanced and props_advanced_draft into props_advanced
-          rowUpdated.props_advanced = {
-            ...row.props_advanced,
-            ...row.props_advanced_draft,
-          }
-          delete rowUpdated.props_advanced_draft
-        }
-      }
-      if ((!backup && !draft) || Objects.isEmpty(rowUpdated.props_advanced_draft)) {
-        // ignore props_advanced_draft
-        delete rowUpdated.props_advanced_draft
-      }
+      applyAdvancedProps(rowUpdated, { draft, backup })
     } else {
       delete rowUpdated.props_advanced
       delete rowUpdated.props_advanced_draft
@@ -60,13 +75,10 @@ export const rowTransformCallback =
     return DBs.transformCallback({ row: rowUpdated, draft, assocPublishedDraft: true, backup })
   }
 
-export type NodeDefinitionFetchParams = {
+export type NodeDefinitionFetchParams = NodeDefRowTransformOptions & {
   surveyId: number
   cycle?: string
-  draft?: boolean
-  advanced?: boolean
   includeDeleted?: boolean
-  backup?: boolean
   includeAnalysis?: boolean
 }
 
