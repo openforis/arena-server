@@ -1,12 +1,20 @@
 import fs from 'fs'
-import { ServiceRegistry, ServiceType, SurveyService } from '@openforis/arena-core'
+import { Versions } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
+import { SurveyRepository } from '../../repository'
 import { DB } from '../db'
 import { Schemata } from '../schemata'
 import { DBMigrate } from './dbMigrate'
 
 const logger = new Logger('DBMigrator')
+
+// App versions that require a survey schema migration.
+const APP_VERSIONS_REQUIRING_SURVEY_SCHEMA_MIGRATION = new Set(['2.8.0'])
+
+const surveySchemaMigrationRequired = (appVersion: string | null): boolean =>
+  appVersion === null ||
+  [...APP_VERSIONS_REQUIRING_SURVEY_SCHEMA_MIGRATION].some((version) => Versions.isGreaterThan(version, appVersion))
 
 const migrateSchema = async (params: { schema?: string; migrationsFolder?: string } = {}): Promise<void> => {
   const { schema = Schemata.PUBLIC, migrationsFolder = __dirname } = params
@@ -29,12 +37,14 @@ const migrateSurveySchema = async (surveyId: number): Promise<void> => {
 }
 
 const migrateSurveySchemas = async (): Promise<void> => {
-  const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
-  const surveyIds = await service.getAllIds()
+  const surveys = await SurveyRepository.getAllIdsAndAppVersions()
+  const surveyIdsToMigrate = surveys
+    .filter(({ appVersion }) => surveySchemaMigrationRequired(appVersion))
+    .map(({ id }) => id)
 
-  logger.info(`starting survey migrations for ${surveyIds.length} surveys`)
+  logger.info(`starting survey migrations for ${surveyIdsToMigrate.length} out of ${surveys.length} surveys`)
 
-  for await (const surveyId of surveyIds) {
+  for await (const surveyId of surveyIdsToMigrate) {
     await migrateSurveySchema(surveyId)
   }
 
