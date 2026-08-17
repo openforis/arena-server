@@ -68,11 +68,18 @@ describe('DBMigrator.migrateSurveySchemas', () => {
 
     await DBMigrator.migrateSurveySchemas({ notifier })
 
-    const expectedSurveyIds = [surveyIdByAppVersion['null'], surveyIdByAppVersion['2.7.0']].sort()
+    // other, pre-existing surveys in the database may also need migrating, so only assert on our own test surveys
+    const notifiedSurveyIds = notifications.map(({ surveyId }) => String(surveyId))
+    expect(notifiedSurveyIds).toEqual(
+      expect.arrayContaining([String(surveyIdByAppVersion['null']), String(surveyIdByAppVersion['2.7.0'])])
+    )
+    expect(notifiedSurveyIds).not.toContain(String(surveyIdByAppVersion['2.8.0']))
+    expect(notifiedSurveyIds).not.toContain(String(surveyIdByAppVersion['2.9.0']))
 
-    expect(notifications).toHaveLength(expectedSurveyIds.length)
-    expect(notifications.map(({ surveyId }) => surveyId).sort()).toEqual(expectedSurveyIds)
-    expect(notifications.every(({ total }) => total === expectedSurveyIds.length)).toBe(true)
-    expect(notifications.map(({ index }) => index).sort()).toEqual([0, 1])
+    // index/total should be consistent with the actual number of notifications sent
+    const totals = new Set(notifications.map(({ total }) => total))
+    expect(totals.size).toBe(1)
+    expect([...totals][0]).toBe(notifications.length)
+    expect(notifications.map(({ index }) => index).sort((a, b) => a - b)).toEqual(notifications.map((_, i) => i))
   })
 })
