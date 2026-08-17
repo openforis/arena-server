@@ -34,11 +34,11 @@ export const rowTransformCallback =
         rowUpdated[Strings.camelCase('draftAdvanced')] = true
 
         // set updated props flags
-        advancedPropKeysDraftToTrack.forEach((advancedPropKey) => {
+        for (const advancedPropKey of advancedPropKeysDraftToTrack) {
           if (rowUpdated.props_advanced_draft[advancedPropKey]) {
             rowUpdated[rowPropertyByAdvancedPropKeys[advancedPropKey]] = true
           }
-        })
+        }
 
         if (draft && !backup) {
           // merge props_advanced and props_advanced_draft into props_advanced

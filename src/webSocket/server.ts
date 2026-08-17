@@ -70,9 +70,11 @@ export class WebSocketServer {
 
   static notifyUser(userUuid: string, eventType: string, message: any): void {
     const socketIds = WebSocketServer.socketIdsByUserUuid.get(userUuid)
-    socketIds?.forEach((socketId) => {
-      WebSocketServer.notifySocket(socketId, eventType, message)
-    })
+    if (socketIds) {
+      for (const socketId of socketIds) {
+        WebSocketServer.notifySocket(socketId, eventType, message)
+      }
+    }
   }
 
   static isSocketConnected(socketId: string): boolean {
