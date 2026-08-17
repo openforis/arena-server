@@ -80,9 +80,9 @@
     "prepare": "run-s build && husky",
     "test": "run-s clean tsc:test copy-assets jest",
     "test:watch": "run-s clean tsc:test copy-assets \"jest --watchAll\"",
-    "tsc": "tsc",
-    "tsc:test": "tsc --project tsconfig.test.json",
-    "tsc:watch": "tsc --watch"
+    "tsc": "tsc --project tsconfig.build.json",
+    "tsc:test": "tsc",
+    "tsc:watch": "tsc --watch --project tsconfig.build.json"
   },
   "files": [
     "dist/**/*"
