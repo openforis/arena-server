@@ -36,6 +36,8 @@ const uploadLogFilesToS3 = async (): Promise<void> => {
 
   for (const entry of files) {
     if (!entry.isFile()) continue
+    // Avoid uploading/unlinking the actively-written log file.
+    if (entry.name === 'arena.log') continue
 
     const absolutePath = path.join(logFolder, entry.name)
     const fileStats = await stat(absolutePath)
@@ -43,8 +45,9 @@ const uploadLogFilesToS3 = async (): Promise<void> => {
 
     const key = `${trimSlashes(ProcessEnv.logS3Prefix)}/${entry.name}`
     const body = await readFile(absolutePath)
+    const contentType = entry.name.endsWith('.gz') ? 'application/gzip' : 'text/plain; charset=utf-8'
 
-    await s3Storage.putFile(key, body, 'text/plain; charset=utf-8')
+    await s3Storage.putFile(key, body, contentType)
 
     await unlink(absolutePath)
   }
