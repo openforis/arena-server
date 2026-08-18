@@ -143,8 +143,7 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     logRetentionDays: Number(env.LOG_RETENTION_DAYS) || 30,
     logUploadIntervalMs: Number(env.LOG_UPLOAD_INTERVAL_MS) || 60 * 1000,
     logS3Prefix: env.LOG_S3_PREFIX || 'logs',
-    fileStorageAwsEnabled,
-    logS3Enabled: fileStorageAwsEnabled,
+    logS3Enabled: isTrue(env.LOG_S3_ENABLED) && fileStorageAwsEnabled,
 
     // RStudio Server
     rStudioDownloadServerUrl: env.RSTUDIO_DOWNLOAD_SERVER_URL,
@@ -171,6 +170,7 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
 
     // File storage
     fileStoragePath: env.FILE_STORAGE_PATH,
+    fileStorageAwsEnabled,
     fileStorageAwsAccessKey,
     fileStorageAwsSecretAccessKey,
     fileStorageAwsS3BucketName,
