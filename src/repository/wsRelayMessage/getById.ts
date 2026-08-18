@@ -6,7 +6,7 @@ import { BaseProtocol, DB, SqlSelectBuilder, TableWsRelayMessage } from '../../d
  * @param id - Relay message ID
  * @param client - Database client
  */
-export const getById = async (id: string, client: BaseProtocol = DB): Promise<unknown | null> => {
+export const getById = async (id: string, client: BaseProtocol = DB): Promise<unknown> => {
   const table = new TableWsRelayMessage()
 
   const sql = new SqlSelectBuilder().select(table.payload).from(table).where(`${table.id} = $/id/`).build()

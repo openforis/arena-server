@@ -29,7 +29,7 @@ type Envelope = InlineEnvelope | RelayedEnvelope
 export class ClusterBus {
   private static readonly logger: Logger = new Logger('ClusterBus')
   private static listenConnection: ListenConnection | null = null
-  private static handlers: ClusterEventHandler[] = []
+  private static readonly handlers: ClusterEventHandler[] = []
   private static sweepInterval: NodeJS.Timeout | null = null
 
   static async init(): Promise<void> {
