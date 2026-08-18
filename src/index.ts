@@ -33,6 +33,9 @@ export type { JobContext, JobMessageIn, JobMessageOut } from './job'
 
 export { Logger } from './log'
 
+export { S3Storage } from './fileStorage/s3Storage'
+export type { S3StorageOptions } from './fileStorage/s3Storage'
+
 export { ProcessEnv, NodeEnv } from './processEnv'
 
 export { NodeDefRepository } from './repository'
