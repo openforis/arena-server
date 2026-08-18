@@ -19,6 +19,8 @@ import { Api } from '../../api'
 export interface InitAppOptions {
   fileSizeLimit?: number
   bodyParseLimit?: string
+  skipPublicSchemaDbMigrations?: boolean
+  skipSurveySchemaDbMigrations?: boolean
 }
 
 const defaultOptions: InitAppOptions = {
