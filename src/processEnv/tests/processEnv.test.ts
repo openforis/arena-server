@@ -1,9 +1,10 @@
 import { buildProcessEnv } from '../index'
 
 describe('ProcessEnv log S3 settings', () => {
-  test('enables log shipping when file storage S3 vars are configured', () => {
+  test('enables log shipping when LOG_S3_ENABLED is true and file storage S3 vars are configured', () => {
     const env = {
       ...process.env,
+      LOG_S3_ENABLED: 'true',
       FILE_STORAGE_AWS_ACCESS_KEY: 'key',
       FILE_STORAGE_AWS_SECRET_ACCESS_KEY: 'secret',
       FILE_STORAGE_AWS_S3_BUCKET_NAME: 'logs-bucket',
@@ -16,8 +17,9 @@ describe('ProcessEnv log S3 settings', () => {
     expect(ProcessEnv.logS3Enabled).toBe(true)
   })
 
-  test('keeps log shipping disabled when file storage S3 vars are missing', () => {
+  test('keeps log shipping disabled when file storage S3 vars are missing, even if LOG_S3_ENABLED is true', () => {
     const env = { ...process.env }
+    env.LOG_S3_ENABLED = 'true'
     delete env.FILE_STORAGE_AWS_ACCESS_KEY
     delete env.FILE_STORAGE_AWS_SECRET_ACCESS_KEY
     delete env.FILE_STORAGE_AWS_S3_BUCKET_NAME
@@ -26,6 +28,20 @@ describe('ProcessEnv log S3 settings', () => {
     const ProcessEnv = buildProcessEnv(env)
 
     expect(ProcessEnv.fileStorageAwsEnabled).toBe(false)
+    expect(ProcessEnv.logS3Enabled).toBe(false)
+  })
+
+  test('keeps log shipping disabled when LOG_S3_ENABLED is not true, even if file storage S3 vars are configured', () => {
+    const env = { ...process.env }
+    env.FILE_STORAGE_AWS_ACCESS_KEY = 'key'
+    env.FILE_STORAGE_AWS_SECRET_ACCESS_KEY = 'secret'
+    env.FILE_STORAGE_AWS_S3_BUCKET_NAME = 'logs-bucket'
+    env.FILE_STORAGE_AWS_S3_BUCKET_REGION = 'eu-central-1'
+    delete env.LOG_S3_ENABLED
+
+    const ProcessEnv = buildProcessEnv(env)
+
+    expect(ProcessEnv.fileStorageAwsEnabled).toBe(true)
     expect(ProcessEnv.logS3Enabled).toBe(false)
   })
 })
