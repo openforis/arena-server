@@ -11,6 +11,55 @@ const getJson = (val: string | undefined): unknown => {
   }
 }
 
+const decodeURIComponentSafe = (value: string): string => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+const parseDbUrl = (
+  dbUrl: string | undefined
+):
+  | {
+      pgUser?: string
+      pgPassword?: string
+      pgHost?: string
+      pgPort?: string
+      pgDatabase?: string
+    }
+  | undefined => {
+  if (!dbUrl) return undefined
+
+  try {
+    const url = new URL(dbUrl)
+    if (!['postgres:', 'postgresql:'].includes(url.protocol)) return undefined
+
+    const dbPath = url.pathname.replace(/^\/+/, '')
+
+    return {
+      pgUser: url.username ? decodeURIComponentSafe(url.username) : undefined,
+      pgPassword: url.password ? decodeURIComponentSafe(url.password) : undefined,
+      pgHost: url.hostname ? url.hostname.replace(/^\[(.*)]$/, '$1') : undefined,
+      pgPort: url.port || undefined,
+      pgDatabase: dbPath ? decodeURIComponentSafe(dbPath) : undefined,
+    }
+  } catch {
+    const fallbackMatch = dbUrl.match(/^postgres(?:ql)?:\/\/([^:]+):([^@]+)@(\[[^\]]+]|[^:/?#]+)(?::(\d+))?\/([^?#]+)/i)
+
+    if (!fallbackMatch) return undefined
+
+    return {
+      pgUser: decodeURIComponentSafe(fallbackMatch[1]),
+      pgPassword: decodeURIComponentSafe(fallbackMatch[2]),
+      pgHost: fallbackMatch[3].replace(/^\[(.*)]$/, '$1'),
+      pgPort: fallbackMatch[4],
+      pgDatabase: decodeURIComponentSafe(fallbackMatch[5]),
+    }
+  }
+}
+
 export enum NodeEnv {
   development = 'development',
   production = 'production',
@@ -19,11 +68,12 @@ export enum NodeEnv {
 
 export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
   const dbUrl = env.DATABASE_URL
-  const regExDbUrl = /postgres:\/\/([^:]+):([^@]+)@([\w.]+):(\d+)\/(\w+)/
-  const dbUrlMatch = dbUrl ? dbUrl.match(regExDbUrl) : null
-  const [pgUser, pgPassword, pgHost, pgPort, pgDatabase] = dbUrlMatch
-    ? [dbUrlMatch[1], dbUrlMatch[2], dbUrlMatch[3], dbUrlMatch[4], dbUrlMatch[5]]
-    : [env.PGUSER, env.PGPASSWORD, env.PGHOST, env.PGPORT, env.PGDATABASE]
+  const parsedDbUrl = parseDbUrl(dbUrl)
+  const pgUser = parsedDbUrl?.pgUser ?? env.PGUSER
+  const pgPassword = parsedDbUrl?.pgPassword ?? env.PGPASSWORD
+  const pgHost = parsedDbUrl?.pgHost ?? env.PGHOST
+  const pgPort = parsedDbUrl?.pgPort ?? env.PGPORT
+  const pgDatabase = parsedDbUrl?.pgDatabase ?? env.PGDATABASE
 
   const fileStorageAwsAccessKey = env.FILE_STORAGE_AWS_ACCESS_KEY
   const fileStorageAwsSecretAccessKey = env.FILE_STORAGE_AWS_SECRET_ACCESS_KEY
