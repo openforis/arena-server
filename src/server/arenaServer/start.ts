@@ -10,8 +10,8 @@ import { onShutdown } from './stop'
 
 const logger: Logger = new Logger('Arena server')
 
-export const start = (app: ArenaApp): Promise<Server> => {
-  return new Promise<Server>((resolve, reject) => {
+export const start = (app: ArenaApp): Promise<Server> =>
+  new Promise<Server>((resolve, reject) => {
     logger.info(`server starting`)
     const port = ProcessEnv.arenaPort
 
@@ -52,4 +52,3 @@ export const start = (app: ArenaApp): Promise<Server> => {
 
     server.once('listening', onListening)
   })
-}

@@ -15,7 +15,12 @@ const initServices = (): ServiceRegistry => {
 const init = async (options?: InitAppOptions): Promise<ArenaApp> => {
   initServices()
   if (!ProcessEnv.disableDbMigrations) {
-    await DBMigrator.migrateAll()
+    if (!options?.skipPublicSchemaDbMigrations) {
+      await DBMigrator.migrateSchema()
+    }
+    if (!options?.skipSurveySchemaDbMigrations) {
+      await DBMigrator.migrateSurveySchemas()
+    }
   }
   return initApp(options)
 }
