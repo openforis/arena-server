@@ -46,7 +46,8 @@ const parseDbUrl = (
       pgDatabase: dbPath ? decodeURIComponentSafe(dbPath) : undefined,
     }
   } catch {
-    const fallbackMatch = dbUrl.match(/^postgres(?:ql)?:\/\/([^:]+):([^@]+)@(\[[^\]]+]|[^:/?#]+)(?::(\d+))?\/([^?#]+)/i)
+    const fallbackRegex = /^postgres(?:ql)?:\/\/([^:]+):([^@]+)@(\[[^\]]+]|[^:/?#]+)(?::(\d+))?\/([^?#]+)/i
+    const fallbackMatch = fallbackRegex.exec(dbUrl)
 
     if (!fallbackMatch) return undefined
 
