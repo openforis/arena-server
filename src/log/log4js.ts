@@ -15,6 +15,16 @@ const withLogFolder = async (): Promise<string> => {
   return logFolder
 }
 
+const trimSlashes = (value: string): string => {
+  let start = 0
+  let end = value.length
+
+  while (start < end && value[start] === '/') start += 1
+  while (end > start && value[end - 1] === '/') end -= 1
+
+  return value.slice(start, end)
+}
+
 const uploadLogFilesToS3 = async (): Promise<void> => {
   if (!ProcessEnv.logS3Enabled) return
 
@@ -31,7 +41,7 @@ const uploadLogFilesToS3 = async (): Promise<void> => {
     const fileStats = await stat(absolutePath)
     if (fileStats.size === 0) continue
 
-    const key = `${ProcessEnv.logS3Prefix.replace(/^\/+|\/+$/g, '')}/${entry.name}`
+    const key = `${trimSlashes(ProcessEnv.logS3Prefix)}/${entry.name}`
     const body = await readFile(absolutePath)
 
     await s3Storage.putFile(key, body, 'text/plain; charset=utf-8')

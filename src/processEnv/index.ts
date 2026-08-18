@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 const isTrue = (val: any): boolean => String(val).toLocaleLowerCase() === 'true' || String(val) === '1'
 
 const getJson = (val: string | undefined): unknown => {
@@ -17,7 +19,7 @@ export enum NodeEnv {
 
 export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
   const dbUrl = env.DATABASE_URL
-  const regExDbUrl = /postgres:\/\/([^:]+):([^@]+)@([\w.\d]+):(\d+)\/(\w+)/
+  const regExDbUrl = /postgres:\/\/([^:]+):([^@]+)@([\w.]+):(\d+)\/(\w+)/
   const dbUrlMatch = dbUrl ? dbUrl.match(regExDbUrl) : null
   const [pgUser, pgPassword, pgHost, pgPort, pgDatabase] = dbUrlMatch
     ? [dbUrlMatch[1], dbUrlMatch[2], dbUrlMatch[3], dbUrlMatch[4], dbUrlMatch[5]]
@@ -41,7 +43,7 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
 
     debug: env.DEBUG === 'true',
     nodeEnv: env.NODE_ENV || NodeEnv.development,
-    tempFolder: env.TEMP_FOLDER || '/tmp/arena_upload',
+    tempFolder: env.TEMP_FOLDER || path.resolve('.tmp/arena_upload'),
     buildReport: isTrue(env.BUILD_REPORT),
 
     // Application Version
