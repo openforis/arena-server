@@ -1,6 +1,7 @@
 import { UUIDs } from '@openforis/arena-core'
 
 import { DB } from '../../../db'
+import { DBMigrator } from '../../../db/dbMigrator'
 import { ConnectedSocketRepository } from '../index'
 import { deleteTestUser, insertTestUser } from './testUtils'
 
@@ -8,6 +9,7 @@ describe('ConnectedSocketRepository', () => {
   let userUuid: string
 
   beforeAll(async () => {
+    await DBMigrator.migrateSchema()
     userUuid = await insertTestUser()
   })
 
