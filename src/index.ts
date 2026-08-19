@@ -41,7 +41,13 @@ export type { S3StorageOptions } from './fileStorage/s3Storage'
 
 export { ProcessEnv, NodeEnv } from './processEnv'
 
-export { NodeDefRepository } from './repository'
+export {
+  ConnectedSocketRepository,
+  JobRepository,
+  NodeDefRepository,
+  RecordSocketAssociationRepository,
+} from './repository'
+export type { JobRow } from './repository'
 
 export type { SurveyDocxOptions, SurveyPdfOptions } from './service/survey'
 export { SurveyDocxGenerator, SurveyPdfGenerator } from './service/survey'
