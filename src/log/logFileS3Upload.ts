@@ -27,7 +27,7 @@ const uploadLogFileToS3 = async (logFolder: string, fileName: string, s3Storage:
   const fileStats = await stat(absolutePath)
   if (shouldDeleteAfterUpload && fileStats.size === 0) return
 
-  const key = `${trimSlashes(ProcessEnv.logS3Prefix)}/${fileName}`
+  const key = `${trimSlashes(ProcessEnv.logS3Prefix)}/${trimSlashes(ProcessEnv.instanceId)}/${fileName}`
   const body = await readFile(absolutePath)
   const contentType = fileName.endsWith('.gz') ? 'application/gzip' : 'text/plain; charset=utf-8'
 

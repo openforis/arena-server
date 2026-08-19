@@ -1,3 +1,4 @@
+import os from 'node:os'
 import path from 'node:path'
 
 const isTrue = (val: any): boolean => String(val).toLocaleLowerCase() === 'true' || String(val) === '1'
@@ -91,6 +92,9 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     arenaRoot: env.ARENA_ROOT,
     arenaDist: env.ARENA_DIST,
     arenaPort: env.PORT || env.ARENA_PORT || '9090',
+
+    // Instance identity (used to avoid collisions between instances in multi-dyno/auto-scaling deployments)
+    instanceId: env.DYNO || env.HOSTNAME || os.hostname(),
 
     debug: env.DEBUG === 'true',
     nodeEnv: env.NODE_ENV || NodeEnv.development,
