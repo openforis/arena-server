@@ -1,4 +1,4 @@
-import { JobStatus, JobSummary, UserFactory, UserStatus, UserTitle, UUIDs } from '@openforis/arena-core'
+import { JobSerialized, JobStatus, UserFactory, UserStatus, UserTitle, UUIDs } from '@openforis/arena-core'
 import { Worker } from '../../thread'
 import { JobManager } from '../jobManager'
 import { JobMessageOut } from '../jobMessage'
@@ -8,12 +8,12 @@ import { SimpleJob, SimpleJobWithJobs } from './testJobs'
 const waitForJobStatus = <R>(
   worker: Worker<JobContext>,
   status: JobStatus = JobStatus.succeeded
-): Promise<JobSummary<R>> =>
-  new Promise<JobSummary<R>>((resolve) => {
+): Promise<JobSerialized<R>> =>
+  new Promise<JobSerialized<R>>((resolve) => {
     worker.on('message', (msg: JobMessageOut) => {
-      const { summary } = msg
-      if (summary.status === status) {
-        return resolve(summary)
+      const { job } = msg
+      if (job.status === status) {
+        return resolve(job)
       }
     })
   })
@@ -33,10 +33,10 @@ describe('Job', () => {
 
   test('SimpleJob', async () => {
     const worker = JobManager.executeJob({ user, type: SimpleJob.type, surveyId: 1 })
-    const summary = await waitForJobStatus<number>(worker)
+    const job = await waitForJobStatus<number>(worker)
 
-    await expect(summary.status).toBe(JobStatus.succeeded)
-    await expect(summary.result).toBe(3)
+    await expect(job.status).toBe(JobStatus.succeeded)
+    await expect(job.result).toBe(3)
   })
 
   test('SimpleJobWithJobs', async () => {
@@ -45,10 +45,10 @@ describe('Job', () => {
       type: SimpleJobWithJobs.type,
       surveyId: 1,
     })
-    const summary = await waitForJobStatus<number>(worker)
+    const job = await waitForJobStatus<number>(worker)
 
-    await expect(summary.status).toBe(JobStatus.succeeded)
-    await expect(summary.result).toBe(6)
+    await expect(job.status).toBe(JobStatus.succeeded)
+    await expect(job.result).toBe(6)
   })
 
   test('SimpleJobsWithJobs - cancel', async () => {
@@ -62,9 +62,9 @@ describe('Job', () => {
     // simulate cancel 1st inner job
     await new Promise((resolve) => setTimeout(resolve, 600))
     JobManager.cancelUserJob(userUuid)
-    const summary = await waitForJobStatus<number>(worker, JobStatus.canceled)
+    const job = await waitForJobStatus<number>(worker, JobStatus.canceled)
 
-    await expect(summary.status).toBe(JobStatus.canceled)
-    await expect(summary.result).not.toBeDefined()
+    await expect(job.status).toBe(JobStatus.canceled)
+    await expect(job.result).not.toBeDefined()
   })
 })
