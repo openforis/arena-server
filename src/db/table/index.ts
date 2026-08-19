@@ -4,6 +4,8 @@ export {
   TableSchemaPublic,
   TableConnectedSocket,
   TableInfo,
+  TableJob,
+  TableRecordSocketAssociation,
   TableSurvey,
   TableUser,
   TableUserTempAuthToken,
