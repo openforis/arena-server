@@ -8,7 +8,7 @@ import {
   isPageNumberingEnabled,
   type SurveyDocImageData,
 } from '../docExport/surveyDocImages'
-import type { SurveyDocOptions } from '../docExport/types'
+import type { PrintOrientation, SurveyDocOptions } from '../docExport/types'
 import { walkSurvey } from '../docExport/SurveyDocWalker'
 import type { PdfElement } from './PdfElement'
 import { PdfSurveyDocRenderer } from './PdfSurveyDocRenderer'
@@ -29,9 +29,24 @@ const FONT_BOLD = 'Helvetica-Bold'
 const MARGIN = 50
 // pt from page bottom — positions the page number label in the bottom edge margin
 const PAGE_NUMBER_BOTTOM_OFFSET = 20
-const PAGE_WIDTH = 595.28 // A4 points
-const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
+const A4_PORTRAIT: [number, number] = [595.28, 841.89]
+const A4_LANDSCAPE: [number, number] = [841.89, 595.28]
 const EMPTY_FIELD = '________________________________'
+
+const pageSizeFor = (orientation: PrintOrientation): [number, number] =>
+  orientation === 'landscape' ? A4_LANDSCAPE : A4_PORTRAIT
+
+const contentWidthFor = (orientation: PrintOrientation): number => pageSizeFor(orientation)[0] - MARGIN * 2
+
+const contentWidthOf = (doc: PDFKit.PDFDocument): number =>
+  doc.page.width - doc.page.margins.left - doc.page.margins.right
+
+// PDFKit's bare addPage() falls back to the *document* options, which would reset a
+// landscape section back to the document's initial page size. continueOnNewPage reuses
+// the current page's own options instead.
+const addPageSameSize = (doc: PDFKit.PDFDocument): void => {
+  doc.continueOnNewPage()
+}
 
 const COLOR_DEFAULT = '#000000'
 const COLOR_TITLE = '#1F3864' // dark navy — matches Word Title style
@@ -68,7 +83,7 @@ const estimateElementHeight = (el: PdfElement): number => {
 
 const renderTitle = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'title' }>, cell?: CellOpts): void => {
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   doc
     .fillColor(COLOR_TITLE)
     .font(FONT_BOLD)
@@ -84,7 +99,7 @@ const renderSubtitle = (
   cell?: CellOpts
 ): void => {
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   doc
     .fillColor(COLOR_SUBTITLE)
     .font(FONT_BOLD)
@@ -99,10 +114,10 @@ const renderHeading = (
   el: Extract<PdfElement, { kind: 'heading' }>,
   cell?: CellOpts
 ): void => {
-  if (el.pageBreak && !cell) doc.addPage()
+  if (el.pageBreak && !cell) addPageSameSize(doc)
   const size = HEADING_SIZES[Math.min(el.level + 1, 6)] ?? 10
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   doc.font(FONT_BOLD).fontSize(size).text(el.text, x, doc.y, { width }).moveDown(0.2)
 }
 
@@ -113,7 +128,7 @@ const renderFieldRow = (
 ): void => {
   const value = el.value ?? el.placeholder ?? EMPTY_FIELD
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   doc.font(FONT_BOLD).fontSize(10).text(`${el.label}: `, x, doc.y, { continued: true, width })
   doc.font(FONT_NORMAL).text(value)
   doc.moveDown(0.2)
@@ -125,7 +140,7 @@ const renderCheckboxRow = (
   cell?: CellOpts
 ): void => {
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   const optionParts = el.options.map((opt) => `${opt.checked ? '[x]' : '[ ]'} ${opt.text}`)
   doc.font(FONT_BOLD).fontSize(10).text(`${el.label}: `, x, doc.y, { continued: true, width })
   doc.font(FONT_NORMAL).text(optionParts.join('   '))
@@ -138,7 +153,7 @@ const renderCompositeBlock = (
   cell?: CellOpts
 ): void => {
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   doc.font(FONT_BOLD).fontSize(10).text(`${el.label}:`, x, doc.y, { width })
   for (const subField of el.subFields) {
     const val = subField.value ?? subField.placeholder ?? EMPTY_FIELD
@@ -150,7 +165,7 @@ const renderCompositeBlock = (
 
 const renderImage = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'image' }>, cell?: CellOpts): void => {
   const x = cell?.x ?? MARGIN
-  const width = cell?.width ?? CONTENT_WIDTH
+  const width = cell?.width ?? contentWidthOf(doc)
   try {
     const imgWidth = Math.min(el.width, width)
     const ratio = el.width > 0 ? imgWidth / el.width : 1
@@ -162,7 +177,7 @@ const renderImage = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'i
     doc.font(FONT_BOLD).fontSize(10)
     const labelHeight = doc.currentLineHeight(true) * 1.1
     if (doc.y + labelHeight + imgHeight > contentBottom) {
-      doc.addPage()
+      addPageSameSize(doc)
     }
     doc.text(`${el.label}:`, x, doc.y, { width }).moveDown(0.1)
     const imageY = doc.y
@@ -191,7 +206,7 @@ const drawTableRow = (doc: PDFKit.PDFDocument, values: string[], y: number, bold
 
 const renderTable = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'table' }>): void => {
   if (el.headers.length === 0) return
-  const colWidth = CONTENT_WIDTH / el.headers.length
+  const colWidth = contentWidthOf(doc) / el.headers.length
 
   let y = doc.y
   drawTableRow(doc, el.headers, y, true, colWidth)
@@ -200,7 +215,7 @@ const renderTable = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 't
   const displayRows = el.rows.length > 0 ? el.rows : [el.headers.map(() => '')]
   for (const row of displayRows) {
     if (y + TABLE_ROW_HEIGHT > getContentBottom(doc)) {
-      doc.addPage()
+      addPageSameSize(doc)
       y = getContentTop(doc)
     }
     drawTableRow(doc, row, y, false, colWidth)
@@ -216,7 +231,7 @@ let serializeElement: (doc: PDFKit.PDFDocument, el: PdfElement, cell?: CellOpts)
 
 const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 'gridRow' }>): void => {
   const { cells, columnCount } = el
-  const baseColWidth = CONTENT_WIDTH / columnCount
+  const baseColWidth = contentWidthOf(doc) / columnCount
   const estimatedRowHeight = Math.max(
     TABLE_ROW_HEIGHT,
     ...cells.map((cell) => cell.content.reduce((sum, elem) => sum + estimateElementHeight(elem), 0))
@@ -225,7 +240,7 @@ const renderGridRow = (doc: PDFKit.PDFDocument, el: Extract<PdfElement, { kind: 
   // If the row cannot fit on the current page, start it on a fresh page so cells stay
   // aligned horizontally instead of each cell landing on its own page.
   if (doc.y + estimatedRowHeight > getContentBottom(doc)) {
-    doc.addPage()
+    addPageSameSize(doc)
   }
 
   let rowStartY = doc.y
@@ -281,10 +296,20 @@ const serializeElements = (doc: PDFKit.PDFDocument, elements: PdfElement[]): voi
   for (const el of elements) serializeElement(doc, el)
 }
 
+const scaledSurveyDocImageSize = (
+  doc: PDFKit.PDFDocument,
+  image: SurveyDocImageData
+): { width: number; height: number } => {
+  const width = Math.min(image.width, contentWidthOf(doc))
+  const height = image.height * (width / image.width)
+  return { width, height }
+}
+
 const drawSurveyDocImage = (doc: PDFKit.PDFDocument, image: SurveyDocImageData, y: number): void => {
   try {
-    const x = MARGIN + (CONTENT_WIDTH - image.width) / 2
-    doc.image(image.buffer, x, y, { width: image.width, height: image.height })
+    const { width, height } = scaledSurveyDocImageSize(doc, image)
+    const x = MARGIN + (contentWidthOf(doc) - width) / 2
+    doc.image(image.buffer, x, y, { width, height })
   } catch {
     // Ignore unsupported or corrupted image data.
   }
@@ -301,7 +326,8 @@ const drawPageDecorations = (
     drawSurveyDocImage(doc, headerImage, DOC_PAGE_EDGE_MARGIN_PT)
   }
   if (footerImage) {
-    const footerY = doc.page.height - DOC_PAGE_EDGE_MARGIN_PT - footerImage.height
+    const { height } = scaledSurveyDocImageSize(doc, footerImage)
+    const footerY = doc.page.height - DOC_PAGE_EDGE_MARGIN_PT - height
     drawSurveyDocImage(doc, footerImage, footerY)
   }
 }
@@ -311,8 +337,11 @@ const drawPageDecorations = (
 const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfResult> => {
   const pageNumbering = isPageNumberingEnabled(options)
   const renderer = new PdfSurveyDocRenderer()
-  const { elements, surveyName } = await walkSurvey(options, renderer)
-  const { headerImage, footerImage } = await fetchSurveyDocImages(options, { maxWidth: CONTENT_WIDTH })
+  const { sections, surveyName } = await walkSurvey(options, renderer)
+  const firstOrientation = sections[0]?.orientation ?? options.orientation ?? 'portrait'
+  const orientations = sections.length > 0 ? sections.map((s) => s.orientation) : [firstOrientation]
+  const maxContentWidth = Math.max(...orientations.map((o) => contentWidthFor(o)))
+  const { headerImage, footerImage } = await fetchSurveyDocImages(options, { maxWidth: maxContentWidth })
   const headerOnFirstPageOnly = isHeaderOnFirstPageOnly(options)
 
   const headerHeight = headerImage?.height ?? 0
@@ -325,18 +354,20 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
       ? DOC_PAGE_EDGE_MARGIN_PT + headerHeight + DOC_HEADER_FOOTER_GAP_PT
       : DOC_PAGE_EDGE_MARGIN_PT
   const bottomMargin = DOC_PAGE_EDGE_MARGIN_PT + footerHeight + (footerHeight > 0 ? DOC_HEADER_FOOTER_GAP_PT : 0)
+  const pageMargins = {
+    top: topMargin,
+    bottom: bottomMargin,
+    left: MARGIN,
+    right: MARGIN,
+  }
 
   return new Promise<SurveyPdfResult>((resolve, reject) => {
     const doc = new PDFDocument({
-      size: 'A4',
-      margins: {
-        top: topMargin,
-        bottom: bottomMargin,
-        left: MARGIN,
-        right: MARGIN,
-      },
+      size: pageSizeFor(firstOrientation),
+      margins: pageMargins,
       // Buffer pages so we can go back and stamp page numbers once we know the total.
       bufferPages: pageNumbering,
+      autoFirstPage: true,
     })
     const chunks: Buffer[] = []
     let pageIndex = 0
@@ -355,7 +386,14 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
     if (headerImage && headerOnFirstPageOnly) {
       doc.y = DOC_PAGE_EDGE_MARGIN_PT + headerImage.height + DOC_HEADER_FOOTER_GAP_PT
     }
-    serializeElements(doc, elements)
+
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i]
+      if (i > 0) {
+        doc.addPage({ size: pageSizeFor(section.orientation), margins: pageMargins })
+      }
+      serializeElements(doc, section.elements)
+    }
 
     if (pageNumbering) {
       const range = doc.bufferedPageRange()
@@ -371,7 +409,7 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
           .fontSize(9)
           .fillColor(COLOR_DEFAULT)
           .text(`${i + 1} of ${totalPages}`, MARGIN, doc.page.height - PAGE_NUMBER_BOTTOM_OFFSET, {
-            width: CONTENT_WIDTH,
+            width: contentWidthOf(doc),
             align: 'right',
           })
         doc.page.margins.bottom = savedBottomMargin

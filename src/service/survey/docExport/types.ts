@@ -8,6 +8,9 @@ import type {
   Survey,
 } from '@openforis/arena-core'
 
+export type PrintOrientation = 'portrait' | 'landscape'
+export type SurveyDocExportScope = 'full' | 'currentPage'
+
 export interface SurveyDocOptions {
   survey: Survey
   cycle?: string
@@ -21,6 +24,19 @@ export interface SurveyDocOptions {
   headerOnFirstPageOnly?: boolean
   /** When false, page numbers are suppressed; defaults to true. */
   pageNumbering?: boolean
+  /** Export scope; defaults to full survey. */
+  exportScope?: SurveyDocExportScope
+  /** Entity definition UUID for current-page export. */
+  entityDefUuid?: string
+  /** Entity node UUID for current-page export. */
+  entityNodeUuid?: string
+  /** Document default print orientation; defaults to portrait. */
+  orientation?: PrintOrientation
+}
+
+export interface SurveyDocSection<T> {
+  orientation: PrintOrientation
+  elements: T[]
 }
 
 export interface RenderContext {

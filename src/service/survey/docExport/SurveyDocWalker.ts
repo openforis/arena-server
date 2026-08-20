@@ -2,8 +2,62 @@ import type { ArenaRecord, Node as ArenaNode, NodeDefEntity, NodeDefEntityChildP
 import { NodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { formatNodeValue, getIsTableLayout, label } from './common'
+import { DEFAULT_PRINT_ORIENTATION, resolvePrintOrientation } from './printOrientation'
 import type { GridRow, SurveyDocRenderer } from './SurveyDocRenderer'
-import type { RenderContext, SurveyDocOptions } from './types'
+import type { PrintOrientation, RenderContext, SurveyDocOptions, SurveyDocSection } from './types'
+
+// ─── Section Builder ───────────────────────────────────────────────────────────
+
+class SectionBuilder<T> {
+  private sections: SurveyDocSection<T>[] = []
+  private current: SurveyDocSection<T>
+
+  constructor(initial: PrintOrientation) {
+    this.current = { orientation: initial, elements: [] }
+  }
+
+  push(...els: T[]): void {
+    this.current.elements.push(...els)
+  }
+
+  ensureOrientation(next: PrintOrientation): void {
+    if (next === this.current.orientation) return
+    if (this.current.elements.length > 0) this.sections.push(this.current)
+    this.current = { orientation: next, elements: [] }
+  }
+
+  /** A section break already starts a page, so a leading element must not break again. */
+  isCurrentSectionEmpty(): boolean {
+    return this.current.elements.length === 0
+  }
+
+  finish(): SurveyDocSection<T>[] {
+    if (this.current.elements.length > 0) this.sections.push(this.current)
+    return this.sections
+  }
+}
+
+interface WalkOptions<T> {
+  includeOwnPageEntities?: boolean
+  sectionBuilder?: SectionBuilder<T>
+  documentDefault?: PrintOrientation
+}
+
+const appendElements = <T>(target: T[], elements: T[], walkOptions?: WalkOptions<T>): void => {
+  if (elements.length === 0) return
+  if (walkOptions?.sectionBuilder) {
+    walkOptions.sectionBuilder.push(...elements)
+  } else {
+    target.push(...elements)
+  }
+}
+
+/** Grid cells must accumulate content locally; only the finished table joins sectionBuilder. */
+const withoutSectionBuilder = <T>(walkOptions?: WalkOptions<T>): WalkOptions<T> | undefined => {
+  if (!walkOptions?.sectionBuilder) return walkOptions
+  const { sectionBuilder: _sectionBuilder, ...rest } = walkOptions
+  return rest
+}
 
 // ─── Relevance / Visibility Helper ───────────────────────────────────────────
 
@@ -56,10 +110,11 @@ const renderGridCellContent = async <T>(
   context: RenderContext,
   depth: number,
   parentEntityNode: ArenaNode | undefined,
-  maxX: number
+  maxX: number,
+  walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   if (NodeDefs.isEntity(nodeDef)) {
-    return walkEntityDef(renderer, nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode)
+    return walkEntityDef(renderer, nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions)
   }
   if (NodeDefs.isHidden(nodeDef)) return []
   const { record } = context
@@ -75,7 +130,8 @@ const walkEntityChildrenGrid = async <T>(
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
-  parentEntityNode?: ArenaNode
+  parentEntityNode?: ArenaNode,
+  walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { survey, cycle } = context
   const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef) as NodeDefEntityChildPosition[]
@@ -96,6 +152,7 @@ const walkEntityChildrenGrid = async <T>(
 
   type PendingCell = { promise: Promise<T[]>; colSpan?: number; rowSpan?: number }
 
+  const gridCellWalkOptions = withoutSectionBuilder(walkOptions)
   const gridRows: Array<GridRow<T>> = []
   for (let y = 0; y < maxY; y++) {
     const pending: PendingCell[] = []
@@ -111,7 +168,16 @@ const walkEntityChildrenGrid = async <T>(
       const h = item.h ?? 1
       markSpannedCells(skip, x, y, w, h)
       pending.push({
-        promise: renderGridCellContent(renderer, nodeDef, item, context, depth, parentEntityNode, maxX),
+        promise: renderGridCellContent(
+          renderer,
+          nodeDef,
+          item,
+          context,
+          depth,
+          parentEntityNode,
+          maxX,
+          gridCellWalkOptions
+        ),
         colSpan: w > 1 ? w : undefined,
         rowSpan: h > 1 ? h : undefined,
       })
@@ -125,14 +191,22 @@ const walkEntityChildrenGrid = async <T>(
 
 // ─── Default (flat) Walker ────────────────────────────────────────────────────
 
+const isChildEntityOnOwnPage = (cycle: string, parentEntityDef: NodeDefEntity, childEntityDef: NodeDefEntity): boolean => {
+  const parentPageUuid = NodeDefs.getPageUuid(cycle)(parentEntityDef)
+  const childPageUuid = NodeDefs.getPageUuid(cycle)(childEntityDef)
+  return Boolean(childPageUuid && childPageUuid !== parentPageUuid)
+}
+
 const walkEntityChildrenDefault = async <T>(
   renderer: SurveyDocRenderer<T>,
   entityDef: NodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
-  parentEntityNode?: ArenaNode
+  parentEntityNode?: ArenaNode,
+  walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { survey, cycle, record } = context
+  const parentEntity = entityDef as NodeDefEntity
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
     nodeDef: entityDef,
@@ -143,7 +217,12 @@ const walkEntityChildrenDefault = async <T>(
   const result: T[] = []
   for (const child of children) {
     if (NodeDefs.isEntity(child)) {
-      result.push(...(await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode)))
+      if (isChildEntityOnOwnPage(cycle, parentEntity, child as NodeDefEntity)) continue
+      appendElements(
+        result,
+        await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions),
+        walkOptions
+      )
     } else {
       if (NodeDefs.isHidden(child)) continue
       let childNode: ArenaNode | undefined
@@ -151,7 +230,11 @@ const walkEntityChildrenDefault = async <T>(
         childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
       }
       if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) continue
-      result.push(...(await renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })))
+      appendElements(
+        result,
+        await renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode }),
+        walkOptions
+      )
     }
   }
   return result
@@ -202,7 +285,8 @@ export const walkEntityChildren = async <T>(
   entityDef: NodeDefEntity,
   context: RenderContext,
   depth: number,
-  parentEntityNode?: ArenaNode
+  parentEntityNode?: ArenaNode,
+  walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { survey, cycle } = context
   const childDefs = Surveys.getNodeDefChildrenSorted({
@@ -220,11 +304,37 @@ export const walkEntityChildren = async <T>(
   const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef)
   const result =
     layoutChildren.length > 0
-      ? await walkEntityChildrenGrid(renderer, entityDef, context, depth, parentEntityNode)
-      : await walkEntityChildrenDefault(renderer, entityDef, context, depth, parentEntityNode)
+      ? await walkEntityChildrenGrid(renderer, entityDef, context, depth, parentEntityNode, walkOptions)
+      : await walkEntityChildrenDefault(renderer, entityDef, context, depth, parentEntityNode, walkOptions)
 
+  if (walkOptions?.includeOwnPageEntities === false) {
+    return result
+  }
+
+  const documentDefault = walkOptions?.documentDefault ?? DEFAULT_PRINT_ORIENTATION
+  if (walkOptions?.sectionBuilder) {
+    walkOptions.sectionBuilder.push(...result)
+  }
   for (const childEntityDef of entityDefsInOwnPage) {
-    result.push(...(await walkEntityDef(renderer, childEntityDef, context, depth + 1, parentEntityNode, true)))
+    const childOrientation = resolvePrintOrientation(childEntityDef, documentDefault)
+    walkOptions?.sectionBuilder?.ensureOrientation(childOrientation)
+    const childElements = await walkEntityDef(
+      renderer,
+      childEntityDef,
+      context,
+      depth + 1,
+      parentEntityNode,
+      true,
+      walkOptions
+    )
+    if (walkOptions?.sectionBuilder) {
+      walkOptions.sectionBuilder.push(...childElements)
+    } else {
+      result.push(...childElements)
+    }
+  }
+  if (walkOptions?.sectionBuilder) {
+    return []
   }
   return result
 }
@@ -236,7 +346,8 @@ const walkEntityNodes = async <T>(
   entityNodes: ArenaNode[],
   entityDef: NodeDefEntity,
   context: RenderContext,
-  depth: number
+  depth: number,
+  walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { record } = context
   const visibleNodes = record ? entityNodes.filter((node) => isNodeRelevantAndVisible(record, node)) : entityNodes
@@ -244,9 +355,13 @@ const walkEntityNodes = async <T>(
   for (let index = 0; index < visibleNodes.length; index++) {
     const entityNode = visibleNodes[index]
     if (visibleNodes.length > 1) {
-      result.push(...renderer.renderEntityInstanceHeading(`${label(entityDef, context.lang)} #${index + 1}`, depth))
+      appendElements(
+        result,
+        renderer.renderEntityInstanceHeading(`${label(entityDef, context.lang)} #${index + 1}`, depth),
+        walkOptions
+      )
     }
-    result.push(...(await walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode)))
+    result.push(...(await walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode, walkOptions)))
   }
   return result
 }
@@ -259,7 +374,8 @@ export const walkEntityDef = async <T>(
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode,
-  hasOwnPage?: boolean
+  hasOwnPage?: boolean,
+  walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { record } = context
   const isRoot = NodeDefs.isRoot(entityDef)
@@ -276,21 +392,21 @@ export const walkEntityDef = async <T>(
   const result: T[] = []
 
   if (!isRoot) {
-    result.push(
-      ...renderer.renderEntityHeading(label(entityDef, context.lang), depth, (isMultiple && depth <= 2) || !!hasOwnPage)
-    )
+    const startsSection = walkOptions?.sectionBuilder?.isCurrentSectionEmpty() ?? false
+    const pageBreak = !startsSection && ((isMultiple && depth <= 2) || !!hasOwnPage)
+    appendElements(result, renderer.renderEntityHeading(label(entityDef, context.lang), depth, pageBreak), walkOptions)
   }
 
   if (isMultiple && isTableLayout) {
-    result.push(...walkEntityAsTable(renderer, entityDef, context, parentEntityNode))
+    appendElements(result, walkEntityAsTable(renderer, entityDef, context, parentEntityNode), walkOptions)
   } else if (isMultiple) {
     if (entityNodes.length > 0) {
-      result.push(...(await walkEntityNodes(renderer, entityNodes, entityDef, context, depth)))
+      result.push(...(await walkEntityNodes(renderer, entityNodes, entityDef, context, depth, walkOptions)))
     } else {
-      result.push(...(await walkEntityChildren(renderer, entityDef, context, depth, parentEntityNode)))
+      result.push(...(await walkEntityChildren(renderer, entityDef, context, depth, parentEntityNode, walkOptions)))
     }
   } else {
-    result.push(...(await walkEntityChildren(renderer, entityDef, context, depth, entityNodes[0])))
+    result.push(...(await walkEntityChildren(renderer, entityDef, context, depth, entityNodes[0], walkOptions)))
   }
 
   return result
@@ -298,28 +414,69 @@ export const walkEntityDef = async <T>(
 
 // ─── Top-level Entry Point ────────────────────────────────────────────────────
 
+const resolveCurrentPageEntity = (
+  options: SurveyDocOptions,
+  context: RenderContext
+): { entityDef: NodeDefEntity; entityNode: ArenaNode } => {
+  const { entityDefUuid, entityNodeUuid } = options
+  if (!entityDefUuid || !entityNodeUuid) {
+    throw new Error('Missing entityDefUuid and entityNodeUuid for current-page export')
+  }
+  const { survey, record } = context
+  if (!record) {
+    throw new Error('Record is required for current-page export')
+  }
+  const entityDef = Surveys.getNodeDefByUuid({ survey, uuid: entityDefUuid })
+  const entityNode = Records.getNodeByUuid(entityNodeUuid)(record)
+  if (!entityDef || !entityNode || !NodeDefs.isEntity(entityDef)) {
+    throw new Error('Entity not found for current-page export')
+  }
+  if (entityNode.nodeDefUuid !== entityDefUuid) {
+    throw new Error('Entity node does not belong to the specified entity definition')
+  }
+  return { entityDef: entityDef as NodeDefEntity, entityNode }
+}
+
 export const walkSurvey = async <T>(
   options: SurveyDocOptions,
   renderer: SurveyDocRenderer<T>
-): Promise<{ elements: T[]; surveyName: string }> => {
+): Promise<{ sections: SurveyDocSection<T>[]; surveyName: string }> => {
   const { survey, i18n, record, fileProvider } = options
   const lang = options.lang ?? Surveys.getDefaultLanguage(survey)
   const cycle = options.cycle ?? Surveys.getDefaultCycleKey(survey) ?? Surveys.getLastCycleKey(survey)
   const context: RenderContext = { survey, lang, cycle, i18n, record, fileProvider }
+  const documentDefault = options.orientation ?? DEFAULT_PRINT_ORIENTATION
+  const exportScope = options.exportScope ?? 'full'
 
   const surveyName = Surveys.getName(survey)
+
+  if (exportScope === 'currentPage') {
+    const { entityDef, entityNode } = resolveCurrentPageEntity(options, context)
+    const orientation = resolvePrintOrientation(entityDef, documentDefault)
+    const entityLabel = label(entityDef, lang)
+    const elements: T[] = [
+      ...renderer.renderTitle(entityLabel, false),
+      ...(await walkEntityChildren(renderer, entityDef, context, 0, entityNode, {
+        includeOwnPageEntities: false,
+        documentDefault,
+      })),
+    ]
+    return { sections: [{ orientation, elements }], surveyName }
+  }
+
   const surveyLabel = Surveys.getLabel(lang)(survey)
   const surveyDescription = Surveys.getDescription(lang)(survey)
-
   const rootDef = Surveys.getNodeDefRoot({ survey })
   const rootEntityNode = record ? Records.getRoot(record) : undefined
+  const rootOrientation = resolvePrintOrientation(rootDef, documentDefault)
+  const sectionBuilder = new SectionBuilder<T>(rootOrientation)
+  const walkOptions: WalkOptions<T> = { sectionBuilder, documentDefault }
 
-  const elements: T[] = []
-  elements.push(...renderer.renderTitle(surveyLabel ?? surveyName, !!surveyDescription))
+  sectionBuilder.push(...renderer.renderTitle(surveyLabel ?? surveyName, !!surveyDescription))
   if (surveyDescription) {
-    elements.push(...renderer.renderSubtitle(surveyDescription))
+    sectionBuilder.push(...renderer.renderSubtitle(surveyDescription))
   }
-  elements.push(...(await walkEntityChildren(renderer, rootDef, context, 0, rootEntityNode)))
+  sectionBuilder.push(...(await walkEntityChildren(renderer, rootDef, context, 0, rootEntityNode, walkOptions)))
 
-  return { elements, surveyName }
+  return { sections: sectionBuilder.finish(), surveyName }
 }
