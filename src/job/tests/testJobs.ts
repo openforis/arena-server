@@ -9,7 +9,7 @@ export class SimpleJob extends JobServer<SimpleJobContext, number> {
   static readonly type: string = 'simple'
 
   protected async execute(): Promise<void> {
-    this.summary.total = 1
+    this.total = 1
 
     // simulate async job
     await new Promise((resolve) => setTimeout(resolve, 500))
@@ -33,6 +33,6 @@ export class SimpleJobWithJobs extends SimpleJob {
 
   protected async prepareResult(): Promise<number> {
     await super.prepareResult()
-    return this.jobs.reduce<number>((total, job) => total + job.summary.result, 0)
+    return this.jobs.reduce<number>((total, job) => total + (job.result ?? 0), 0)
   }
 }

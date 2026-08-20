@@ -1,18 +1,18 @@
-import { JobSummary } from '@openforis/arena-core'
+import { JobSerialized } from '@openforis/arena-core'
 
 import { WorkerMessage } from '../thread'
 
 export enum JobMessageInType {
-  getSummary = 'getSummary',
+  getStatus = 'getStatus',
   cancel = 'cancel',
 }
 
 export enum JobMessageOutType {
-  summaryUpdate = 'summaryUpdate',
+  jobUpdate = 'jobUpdate',
 }
 
 export type JobMessageIn = WorkerMessage<JobMessageInType>
 
 export interface JobMessageOut extends WorkerMessage<JobMessageOutType> {
-  summary: JobSummary<any>
+  job: JobSerialized<any>
 }
