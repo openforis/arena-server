@@ -1,4 +1,5 @@
 import { JobContext as CoreJobContext } from '@openforis/arena-core'
+
 import { BaseProtocol } from '../db'
 
 export interface JobContext extends CoreJobContext {
