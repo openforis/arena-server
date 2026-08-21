@@ -3,6 +3,9 @@ export type { ArenaApp, ExpressInitializer } from './server'
 
 export { ApiEndpoint, ApiAuthMiddleware } from './api'
 
+export { ClusterBus, runWithClusterLock } from './clusterBus'
+export type { ClusterEvent } from './clusterBus'
+
 export {
   DB,
   DBMigrator,
@@ -38,7 +41,13 @@ export type { S3StorageOptions } from './fileStorage/s3Storage'
 
 export { ProcessEnv, NodeEnv } from './processEnv'
 
-export { NodeDefRepository } from './repository'
+export {
+  ConnectedSocketRepository,
+  JobRepository,
+  NodeDefRepository,
+  RecordSocketAssociationRepository,
+} from './repository'
+export type { JobRow } from './repository'
 
 export type { SurveyDocxOptions, SurveyPdfOptions } from './service/survey'
 export { SurveyDocxGenerator, SurveyPdfGenerator } from './service/survey'
