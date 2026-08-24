@@ -47,7 +47,8 @@ describe('logFileS3Upload', () => {
     // Run 1: server starts, writes to the live arena.log file, uploader ships it to S3.
     await writeFile(path.join(logFolder, 'arena.log'), 'run 1 content')
     jest.resetModules()
-    const firstRun = await import('../logFileS3Upload.js')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
+    const firstRun = require('../logFileS3Upload')
     await firstRun.uploadLogFilesToS3()
 
     expect(putFileMock).toHaveBeenCalledTimes(1)
@@ -58,7 +59,8 @@ describe('logFileS3Upload', () => {
     putFileMock.mockClear()
     await writeFile(path.join(logFolder, 'arena.log'), 'run 2 content')
     jest.resetModules()
-    const secondRun = await import('../logFileS3Upload.js')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
+    const secondRun = require('../logFileS3Upload')
     await secondRun.uploadLogFilesToS3()
 
     expect(putFileMock).toHaveBeenCalledTimes(1)
@@ -78,7 +80,8 @@ describe('logFileS3Upload', () => {
     listFilesMock.mockResolvedValue([staleFile, freshFile])
 
     jest.resetModules()
-    const { uploadLogFilesToS3 } = await import('../logFileS3Upload.js')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
+    const { uploadLogFilesToS3 } = require('../logFileS3Upload')
     await uploadLogFilesToS3()
 
     expect(listFilesMock).toHaveBeenCalledWith('logs/')
@@ -91,7 +94,8 @@ describe('logFileS3Upload', () => {
     listFilesMock.mockResolvedValue([{ key: 'logs/instance-a/arena.log', lastModified: new Date() }])
 
     jest.resetModules()
-    const { uploadLogFilesToS3 } = await import('../logFileS3Upload.js')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
+    const { uploadLogFilesToS3 } = require('../logFileS3Upload')
     await uploadLogFilesToS3()
 
     expect(deleteFilesMock).not.toHaveBeenCalled()
