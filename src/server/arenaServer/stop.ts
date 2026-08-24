@@ -2,11 +2,13 @@ import { Server } from 'http'
 
 import { DB } from '../../db'
 import { Logger } from '../../log'
+import { WebSocketServer } from '../../webSocket'
 
 const logger: Logger = new Logger('Arena server')
 
 export const onShutdown = async (): Promise<void> => {
   logger.info(`server shutting down`)
+  await WebSocketServer.shutdown()
   await DB.$pool.end()
 }
 
