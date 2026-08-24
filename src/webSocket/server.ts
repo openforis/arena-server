@@ -50,11 +50,15 @@ export class WebSocketServer {
     }
   }
 
-  static init(_app: ArenaApp, server: Server): void {
+  static async init(_app: ArenaApp, server: Server): Promise<void> {
     const socketServer = new SocketServer(server)
 
-    ClusterBus.init().catch((error) => WebSocketServer.logger.error(`error initializing cluster bus: ${error}`))
     ClusterBus.onEvent(WebSocketServer.onClusterEvent)
+    // Must be awaited: notifyUser/notifySocket rely on this dyno receiving its own NOTIFY
+    // (see onClusterEvent) for local delivery. Publishing before LISTEN is active would
+    // silently drop notifications for sockets connected to this dyno. Errors are swallowed
+    // (logged only) so a cluster bus outage doesn't prevent the HTTP server from starting.
+    await ClusterBus.init().catch((error) => WebSocketServer.logger.error(`error initializing cluster bus: ${error}`))
 
     socketServer.on(WebSocketEvent.connection, (socket) => {
       const userUuid = WebSocketServer.verifyAuthToken({ socket })
@@ -108,7 +112,8 @@ export class WebSocketServer {
       return true
     }
     // Not held by this dyno: it may be connected to another one - broadcast and let its
-    // owner (if any) deliver. Best effort, matching the pre-existing "self-heal" behavior.
+    // owner (if any) deliver. Best effort; the return value reflects local delivery only,
+    // preserving the pre-existing "false means self-heal/remove stale association" contract.
     WebSocketServer.logger.debug(`socket with ID ${socketId} not found locally, broadcasting to cluster`)
     ClusterBus.publish({
       targetType: ClusterEventTargetType.socket,
@@ -116,7 +121,7 @@ export class WebSocketServer {
       eventType,
       message,
     }).catch((error) => WebSocketServer.logger.error(`error broadcasting to socket ${socketId}: ${error}`))
-    return true
+    return false
   }
 
   static notifyUser(userUuid: string, eventType: string, message: any): void {
