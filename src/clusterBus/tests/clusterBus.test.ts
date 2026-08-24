@@ -1,4 +1,5 @@
 import { DB } from '../../db'
+import { DBMigrator } from '../../db/dbMigrator'
 import { ClusterBus } from '../clusterBus'
 import { runWithClusterLock } from '../clusterLock'
 import { ClusterEvent } from '../types'
@@ -17,6 +18,7 @@ const waitFor = async (predicate: () => boolean, timeoutMs = 2000): Promise<void
 // pool teardown must each run exactly once for the whole file, regardless of how many
 // describe blocks use them.
 beforeAll(async () => {
+  await DBMigrator.migrateSchema()
   await ClusterBus.init()
   // A single handler collecting every event: ClusterBus.onEvent has no matching "off", so
   // registering per-test would leak handlers across tests within this file.

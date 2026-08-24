@@ -1,7 +1,12 @@
 import { DB } from '../../../db'
+import { DBMigrator } from '../../../db/dbMigrator'
 import { WsRelayMessageRepository } from '../index'
 
 describe('WsRelayMessageRepository', () => {
+  beforeAll(async () => {
+    await DBMigrator.migrateSchema()
+  })
+
   afterAll(async () => {
     await DB.$pool.end()
   })
