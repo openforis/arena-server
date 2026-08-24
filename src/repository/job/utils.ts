@@ -3,7 +3,7 @@ import { JobStatus } from '@openforis/arena-core'
 export interface JobRow {
   uuid: string
   userUuid: string
-  surveyId: number
+  surveyId: number | null
   type: string
   status: JobStatus
   processed: number

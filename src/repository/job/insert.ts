@@ -11,10 +11,10 @@ import { JobRow, transformCallback } from './utils'
  * @param client - Database client
  */
 export const insert = (
-  params: { uuid: string; userUuid: string; surveyId: number; type: string },
+  params: { uuid: string; userUuid: string; surveyId?: number; type: string },
   client: BaseProtocol = DB
 ): Promise<JobRow> => {
-  const { uuid, userUuid, surveyId, type } = params
+  const { uuid, userUuid, surveyId = null, type } = params
   const table = new TableJob()
 
   const values = {

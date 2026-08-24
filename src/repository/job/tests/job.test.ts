@@ -82,4 +82,16 @@ describe('JobRepository', () => {
     const job = await JobRepository.getByUuid(uuid)
     expect(job).toMatchObject({ status: JobStatus.succeeded, props: { result: { count: 42 } } })
   })
+
+  test('insert persists a global job with a null surveyId', async () => {
+    const uuid = UUIDs.v4()
+
+    const inserted = await JobRepository.insert({ uuid, userUuid, type: 'GlobalJob' })
+    expect(inserted.surveyId).toBeNull()
+
+    const job = await JobRepository.getByUuid(uuid)
+    expect(job).toMatchObject({ uuid, userUuid, surveyId: null, type: 'GlobalJob' })
+
+    await JobRepository.updateStatus({ uuid, status: JobStatus.succeeded })
+  })
 })

@@ -3,7 +3,7 @@ CREATE TABLE
 (
   uuid          uuid        PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_uuid     uuid        NOT NULL,
-  survey_id     bigint      NOT NULL,
+  survey_id     bigint,
   type          VARCHAR     NOT NULL,
   status        VARCHAR     NOT NULL,
   processed     INTEGER     NOT NULL DEFAULT 0,
