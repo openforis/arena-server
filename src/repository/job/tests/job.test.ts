@@ -119,7 +119,14 @@ describe('JobRepository', () => {
     const failedCount = await JobRepository.failOrphanedByInstanceId(ProcessEnv.instanceId)
     expect(failedCount).toBeGreaterThanOrEqual(2)
 
-    await expect(JobRepository.getByUuid(uuidPending)).resolves.toMatchObject({ status: JobStatus.failed })
+    const pendingJob = await JobRepository.getByUuid(uuidPending)
+    expect(pendingJob).toMatchObject({ status: JobStatus.failed })
+    // the webapp's job monitor renders props.errors as a Validation instance (see core/validation) -
+    // each entry must be a fields-map (Validation.getFieldValidations), not a bare {key, params}
+    expect(pendingJob?.props.errors).toMatchObject({
+      generic: { error: { valid: false, errors: [{ key: 'appErrors:generic' }] } },
+    })
+
     await expect(JobRepository.getByUuid(uuidRunning)).resolves.toMatchObject({ status: JobStatus.failed })
     // untouched: was already terminal before the call
     await expect(JobRepository.getByUuid(uuidAlreadyDone)).resolves.toMatchObject({ status: JobStatus.succeeded })
