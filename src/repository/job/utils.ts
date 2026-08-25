@@ -11,6 +11,7 @@ export interface JobRow {
   props: Record<string, unknown>
   dateCreated: Date
   dateModified: Date
+  instanceId: string | null
 }
 
 export const transformCallbackSafe = (row: any): JobRow | null => {
@@ -26,6 +27,7 @@ export const transformCallbackSafe = (row: any): JobRow | null => {
     props: row.props || {},
     dateCreated: row.date_created,
     dateModified: row.date_modified,
+    instanceId: row.instance_id,
   }
 }
 

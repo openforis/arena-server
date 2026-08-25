@@ -12,6 +12,7 @@ export class TableJob extends TableSchemaPublic {
   readonly props: Column = new Column(this, 'props', ColumnType.jsonb)
   readonly dateCreated: Column = new Column(this, 'date_created', ColumnType.timeStamp)
   readonly dateModified: Column = new Column(this, 'date_modified', ColumnType.timeStamp)
+  readonly instanceId: Column = new Column(this, 'instance_id', ColumnType.varchar)
 
   constructor() {
     super('job')
@@ -29,6 +30,7 @@ export class TableJob extends TableSchemaPublic {
       this.props,
       this.dateCreated,
       this.dateModified,
+      this.instanceId,
     ]
   }
 }

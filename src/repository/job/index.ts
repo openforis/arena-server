@@ -1,3 +1,4 @@
+import { failOrphanedByInstanceId } from './failOrphanedByInstanceId'
 import { getActiveByUserUuid } from './getActiveByUserUuid'
 import { getActiveBySurveyId } from './getActiveBySurveyId'
 import { getByUuid } from './getByUuid'
@@ -12,6 +13,7 @@ export const JobRepository = {
   getByUuid,
   getActiveByUserUuid,
   getActiveBySurveyId,
+  failOrphanedByInstanceId,
 }
 
 export type { JobRow } from './utils'

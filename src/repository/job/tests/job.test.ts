@@ -2,6 +2,7 @@ import { JobStatus, UUIDs } from '@openforis/arena-core'
 
 import { DB } from '../../../db'
 import { DBMigrator } from '../../../db/dbMigrator'
+import { ProcessEnv } from '../../../processEnv'
 import { JobRepository } from '../index'
 import { deleteTestSurvey, deleteTestUser, insertTestSurvey, insertTestUser } from './testUtils'
 
@@ -91,6 +92,47 @@ describe('JobRepository', () => {
 
     const job = await JobRepository.getByUuid(uuid)
     expect(job).toMatchObject({ uuid, userUuid, surveyId: null, type: 'GlobalJob' })
+
+    await JobRepository.updateStatus({ uuid, status: JobStatus.succeeded })
+  })
+
+  test('insert stamps the row with this process instanceId', async () => {
+    const uuid = UUIDs.v4()
+
+    const inserted = await JobRepository.insert({ uuid, userUuid, surveyId, type: 'TestJob' })
+    expect(inserted.instanceId).toBe(ProcessEnv.instanceId)
+
+    await JobRepository.updateStatus({ uuid, status: JobStatus.succeeded })
+  })
+
+  test('failOrphanedByInstanceId fails pending/running rows owned by that instance', async () => {
+    const uuidPending = UUIDs.v4()
+    const uuidRunning = UUIDs.v4()
+    const uuidAlreadyDone = UUIDs.v4()
+
+    await JobRepository.insert({ uuid: uuidPending, userUuid, surveyId, type: 'TestJob' })
+    await JobRepository.insert({ uuid: uuidRunning, userUuid, surveyId, type: 'TestJob' })
+    await JobRepository.updateStatus({ uuid: uuidRunning, status: JobStatus.running })
+    await JobRepository.insert({ uuid: uuidAlreadyDone, userUuid, surveyId, type: 'TestJob' })
+    await JobRepository.updateStatus({ uuid: uuidAlreadyDone, status: JobStatus.succeeded })
+
+    const failedCount = await JobRepository.failOrphanedByInstanceId(ProcessEnv.instanceId)
+    expect(failedCount).toBeGreaterThanOrEqual(2)
+
+    await expect(JobRepository.getByUuid(uuidPending)).resolves.toMatchObject({ status: JobStatus.failed })
+    await expect(JobRepository.getByUuid(uuidRunning)).resolves.toMatchObject({ status: JobStatus.failed })
+    // untouched: was already terminal before the call
+    await expect(JobRepository.getByUuid(uuidAlreadyDone)).resolves.toMatchObject({ status: JobStatus.succeeded })
+  })
+
+  test('failOrphanedByInstanceId ignores rows owned by a different instance', async () => {
+    const uuid = UUIDs.v4()
+    await JobRepository.insert({ uuid, userUuid, surveyId, type: 'TestJob' })
+
+    const failedCount = await JobRepository.failOrphanedByInstanceId('some-other-dyno-instance')
+    expect(failedCount).toBe(0)
+
+    await expect(JobRepository.getByUuid(uuid)).resolves.toMatchObject({ status: JobStatus.pending })
 
     await JobRepository.updateStatus({ uuid, status: JobStatus.succeeded })
   })
