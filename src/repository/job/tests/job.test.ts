@@ -124,7 +124,7 @@ describe('JobRepository', () => {
     // the webapp's job monitor renders props.errors as a Validation instance (see core/validation) -
     // each entry must be a fields-map (Validation.getFieldValidations), not a bare {key, params}
     expect(pendingJob?.props.errors).toMatchObject({
-      generic: { error: { valid: false, errors: [{ key: 'appErrors:generic' }] } },
+      generic: { error: { valid: false, errors: [{ key: 'appErrors:jobOrphanedOnRestart' }] } },
     })
 
     await expect(JobRepository.getByUuid(uuidRunning)).resolves.toMatchObject({ status: JobStatus.failed })

@@ -22,12 +22,7 @@ export const failOrphanedByInstanceId = async (instanceId: string, client: BaseP
       generic: {
         error: {
           valid: false,
-          errors: [
-            {
-              key: 'appErrors:generic',
-              params: { text: 'Job orphaned by a restart of its owning process and marked failed on boot' },
-            },
-          ],
+          errors: [{ key: 'appErrors:jobOrphanedOnRestart' }],
         },
       },
     },
