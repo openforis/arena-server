@@ -19,6 +19,8 @@ export class JobManager {
 
     const { job } = msg
     const { userUuid, ended } = job
+    if (!userUuid) return
+
     const worker = JobManager.workers.get(userUuid)
 
     WebSocketServer.notifyUser(userUuid, WebSocketEvent.jobUpdate, job)
