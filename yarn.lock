@@ -1217,9 +1217,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^2.1.2":
-  version: 2.1.2
-  resolution: "@openforis/arena-core@npm:2.1.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F2.1.2%2F15b52b1957c9acf1e050177ace9f617841e3eebe"
+"@openforis/arena-core@npm:^2.1.4":
+  version: 2.1.4
+  resolution: "@openforis/arena-core@npm:2.1.4::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F2.1.4%2Fb5041d9dd42e41fb28aefda1242027613d09c6ba"
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
     "@turf/bearing": "npm:^7.3.5"
@@ -1235,7 +1235,7 @@ __metadata:
     moment: "npm:^2.30.1"
     proj4: "npm:^2.20.9"
     uuid: "npm:^14.0.1"
-  checksum: 10c0/8fc2ddac5cf6bb07f483d743dadf3b2f3c845218a7b8ad98b4ed65183f93acc95ed6a921de28746b7e17a5350df3a9cb6739258433d28eba6af8aca78fc14bf4
+  checksum: 10c0/7debabeb08853ed3249a0f56097b86a48476c6e38f2dc51bb2fd81ee9c7d41cb0cd115b541cc7dd901a22aa17bab02f1076bb3bbf18ee47917bb2ff771bc1c0f
   languageName: node
   linkType: hard
 
@@ -1247,7 +1247,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^2.1.2"
+    "@openforis/arena-core": "npm:^2.1.4"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
