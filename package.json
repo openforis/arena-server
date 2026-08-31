@@ -46,7 +46,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1112.0",
     "@godaddy/terminus": "^4.12.1",
-    "@openforis/arena-core": "^2.2.0",
+    "@openforis/arena-core": "^2.2.1",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
