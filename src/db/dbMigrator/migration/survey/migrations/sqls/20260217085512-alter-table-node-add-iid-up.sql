@@ -70,21 +70,21 @@ WHERE n.meta ? 'h';
 
 UPDATE record r
 SET validation = jsonb_set(
-    r.validation, 
-    '{fields}', 
+    r.validation,
+    '{fields}',
     updated_fields.new_fields
 )
 FROM (
-    SELECT 
-        r_inner.id,
+    SELECT
+        r_inner.uuid,
         jsonb_object_agg(
-            CASE 
+            CASE
                 -- Case 1: childrenCount_NODEUUID_NODEDEFUUID
-                WHEN fields.key LIKE 'childrenCount_%' THEN 
+                WHEN fields.key LIKE 'childrenCount_%' THEN
                     'childrenCount_' || COALESCE(n.i_id::text, split_part(fields.key, '_', 2)) || '_' || split_part(fields.key, '_', 3)
-                
+
                 -- Case 2: Plain NODEUUID
-                ELSE 
+                ELSE
                     COALESCE(n.i_id::text, fields.key)
             END,
             fields.value
@@ -93,14 +93,14 @@ FROM (
     CROSS JOIN LATERAL jsonb_each(r_inner.validation->'fields') AS fields(key, value)
     -- Join logic: if prefixed, get 2nd part; if not, get 1st part
     LEFT JOIN node n ON (
-        CASE 
+        CASE
             WHEN fields.key LIKE 'childrenCount_%' THEN split_part(fields.key, '_', 2)
             ELSE fields.key
         END
     )::uuid = n.uuid
-    GROUP BY r_inner.id
+    GROUP BY r_inner.uuid
 ) AS updated_fields
-WHERE r.id = updated_fields.id;
+WHERE r.uuid = updated_fields.uuid;
 
 -- Create an index on the combination of record_uuid and i_id for faster lookups
 
