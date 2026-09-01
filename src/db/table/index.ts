@@ -2,7 +2,10 @@ export { Table } from './table'
 
 export {
   TableSchemaPublic,
+  TableConnectedSocket,
   TableInfo,
+  TableJob,
+  TableRecordSocketAssociation,
   TableSurvey,
   TableUser,
   TableUserTempAuthToken,
@@ -11,6 +14,9 @@ export {
   TableUser2FADevice,
   TableAuthGroup,
   TableAuthGroupUser,
+  TableUserGroup,
+  TableUserGroupUser,
+  TableWsRelayMessage,
 } from './schemaPublic'
 
 export {

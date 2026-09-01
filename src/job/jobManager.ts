@@ -1,5 +1,4 @@
 import path from 'path'
-import { JobStatus } from '@openforis/arena-core'
 
 import { WebSocketEvent, WebSocketServer } from '../webSocket'
 import { Worker } from '../thread'
@@ -16,21 +15,22 @@ export class JobManager {
   }
 
   private static onMessage(msg: JobMessageOut): void {
-    if (msg.type === JobMessageOutType.summaryUpdate) {
-      const { summary } = msg
-      const { status, userUuid } = summary
-      const worker = JobManager.workers.get(userUuid)
+    if (msg.type !== JobMessageOutType.jobUpdate) return
 
-      WebSocketServer.notifyUser(userUuid, WebSocketEvent.jobUpdate, summary)
+    const { job } = msg
+    const { userUuid, ended } = job
+    if (!userUuid) return
 
-      // Job has not ended
-      if ([JobStatus.pending, JobStatus.running].includes(status) || !worker) return
+    const worker = JobManager.workers.get(userUuid)
 
-      // Delay thread termination by 1 second (give time to print debug info to the console)
-      setTimeout(() => {
-        worker.terminate().then(() => JobManager.workers.delete(userUuid))
-      }, 1000)
-    }
+    WebSocketServer.notifyUser(userUuid, WebSocketEvent.jobUpdate, job)
+
+    if (!ended || !worker) return
+
+    // Delay thread termination by 1 second (give time to print debug info to the console)
+    setTimeout(() => {
+      worker.terminate().then(() => JobManager.workers.delete(userUuid))
+    }, 1000)
   }
 
   static executeJob<C extends JobContext = JobContext>(data: C): Worker<C> {

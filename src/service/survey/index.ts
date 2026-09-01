@@ -1,10 +1,16 @@
-import { JobSummary, LanguageCode, Survey, SurveyService, SurveyProps, User } from '@openforis/arena-core'
+import { JobSerialized, LanguageCode, Survey, SurveyService, SurveyProps, User } from '@openforis/arena-core'
 
 import { getAllIds } from './getAllIds'
 import { get } from './get'
 
+export type { SurveyDocOptions, RenderContext, SurveyDocRenderer } from './docExport'
+export { walkSurvey, walkEntityDef, walkEntityChildren } from './docExport'
+
 export type { SurveyDocxOptions } from './docxExport'
-export { SurveyDocxGenerator } from './docxExport'
+export { DocxSurveyDocRenderer, SurveyDocxGenerator } from './docxExport'
+
+export type { SurveyPdfOptions, SurveyPdfResult, PdfElement } from './pdfExport'
+export { SurveyPdfGenerator, PdfSurveyDocRenderer } from './pdfExport'
 
 export const SurveyServiceServer: SurveyService = {
   // @ts-ignore
@@ -15,7 +21,7 @@ export const SurveyServiceServer: SurveyService = {
     lang: LanguageCode
     surveyId: number
     user: User
-  }): Promise<JobSummary<any>> {
+  }): Promise<JobSerialized<any>> {
     throw new Error('TODO')
   },
 
@@ -49,7 +55,7 @@ export const SurveyServiceServer: SurveyService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  publish(options: { surveyId: number; user: User }): Promise<JobSummary<any>> {
+  publish(options: { surveyId: number; user: User }): Promise<JobSerialized<any>> {
     throw new Error('TODO')
   },
 

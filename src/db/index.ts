@@ -4,6 +4,7 @@ export { DBs } from './dbs'
 export type { BaseProtocol } from './db'
 
 export { DBMigrator } from './dbMigrator'
+export type { SurveySchemaMigrationNotifier, SurveySchemaMigrationNotifierParams } from './dbMigrator'
 
 export { Schemata } from './schemata'
 
@@ -17,10 +18,13 @@ export {
   TableChain,
   TableChainNodeDef,
   TableChainNodeDefAggregate,
+  TableConnectedSocket,
   TableDataQuery,
   TableInfo,
+  TableJob,
   TableNodeDef,
   TableRecord,
+  TableRecordSocketAssociation,
   TableSurvey,
   TableUser,
   TableUserTempAuthToken,
@@ -29,4 +33,7 @@ export {
   TableUser2FADevice,
   TableAuthGroup,
   TableAuthGroupUser,
+  TableUserGroup,
+  TableUserGroupUser,
+  TableWsRelayMessage,
 } from './table'

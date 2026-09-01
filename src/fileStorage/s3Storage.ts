@@ -1,0 +1,109 @@
+import {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
+
+import { ProcessEnv } from '../processEnv'
+
+export type S3StorageOptions = {
+  bucketName: string
+  region: string | undefined
+  accessKeyId: string
+  secretAccessKey: string
+  endpoint?: string
+  forcePathStyle?: boolean
+}
+
+export type S3FileInfo = {
+  key: string
+  lastModified?: Date
+}
+
+const deleteObjectsBatchSize = 1000 // S3 DeleteObjects accepts at most 1000 keys per request
+
+export class S3Storage {
+  static fromEnvironment(): S3Storage | null {
+    if (!ProcessEnv.fileStorageAwsEnabled) return null
+
+    return new S3Storage({
+      bucketName: ProcessEnv.fileStorageAwsS3BucketName!,
+      region: ProcessEnv.fileStorageAwsS3BucketRegion,
+      accessKeyId: ProcessEnv.fileStorageAwsAccessKey!,
+      secretAccessKey: ProcessEnv.fileStorageAwsSecretAccessKey!,
+    })
+  }
+
+  private readonly client: S3Client
+
+  constructor(private readonly options: S3StorageOptions) {
+    this.client = new S3Client({
+      region: options.region,
+      endpoint: options.endpoint,
+      forcePathStyle: options.forcePathStyle,
+      credentials: {
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey,
+      },
+    })
+  }
+
+  async putFile(key: string, body: Buffer | Uint8Array | string, contentType?: string): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.options.bucketName,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      })
+    )
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.options.bucketName,
+        Key: key,
+      })
+    )
+  }
+
+  async listFiles(prefix: string): Promise<S3FileInfo[]> {
+    const files: S3FileInfo[] = []
+    let continuationToken: string | undefined
+
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.options.bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        })
+      )
+
+      for (const object of response.Contents ?? []) {
+        if (object.Key) {
+          files.push({ key: object.Key, lastModified: object.LastModified })
+        }
+      }
+
+      continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined
+    } while (continuationToken)
+
+    return files
+  }
+
+  async deleteFiles(keys: string[]): Promise<void> {
+    for (let i = 0; i < keys.length; i += deleteObjectsBatchSize) {
+      const batch = keys.slice(i, i + deleteObjectsBatchSize)
+      await this.client.send(
+        new DeleteObjectsCommand({
+          Bucket: this.options.bucketName,
+          Delete: { Objects: batch.map((key) => ({ Key: key })) },
+        })
+      )
+    }
+  }
+}

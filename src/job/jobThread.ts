@@ -16,15 +16,15 @@ export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMes
       if (!Job) throw new ServerError('jobNotRegistered', this.data)
 
       this.job = new Job(this.data)
-      this.job.on(JobMessageOutType.summaryUpdate, this.postSummary.bind(this))
+      this.job.onEvent(() => this.postJob())
       this.job.start()
     })
   }
 
   async onMessage(msg: JobMessageIn): Promise<void> {
     switch (msg.type) {
-      case JobMessageInType.getSummary:
-        this.postSummary()
+      case JobMessageInType.getStatus:
+        this.postJob()
         break
       case JobMessageInType.cancel:
         await this.job?.cancel()
@@ -34,9 +34,9 @@ export class JobThread<C extends JobContext> extends Thread<JobMessageIn, JobMes
     }
   }
 
-  private postSummary(): void {
+  private postJob(): void {
     if (this.job) {
-      this.postMessage({ type: JobMessageOutType.summaryUpdate, summary: this.job.summary })
+      this.postMessage({ type: JobMessageOutType.jobUpdate, job: this.job.toJSON() })
     }
   }
 }

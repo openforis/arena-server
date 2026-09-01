@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import {
   Authorizer,
+  AuthGroupName,
   DownloadAuthTokenPayload,
   RecordService,
   ServiceRegistry,
@@ -112,6 +113,18 @@ const requireUserPermission =
     }
   }
 
+// Only the survey's `surveyAdmin` group (or system admins) may manage user-groups.
+// Deliberately checks the auth-group's name rather than its stored `permissions`
+// column: AuthGroups.getPermissions() (arena-core) derives permissions from a
+// static, non-exported map keyed by group name, not from that DB column.
+const canManageUserGroups = (user: User, surveyInfo?: any) => {
+  if (!user) return false
+  if (Users.isSystemAdmin(user)) return true
+  if (!surveyInfo) return false
+  const authGroup = Users.getAuthGroupBySurveyUuid(surveyInfo.uuid)(user)
+  return authGroup?.name === AuthGroupName.surveyAdmin
+}
+
 const requireLoggedInUser = async (req: Request, _res: Response, next: NextFunction) => {
   try {
     const user = Requests.getUser(req)
@@ -195,6 +208,9 @@ export const ApiAuthMiddleware = {
   // User access requests
   requireCanViewAccessRequestsPermission: requirePermission(Authorizer.canViewUsersAccessRequests),
   requireCanEditAccessRequestsPermission: requirePermission(Authorizer.canEditUsersAccessRequests),
+
+  // User groups
+  requireUserGroupManagePermission: requireSurveyPermission(canManageUserGroups),
 
   requireDownloadToken,
 }

@@ -3,14 +3,29 @@ import rateLimit from 'express-rate-limit'
 
 import { ExpressInitializer } from '../expressInitializer'
 import { ProcessEnv } from '../../processEnv'
+import { ApiEndpoint } from '../../api/endpoint'
+import { Logger } from '../../log'
 
-const rateLimitedPaths = ['/auth']
+const logger = new Logger('RateLimitMiddleware')
+
+const toExactPathRegExp = (path: string): RegExp => new RegExp(`^${path}$`)
+
+const rateLimitedPaths = [
+  toExactPathRegExp(ApiEndpoint.auth.login()),
+  toExactPathRegExp(ApiEndpoint.auth.loginTemp()),
+  toExactPathRegExp(ApiEndpoint.auth.tokenRefresh()),
+]
 
 export const RateLimitMiddleware: ExpressInitializer = {
   init(express: Express): void {
     if (!ProcessEnv.rateLimitEnabled) {
+      logger.debug('Rate limiting is disabled')
       return
     }
+    logger.debug(
+      `Rate limiting initialized with windowMs=${ProcessEnv.rateLimitWindowMs} and max=${ProcessEnv.rateLimitRequestsPerWindow}`
+    )
+
     const limiter = rateLimit({
       windowMs: ProcessEnv.rateLimitWindowMs,
       max: ProcessEnv.rateLimitRequestsPerWindow,
@@ -29,9 +44,5 @@ export const RateLimitMiddleware: ExpressInitializer = {
       const proxies = 1 // number of proxies between user and server
       express.set('trust proxy', proxies)
     }
-    // Endpoint to get client IP address (for testing purposes)
-    express.get('/ip', (request, response) => {
-      response.send(request.ip)
-    })
   },
 }
