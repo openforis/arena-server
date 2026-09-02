@@ -116,3 +116,11 @@ ALTER TABLE node
 	ADD PRIMARY KEY (record_uuid, i_id),
 	ADD CONSTRAINT node_parent_fk FOREIGN KEY (record_uuid, p_i_id) REFERENCES "node" (record_uuid, i_id) ON DELETE CASCADE;
 
+-- Drop the now-superseded uuid-based identity columns entirely, to reclaim their storage (and the
+-- storage of node_uuid_idx/node_parent_uuid_idx, dropped automatically with them). This is
+-- deliberately irreversible: uuid and parent_uuid are randomly generated and cannot be
+-- reconstructed once dropped, so this migration has no matching down step - see the down script.
+ALTER TABLE node
+	DROP COLUMN uuid,
+	DROP COLUMN parent_uuid;
+
