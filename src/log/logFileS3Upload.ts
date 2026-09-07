@@ -5,11 +5,12 @@ import { promisify } from 'node:util'
 
 import { S3Storage } from '../fileStorage/s3Storage'
 import { ProcessEnv } from '../processEnv'
+import { LOG_FILE_NAME } from './logFileConstants'
 
 const gzipAsync = promisify(gzip)
 
 // Identifies the current process run, so its live log file gets its own S3 key and a
-// restart (which starts arena.log fresh on typical ephemeral-filesystem hosting) never
+// restart (which starts the live log file fresh on typical ephemeral-filesystem hosting) never
 // overwrites the previous run's uploaded content.
 const processStartedAt = new Date().toISOString().replace(/[:.]/g, '-')
 
@@ -30,7 +31,7 @@ const trimSlashes = (value: string): string => {
 }
 
 const uploadLogFileToS3 = async (logFolder: string, fileName: string, s3Storage: S3Storage): Promise<void> => {
-  const isLiveFile = fileName === 'arena.log'
+  const isLiveFile = fileName === LOG_FILE_NAME
   const shouldDeleteAfterUpload = !isLiveFile
   // Rotated backups are already gzipped locally (log4js file appender has compress: true);
   // the live file is still plain text (actively being appended to), so gzip it on the way out
