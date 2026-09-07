@@ -1,8 +1,12 @@
 import { mkdir, readFile, readdir, rm, stat, unlink } from 'node:fs/promises'
 import path from 'node:path'
+import { gzip } from 'node:zlib'
+import { promisify } from 'node:util'
 
 import { S3Storage } from '../fileStorage/s3Storage'
 import { ProcessEnv } from '../processEnv'
+
+const gzipAsync = promisify(gzip)
 
 // Identifies the current process run, so its live log file gets its own S3 key and a
 // restart (which starts arena.log fresh on typical ephemeral-filesystem hosting) never
@@ -28,17 +32,21 @@ const trimSlashes = (value: string): string => {
 const uploadLogFileToS3 = async (logFolder: string, fileName: string, s3Storage: S3Storage): Promise<void> => {
   const isLiveFile = fileName === 'arena.log'
   const shouldDeleteAfterUpload = !isLiveFile
+  // Rotated backups are already gzipped locally (log4js file appender has compress: true);
+  // the live file is still plain text (actively being appended to), so gzip it on the way out
+  // instead of storing it uncompressed in S3.
+  const isAlreadyCompressed = fileName.endsWith('.gz')
 
   const absolutePath = path.join(logFolder, fileName)
   const fileStats = await stat(absolutePath)
   if (shouldDeleteAfterUpload && fileStats.size === 0) return
 
-  const s3FileName = isLiveFile ? `arena-${processStartedAt}.log` : fileName
+  const rawBody = await readFile(absolutePath)
+  const body = isAlreadyCompressed ? rawBody : await gzipAsync(rawBody)
+  const s3FileName = isLiveFile ? `arena-${processStartedAt}.log.gz` : fileName
   const key = `${trimSlashes(ProcessEnv.logS3Prefix)}/${trimSlashes(ProcessEnv.instanceId)}/${s3FileName}`
-  const body = await readFile(absolutePath)
-  const contentType = fileName.endsWith('.gz') ? 'application/gzip' : 'text/plain; charset=utf-8'
 
-  await s3Storage.putFile(key, body, contentType)
+  await s3Storage.putFile(key, body, 'application/gzip')
 
   if (shouldDeleteAfterUpload) {
     await unlink(absolutePath)

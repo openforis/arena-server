@@ -1,6 +1,10 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { gunzip, gzipSync } from 'node:zlib'
+import { promisify } from 'node:util'
+
+const gunzipAsync = promisify(gunzip)
 
 const putFileMock = jest.fn().mockResolvedValue(undefined)
 const listFilesMock = jest.fn().mockResolvedValue([])
@@ -53,7 +57,8 @@ describe('logFileS3Upload', () => {
 
     expect(putFileMock).toHaveBeenCalledTimes(1)
     const [firstKey, firstBody] = putFileMock.mock.calls[0]
-    expect(String(firstBody)).toBe('run 1 content')
+    expect(firstKey).toMatch(/\.log\.gz$/)
+    expect(String(await gunzipAsync(firstBody))).toBe('run 1 content')
 
     // Run 2: server restarts. The host filesystem is ephemeral, so arena.log starts fresh.
     putFileMock.mockClear()
@@ -65,10 +70,27 @@ describe('logFileS3Upload', () => {
 
     expect(putFileMock).toHaveBeenCalledTimes(1)
     const [secondKey, secondBody] = putFileMock.mock.calls[0]
-    expect(String(secondBody)).toBe('run 2 content')
+    expect(secondKey).toMatch(/\.log\.gz$/)
+    expect(String(await gunzipAsync(secondBody))).toBe('run 2 content')
 
     // The second run must not reuse the first run's S3 key, or it would overwrite run 1's log.
     expect(secondKey).not.toBe(firstKey)
+  })
+
+  test('gzips already-compressed rotated backups only once (does not double-compress)', async () => {
+    const compressed = gzipSync('rotated backup content')
+    await writeFile(path.join(logFolder, 'arena.log.1.gz'), compressed)
+
+    jest.resetModules()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
+    const { uploadLogFilesToS3 } = require('../logFileS3Upload')
+    await uploadLogFilesToS3()
+
+    const call = putFileMock.mock.calls.find(([key]: [string]) => key.endsWith('arena.log.1.gz'))
+    expect(call).toBeDefined()
+    const [, body, contentType] = call
+    expect(Buffer.from(body)).toEqual(compressed)
+    expect(contentType).toBe('application/gzip')
   })
 
   test('deletes S3 log objects older than the retention window and keeps the rest', async () => {
