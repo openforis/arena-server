@@ -3,6 +3,7 @@ import path from 'node:path'
 import { configure, Logger } from 'log4js'
 
 import { ProcessEnv } from '../processEnv'
+import { LOG_FILE_NAME } from './logFileConstants'
 import { startLogUploadPolling } from './logFileS3Upload'
 
 // Only display color for terminals:
@@ -13,7 +14,7 @@ startLogUploadPolling()
 export const getLogger = (category?: string): Logger => {
   const fileAppender = {
     type: 'file',
-    filename: path.join(path.resolve(ProcessEnv.logFolder), 'arena.log'),
+    filename: path.join(path.resolve(ProcessEnv.logFolder), LOG_FILE_NAME),
     maxLogSize: ProcessEnv.logMaxSizeBytes,
     backups: 5,
     compress: true,

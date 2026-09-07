@@ -1,6 +1,12 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { gunzip, gzipSync } from 'node:zlib'
+import { promisify } from 'node:util'
+
+import { LOG_FILE_NAME } from '../logFileConstants'
+
+const gunzipAsync = promisify(gunzip)
 
 const putFileMock = jest.fn().mockResolvedValue(undefined)
 const listFilesMock = jest.fn().mockResolvedValue([])
@@ -45,7 +51,7 @@ describe('logFileS3Upload', () => {
 
   test('a server restart does not overwrite the previous run live log file in S3', async () => {
     // Run 1: server starts, writes to the live arena.log file, uploader ships it to S3.
-    await writeFile(path.join(logFolder, 'arena.log'), 'run 1 content')
+    await writeFile(path.join(logFolder, LOG_FILE_NAME), 'run 1 content')
     jest.resetModules()
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
     const firstRun = require('../logFileS3Upload')
@@ -53,11 +59,12 @@ describe('logFileS3Upload', () => {
 
     expect(putFileMock).toHaveBeenCalledTimes(1)
     const [firstKey, firstBody] = putFileMock.mock.calls[0]
-    expect(String(firstBody)).toBe('run 1 content')
+    expect(firstKey).toMatch(/\.log\.gz$/)
+    expect(String(await gunzipAsync(firstBody))).toBe('run 1 content')
 
     // Run 2: server restarts. The host filesystem is ephemeral, so arena.log starts fresh.
     putFileMock.mockClear()
-    await writeFile(path.join(logFolder, 'arena.log'), 'run 2 content')
+    await writeFile(path.join(logFolder, LOG_FILE_NAME), 'run 2 content')
     jest.resetModules()
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
     const secondRun = require('../logFileS3Upload')
@@ -65,18 +72,35 @@ describe('logFileS3Upload', () => {
 
     expect(putFileMock).toHaveBeenCalledTimes(1)
     const [secondKey, secondBody] = putFileMock.mock.calls[0]
-    expect(String(secondBody)).toBe('run 2 content')
+    expect(secondKey).toMatch(/\.log\.gz$/)
+    expect(String(await gunzipAsync(secondBody))).toBe('run 2 content')
 
     // The second run must not reuse the first run's S3 key, or it would overwrite run 1's log.
     expect(secondKey).not.toBe(firstKey)
+  })
+
+  test('gzips already-compressed rotated backups only once (does not double-compress)', async () => {
+    const compressed = gzipSync('rotated backup content')
+    await writeFile(path.join(logFolder, `${LOG_FILE_NAME}.1.gz`), compressed)
+
+    jest.resetModules()
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
+    const { uploadLogFilesToS3 } = require('../logFileS3Upload')
+    await uploadLogFilesToS3()
+
+    const call = putFileMock.mock.calls.find(([key]: [string]) => key.endsWith(`${LOG_FILE_NAME}.1.gz`))
+    expect(call).toBeDefined()
+    const [, body, contentType] = call
+    expect(Buffer.from(body)).toEqual(compressed)
+    expect(contentType).toBe('application/gzip')
   })
 
   test('deletes S3 log objects older than the retention window and keeps the rest', async () => {
     process.env.LOG_RETENTION_DAYS = '30'
     const now = Date.now()
     const dayMs = 24 * 60 * 60 * 1000
-    const staleFile = { key: 'logs/instance-b/arena.log', lastModified: new Date(now - 31 * dayMs) }
-    const freshFile = { key: 'logs/instance-a/arena.log', lastModified: new Date(now - 1 * dayMs) }
+    const staleFile = { key: `logs/instance-b/${LOG_FILE_NAME}`, lastModified: new Date(now - 31 * dayMs) }
+    const freshFile = { key: `logs/instance-a/${LOG_FILE_NAME}`, lastModified: new Date(now - 1 * dayMs) }
     listFilesMock.mockResolvedValue([staleFile, freshFile])
 
     jest.resetModules()
@@ -91,7 +115,7 @@ describe('logFileS3Upload', () => {
 
   test('does not call deleteFiles when nothing is stale', async () => {
     process.env.LOG_RETENTION_DAYS = '30'
-    listFilesMock.mockResolvedValue([{ key: 'logs/instance-a/arena.log', lastModified: new Date() }])
+    listFilesMock.mockResolvedValue([{ key: `logs/instance-a/${LOG_FILE_NAME}`, lastModified: new Date() }])
 
     jest.resetModules()
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- must re-require after resetModules() for a fresh module instance with mocks intact
