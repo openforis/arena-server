@@ -144,7 +144,7 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     disableLogging: env.NODE_ENV === 'test' && isTrue(env.DISABLE_LOGS),
     logFolder: env.LOG_FOLDER || env.LOG_DIR || env.LOGS_FOLDER || './logs',
     logMaxSizeBytes: Number(env.LOG_MAX_SIZE_BYTES) || 10 * 1024 * 1024,
-    logRetentionDays: Number(env.LOG_RETENTION_DAYS) || 30,
+    logRetentionDays: Number(env.LOG_RETENTION_DAYS) || 7,
     logUploadIntervalMs: Number(env.LOG_UPLOAD_INTERVAL_MS) || 60 * 1000,
     logS3Prefix: env.LOG_S3_PREFIX || 'logs',
     logS3Enabled: isTrue(env.LOG_S3_ENABLED) && fileStorageAwsEnabled,
