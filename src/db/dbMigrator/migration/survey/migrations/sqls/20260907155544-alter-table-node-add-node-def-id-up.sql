@@ -7,6 +7,11 @@
 -- built on top of it) select node.node_def_uuid directly, so they have to be dropped before the
 -- column can go and recreated afterwards, now sourcing node_def_uuid via the same join.
 
+-- Bump maintenance_work_mem for this transaction's node_node_def_id_idx build below; at this
+-- deployment's default (64MB) an index build over an 8M+ row table sorts on disk instead of
+-- in memory.
+SET LOCAL maintenance_work_mem = '2GB';
+
 DO $$
 DECLARE
     rdb_schema text := current_schema() || '_data';

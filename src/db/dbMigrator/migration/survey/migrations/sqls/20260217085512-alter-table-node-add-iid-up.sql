@@ -4,67 +4,91 @@ ALTER TABLE node
 ALTER TABLE node
 	ADD COLUMN p_i_id INTEGER;
 
-CREATE INDEX IF NOT EXISTS node_uuid_idx 
-    ON node (uuid);
-
-CREATE INDEX IF NOT EXISTS node_id_idx 
-    ON node (id);
-
-CREATE INDEX IF NOT EXISTS node_record_uuid_id_idx 
-    ON node (record_uuid, id);
-
--- Update node i_id START
-
-CREATE UNLOGGED TABLE temp_node_ranking AS
-SELECT 
-    id, 
-    ROW_NUMBER() OVER (PARTITION BY record_uuid ORDER BY id) AS new_i_id
-FROM node
-ORDER BY id;
-
-CREATE INDEX idx_temp_node_id ON temp_node_ranking (id);
-ANALYZE temp_node_ranking;
+-- Bump maintenance_work_mem for this transaction's index builds (node_uuid_idx below, the
+-- temp ranking/hierarchy tables' indexes, and the composite primary key built further down):
+-- at this deployment's default (64MB), sorting an 8M+ row table for an index spills to a
+-- multi-pass on-disk sort instead of sorting in memory.
+SET LOCAL maintenance_work_mem = '2GB';
 
 SET LOCAL session_replication_role = 'replica';
 
 SET LOCAL work_mem = '512MB';
 
-UPDATE node
-SET i_id = t.new_i_id
-FROM temp_node_ranking t
-WHERE node.id = t.id;
+-- Force single-process execution: a parallel hash join/aggregate needs dynamic shared
+-- memory (/dev/shm) sized for its hash table, and Arena's own Docker deployment (see this
+-- repo's Dockerfile) doesn't raise the engine's small default shm-size, so a parallel plan
+-- here can fail outright with "could not resize shared memory segment" instead of just
+-- being slower. A single-process plan is bounded by work_mem/maintenance_work_mem instead.
+SET LOCAL max_parallel_workers_per_gather = 0;
+
+CREATE INDEX IF NOT EXISTS node_uuid_idx
+    ON node (uuid);
+
+-- Update node i_id/p_i_id START
+--
+-- i_id and p_i_id are backfilled together in a single UPDATE, instead of two separate
+-- full-table passes: the ranking table below also carries each node's own uuid/parent_uuid,
+-- so a parent's new i_id can be looked up by self-joining the ranking table on
+-- parent_uuid = uuid, without a second full rewrite of the (much larger) node table.
+
+CREATE UNLOGGED TABLE temp_node_ranking AS
+SELECT
+    id,
+    uuid,
+    parent_uuid,
+    ROW_NUMBER() OVER (PARTITION BY record_uuid ORDER BY id) AS new_i_id
+FROM node
+ORDER BY id;
+
+CREATE INDEX idx_temp_node_id ON temp_node_ranking (id);
+CREATE INDEX idx_temp_node_uuid ON temp_node_ranking (uuid);
+ANALYZE temp_node_ranking;
+
+UPDATE node AS n
+SET i_id = t.new_i_id,
+    p_i_id = pt.new_i_id
+FROM temp_node_ranking AS t
+LEFT JOIN temp_node_ranking AS pt ON pt.uuid = t.parent_uuid
+WHERE n.id = t.id;
 
 DROP TABLE temp_node_ranking;
 
--- Update node i_id END
+-- Update node i_id/p_i_id END
 
 ALTER TABLE node
 	ALTER COLUMN i_id SET NOT NULL;
 
--- Populate the p_i_id column by joining the node table with itself based on the parent-child relationship
-UPDATE node AS child
-SET p_i_id = parent.i_id
-FROM node AS parent
-WHERE child.parent_uuid IS NOT NULL 
-    AND child.parent_uuid = parent.uuid;
+-- Replace meta.h UUID array with i_id array, preserving order.
+--
+-- Rewritten as a single set-based join (unnest every row's array once into a temp table,
+-- then one UPDATE ... FROM against it) instead of a correlated subquery re-executed once
+-- per outer row: the original ran the uuid -> i_id lookup as an independent subquery for
+-- each of the table's ~8M rows rather than as one join.
 
--- Replace meta.h UUID array with i_id array, preserving order
+CREATE UNLOGGED TABLE temp_node_h AS
+SELECT
+    n.id,
+    COALESCE(
+        jsonb_agg(p.i_id ORDER BY elems.ordinality) FILTER (WHERE p.i_id IS NOT NULL),
+        '[]'::jsonb
+    ) AS new_h
+FROM node AS n
+LEFT JOIN LATERAL jsonb_array_elements_text(n.meta->'h') WITH ORDINALITY AS elems(uuid_text, ordinality) ON TRUE
+LEFT JOIN node AS p
+    ON p.record_uuid = n.record_uuid
+    AND p.uuid = elems.uuid_text::uuid
+WHERE n.meta ? 'h'
+GROUP BY n.id;
+
+CREATE INDEX idx_temp_node_h_id ON temp_node_h (id);
+ANALYZE temp_node_h;
+
 UPDATE node AS n
-SET meta = jsonb_set(
-	meta,
-	'{h}',
-	COALESCE(
-		(
-			SELECT jsonb_agg(p.i_id ORDER BY elems.ordinality)
-			FROM jsonb_array_elements_text(n.meta->'h') WITH ORDINALITY AS elems(uuid_text, ordinality)
-			JOIN node AS p 
-				ON p.record_uuid = n.record_uuid 
-				AND p.uuid = elems.uuid_text::uuid
-		),
-		'[]'::jsonb
-	)
-)
-WHERE n.meta ? 'h';
+SET meta = jsonb_set(meta, '{h}', t.new_h)
+FROM temp_node_h AS t
+WHERE n.id = t.id;
+
+DROP TABLE temp_node_h;
 
 -- Update record validation fields to replace UUID references with i_id references
 
@@ -102,10 +126,9 @@ FROM (
 ) AS updated_fields
 WHERE r.uuid = updated_fields.uuid;
 
--- Create an index on the combination of record_uuid and i_id for faster lookups
-
-CREATE INDEX IF NOT EXISTS node_record_uuid_i_id_idx
-	ON node (record_uuid, i_id);
+-- No separate (record_uuid, i_id) index is created here: the composite PRIMARY KEY added
+-- below builds its own unique index on exactly those columns, so a plain index on the same
+-- pair would just be a duplicate paid for twice (once to build, permanently in storage).
 
 -- The survey rdb "_data" schema's _node_hierarchy_disaggregated view (and _node_keys_hierarchy,
 -- built on top of it) select node.uuid/node.parent_uuid directly, so - for any survey that already
