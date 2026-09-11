@@ -19,7 +19,7 @@ exports.setup = function (options, seedLink) {
 }
 
 exports.up = function (db) {
-  var filePath = path.join(__dirname, 'sqls', '20260910202731-add-table-odk-import-report-up.sql')
+  var filePath = path.join(__dirname, 'sqls', '20260911194436-generalize-collect-import-report-to-import-report-up.sql')
   return new Promise(function (resolve, reject) {
     fs.readFile(filePath, { encoding: 'utf-8' }, function (err, data) {
       if (err) return reject(err)
@@ -33,7 +33,11 @@ exports.up = function (db) {
 }
 
 exports.down = function (db) {
-  var filePath = path.join(__dirname, 'sqls', '20260910202731-add-table-odk-import-report-down.sql')
+  var filePath = path.join(
+    __dirname,
+    'sqls',
+    '20260911194436-generalize-collect-import-report-to-import-report-down.sql'
+  )
   return new Promise(function (resolve, reject) {
     fs.readFile(filePath, { encoding: 'utf-8' }, function (err, data) {
       if (err) return reject(err)
