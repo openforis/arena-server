@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS file_uuid_idx;
