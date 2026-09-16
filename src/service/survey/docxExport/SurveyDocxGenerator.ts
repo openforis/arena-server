@@ -43,6 +43,7 @@ export interface SurveyDocxResult {
 
 // Extra twips reserved for the page-number text row when it shares the footer with an image.
 const PAGE_NUMBER_ROW_TWIPS = 240
+const QR_CODE_SIZE_PX = 96
 
 const buildDocxImageParagraph = (image: SurveyDocImageData, spacingAfter?: number): Paragraph =>
   new Paragraph({
@@ -55,6 +56,21 @@ const buildDocxImageParagraph = (image: SurveyDocImageData, spacingAfter?: numbe
         transformation: {
           width: image.width,
           height: image.height,
+        },
+      }),
+    ],
+  })
+
+const buildQrCodeParagraph = (qrCodeImage: Buffer): Paragraph =>
+  new Paragraph({
+    alignment: AlignmentType.RIGHT,
+    children: [
+      new ImageRun({
+        data: qrCodeImage,
+        type: 'png',
+        transformation: {
+          width: QR_CODE_SIZE_PX,
+          height: QR_CODE_SIZE_PX,
         },
       }),
     ],
@@ -151,10 +167,14 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
       const footersConfig = buildFootersConfig(footerImage, pageNumbering, isFirstSection)
       const topMargin =
         DOCX_BASE_MARGIN_TWIPS + (isFirstSection || !headerOnFirstPageOnly ? headerMarginTwips : 0)
-      const sectionChildren =
-        isFirstSection && headerImage && headerOnFirstPageOnly
-          ? [buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS), ...section.elements]
-          : section.elements
+      const firstSectionDecorations: Paragraph[] = []
+      if (isFirstSection && headerImage && headerOnFirstPageOnly) {
+        firstSectionDecorations.push(buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS))
+      }
+      if (isFirstSection && options.qrCodeImage) {
+        firstSectionDecorations.push(buildQrCodeParagraph(options.qrCodeImage))
+      }
+      const sectionChildren = [...firstSectionDecorations, ...section.elements]
 
       return {
         properties: {
