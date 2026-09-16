@@ -318,10 +318,18 @@ const drawSurveyDocImage = (doc: PDFKit.PDFDocument, image: SurveyDocImageData, 
 }
 
 const drawQrCodeOnFirstPage = (doc: PDFKit.PDFDocument, qrCodeImage: Buffer): number => {
-  const x = doc.page.width - doc.page.margins.right - QR_SIZE_PT
-  const y = Math.max(doc.y, doc.page.margins.top, QR_MARGIN_FROM_EDGE_PT)
-  doc.image(qrCodeImage, x, y, { width: QR_SIZE_PT, height: QR_SIZE_PT })
-  return y + QR_SIZE_PT
+  if (!qrCodeImage?.length) {
+    return doc.y
+  }
+  try {
+    const x = doc.page.width - doc.page.margins.right - QR_SIZE_PT
+    const y = Math.max(doc.y, doc.page.margins.top, QR_MARGIN_FROM_EDGE_PT)
+    doc.image(qrCodeImage, x, y, { width: QR_SIZE_PT, height: QR_SIZE_PT })
+    return y + QR_SIZE_PT
+  } catch {
+    // Ignore unsupported or corrupted QR image data (same approach as drawSurveyDocImage).
+    return doc.y
+  }
 }
 
 const drawPageDecorations = (
@@ -396,8 +404,11 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
       doc.y = DOC_PAGE_EDGE_MARGIN_PT + headerImage.height + DOC_HEADER_FOOTER_GAP_PT
     }
     if (options.qrCodeImage) {
+      const yBeforeQr = doc.y
       const qrBottom = drawQrCodeOnFirstPage(doc, options.qrCodeImage)
-      doc.y = Math.max(doc.y, qrBottom + DOC_HEADER_FOOTER_GAP_PT)
+      if (qrBottom > yBeforeQr) {
+        doc.y = Math.max(doc.y, qrBottom + DOC_HEADER_FOOTER_GAP_PT)
+      }
     }
 
     for (let i = 0; i < sections.length; i++) {

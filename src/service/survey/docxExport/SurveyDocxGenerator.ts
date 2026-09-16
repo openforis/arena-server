@@ -61,8 +61,11 @@ const buildDocxImageParagraph = (image: SurveyDocImageData, spacingAfter?: numbe
     ],
   })
 
-const buildQrCodeParagraph = (qrCodeImage: Buffer): Paragraph =>
-  new Paragraph({
+const buildQrCodeParagraph = (qrCodeImage: Buffer): Paragraph | null => {
+  if (!qrCodeImage?.length) {
+    return null
+  }
+  return new Paragraph({
     alignment: AlignmentType.RIGHT,
     children: [
       new ImageRun({
@@ -75,6 +78,7 @@ const buildQrCodeParagraph = (qrCodeImage: Buffer): Paragraph =>
       }),
     ],
   })
+}
 
 const buildPageNumberParagraph = (): Paragraph =>
   new Paragraph({
@@ -172,7 +176,10 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
         firstSectionDecorations.push(buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS))
       }
       if (isFirstSection && options.qrCodeImage) {
-        firstSectionDecorations.push(buildQrCodeParagraph(options.qrCodeImage))
+        const qrParagraph = buildQrCodeParagraph(options.qrCodeImage)
+        if (qrParagraph) {
+          firstSectionDecorations.push(qrParagraph)
+        }
       }
       const sectionChildren = [...firstSectionDecorations, ...section.elements]
 
