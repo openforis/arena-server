@@ -27,6 +27,8 @@ export interface SurveyPdfResult {
 const FONT_NORMAL = 'Helvetica'
 const FONT_BOLD = 'Helvetica-Bold'
 const MARGIN = 50
+const QR_SIZE_PT = 72
+const QR_MARGIN_FROM_EDGE_PT = 40
 // pt from page bottom — positions the page number label in the bottom edge margin
 const PAGE_NUMBER_BOTTOM_OFFSET = 20
 const A4_PORTRAIT: [number, number] = [595.28, 841.89]
@@ -315,6 +317,21 @@ const drawSurveyDocImage = (doc: PDFKit.PDFDocument, image: SurveyDocImageData, 
   }
 }
 
+const drawQrCodeOnFirstPage = (doc: PDFKit.PDFDocument, qrCodeImage: Buffer): number => {
+  if (!qrCodeImage?.length) {
+    return doc.y
+  }
+  try {
+    const x = doc.page.width - doc.page.margins.right - QR_SIZE_PT
+    const y = Math.max(doc.y, doc.page.margins.top, QR_MARGIN_FROM_EDGE_PT)
+    doc.image(qrCodeImage, x, y, { width: QR_SIZE_PT, height: QR_SIZE_PT })
+    return y + QR_SIZE_PT
+  } catch {
+    // Ignore unsupported or corrupted QR image data (same approach as drawSurveyDocImage).
+    return doc.y
+  }
+}
+
 const drawPageDecorations = (
   doc: PDFKit.PDFDocument,
   pageIndex: number,
@@ -385,6 +402,13 @@ const generateSurveyPdf = async (options: SurveyPdfOptions): Promise<SurveyPdfRe
     // starts below it (the top margin is kept small for all pages, so this is needed on page 1).
     if (headerImage && headerOnFirstPageOnly) {
       doc.y = DOC_PAGE_EDGE_MARGIN_PT + headerImage.height + DOC_HEADER_FOOTER_GAP_PT
+    }
+    if (options.qrCodeImage) {
+      const yBeforeQr = doc.y
+      const qrBottom = drawQrCodeOnFirstPage(doc, options.qrCodeImage)
+      if (qrBottom > yBeforeQr) {
+        doc.y = Math.max(doc.y, qrBottom + DOC_HEADER_FOOTER_GAP_PT)
+      }
     }
 
     for (let i = 0; i < sections.length; i++) {
