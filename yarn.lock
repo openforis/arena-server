@@ -1273,26 +1273,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "@openforis/arena-core@npm:2.3.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F2.3.1%2Fc5ad3979ca79063edd9cc74d6978005c6583fd95"
+"@openforis/arena-core@npm:^2.3.3":
+  version: 2.3.3
+  resolution: "@openforis/arena-core@npm:2.3.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40openforis%2Farena-core%2F2.3.3%2F329bb0886f8bb09ee657163d15e14fe3dbf47c33"
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
     "@turf/bearing": "npm:^7.3.5"
     "@turf/destination": "npm:^7.3.5"
     "@turf/distance": "npm:^7.3.5"
-    bignumber.js: "npm:^11.1.4"
+    bignumber.js: "npm:^11.1.5"
     change-case: "npm:^5.4.4"
     jsep: "npm:^1.4.0"
     lodash.differencewith: "npm:^4.5.0"
     lodash.frompairs: "npm:^4.0.1"
     lodash.isequal: "npm:^4.5.0"
     lodash.topairs: "npm:^4.3.0"
-    moment: "npm:^2.30.1"
+    moment: "npm:^2.31.0"
     n2words: "npm:^6.2.0"
-    proj4: "npm:^2.20.9"
-    uuid: "npm:^14.0.1"
-  checksum: 10c0/4e716dde725d166834aeb3caedaa2e643d38583db2e0a567e0d685a2e8e379a9ea8be744f708d276febcecb60175f46370e26321125ebb474c62971afae7a3d3
+    proj4: "npm:^2.22.0"
+    uuid: "npm:^14.0.2"
+  checksum: 10c0/34a9de95e3c767f4ea57bbf1489e36a276ffd6ec582a28ee5c83e04a1a12a3b26f8b9d4cc0d1c0097d3431f2a37c8a8bb25c44a9a7b112e7c1d2f6abdd6a76da
   languageName: node
   linkType: hard
 
@@ -1304,7 +1304,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^2.3.1"
+    "@openforis/arena-core": "npm:^2.3.3"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
@@ -2894,7 +2894,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bignumber.js@npm:^11.1.4":
+"bignumber.js@npm:^11.1.5":
   version: 11.1.5
   resolution: "bignumber.js@npm:11.1.5"
   checksum: 10c0/8e829402c6c190d92becb2495d62581c66f170deae99f43ae859e54cdc586d4375c752131d07f60fcc709b84c9ca4c362623c97f3703629e69792c7bb1def00c
@@ -6269,7 +6269,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:^2.30.1":
+"moment@npm:^2.31.0":
   version: 2.31.0
   resolution: "moment@npm:2.31.0"
   checksum: 10c0/3755b186b8ff62c565685ce69dde55bf46003c0329139be5c8dd7845cd567bfd7d02be3a13e379a25acb9e98f6b87136c4776745e440615a4f5ca8dd9a8815b9
@@ -7088,7 +7088,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"proj4@npm:^2.20.9":
+"proj4@npm:^2.22.0":
   version: 2.22.0
   resolution: "proj4@npm:2.22.0"
   dependencies:
@@ -8569,7 +8569,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^14.0.1":
+"uuid@npm:^14.0.2":
   version: 14.0.2
   resolution: "uuid@npm:14.0.2"
   bin:
