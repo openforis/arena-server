@@ -1,4 +1,4 @@
-name: Arena Server - Bump Version and Publish to GitHub NPM
+name: Arena Server - Bump Version and Publish to GitHub Packages and npmjs
 
 on:
   push:
@@ -10,8 +10,6 @@ on:
 jobs:
   publish-new-version:
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v6
@@ -32,20 +30,21 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com/
-          scope: '@openforis'
-      # -----------------------------------------------
-      # This step calls the composite action
-      # to create the `.yarnrc.yml` in the workflow
-      - name: Setup .yarnrc.yml
-        uses: ./.github/actions/setup-yarnrc
-        with:
-          NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      # -----------------------------------------------
       - name: Install dependencies
         run: yarn install --immutable
       - run: yarn build
-      - run: yarn npm publish
+      - name: Publish to GitHub Packages
+        run: yarn npm publish
+        env:
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      # npmjs: drop the GitHub-specific registry config (publishConfig) before publishing
+      - name: Publish to npmjs
+        run: |
+          npm pkg delete publishConfig
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > "$RUNNER_TEMP/npmjs.npmrc"
+          npm publish --registry https://registry.npmjs.org/ --access public --userconfig "$RUNNER_TEMP/npmjs.npmrc"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Enable "include administrators" branch protection
         if: always() # Force to always run this step to ensure "include administrators" is always turned back on
         uses: ./.github/actions/toggle-branch-protection
