@@ -100,7 +100,7 @@ This is a library package (not a standalone application):
 
 - Main export: `dist/index.js`
 - Type definitions: `dist/index.d.ts`
-- Published to GitHub Packages as `@openforis/arena-server`
+- Published to npmjs and GitHub Packages as `@openforis/arena-server`
 - All exports defined in `src/index.ts`
 
 ### Environment Configuration
@@ -140,11 +140,6 @@ docker container restart arena-db
 
 **Asset Handling**: SQL files are code assets and must be copied to `dist/` alongside compiled TypeScript
 
-## GitHub Packages Authentication
+## Package Registry
 
-This package depends on `@openforis/arena-core` from GitHub Packages. Configure `.npmrc`:
-
-```
-@openforis:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
-```
+`@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. On release, the CI workflow (`bump-version-and-publish.yml`) publishes this package to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs (using the `NPM_TOKEN` secret).
