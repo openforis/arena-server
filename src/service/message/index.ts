@@ -34,7 +34,7 @@ const getNotifiedToUser = async (user: User, client?: BaseProtocol): Promise<Mes
       Messages.getNotificationTypes(message).includes(MessageNotificationType.PushNotification) &&
       Messages.isTargetingUser(user)(message)
   )
-  return filteredMessages.map(Messages.clearHiddenProps)
+  return filteredMessages.map((message) => Messages.clearHiddenProps(message))
 }
 
 export const MessageServiceServer: MessageService = {

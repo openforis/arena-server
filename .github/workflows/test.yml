@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: yarn install --immutable
+      - run: yarn install --immutable --mode=skip-build
       - run: yarn test
         env:
           PGHOST: localhost
