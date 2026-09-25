@@ -1273,9 +1273,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^2.3.8":
-  version: 2.3.8
-  resolution: "@openforis/arena-core@npm:2.3.8"
+"@openforis/arena-core@npm:^2.3.9":
+  version: 2.3.9
+  resolution: "@openforis/arena-core@npm:2.3.9"
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
     "@turf/bearing": "npm:^7.3.5"
@@ -1292,7 +1292,7 @@ __metadata:
     n2words: "npm:^6.2.0"
     proj4: "npm:^2.22.0"
     uuid: "npm:^14.0.2"
-  checksum: 10c0/7e77656e1fa060efa83c5fb0a871a3a060b6b6b19c1a9e954b9e2972aa7e13462bcf878d3f72f4450ff642081f0a58cdfb1c94ccc8b1be88ff03aad415d624cf
+  checksum: 10c0/3cd35b679c278df6b55262b8013f48156db50bd1fe38ccdada5b9e038f0b21a59ad6b2df24746c361006a542ad0ebbc4734ea46b71791367d97fcfc0d1d39fed
   languageName: node
   linkType: hard
 
@@ -1304,7 +1304,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^2.3.8"
+    "@openforis/arena-core": "npm:^2.3.9"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
