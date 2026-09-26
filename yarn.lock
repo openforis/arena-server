@@ -1273,14 +1273,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^2.3.9":
-  version: 2.3.9
-  resolution: "@openforis/arena-core@npm:2.3.9"
+"@openforis/arena-core@npm:^2.3.10":
+  version: 2.3.10
+  resolution: "@openforis/arena-core@npm:2.3.10"
   dependencies:
     "@jsep-plugin/regex": "npm:^1.0.4"
-    "@turf/bearing": "npm:^7.3.5"
-    "@turf/destination": "npm:^7.3.5"
-    "@turf/distance": "npm:^7.3.5"
+    "@turf/bearing": "npm:^7.4.0"
+    "@turf/destination": "npm:^7.4.0"
+    "@turf/distance": "npm:^7.4.0"
     bignumber.js: "npm:^11.1.5"
     change-case: "npm:^5.4.4"
     jsep: "npm:^1.4.0"
@@ -1292,7 +1292,7 @@ __metadata:
     n2words: "npm:^6.2.0"
     proj4: "npm:^2.22.0"
     uuid: "npm:^14.0.2"
-  checksum: 10c0/3cd35b679c278df6b55262b8013f48156db50bd1fe38ccdada5b9e038f0b21a59ad6b2df24746c361006a542ad0ebbc4734ea46b71791367d97fcfc0d1d39fed
+  checksum: 10c0/4755d0ef314582b5697a00c007f5fd165036de231ff9bb6dc1cf93a5fd9b93a715184b7820861ddb3c712c387a791eed4ee56fe98e48c466becce3eff76a249b
   languageName: node
   linkType: hard
 
@@ -1304,7 +1304,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^2.3.9"
+    "@openforis/arena-core": "npm:^2.3.10"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
@@ -1713,7 +1713,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@turf/bearing@npm:^7.3.5":
+"@turf/bearing@npm:^7.4.0":
   version: 7.4.0
   resolution: "@turf/bearing@npm:7.4.0"
   dependencies:
@@ -1725,7 +1725,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@turf/destination@npm:^7.3.5":
+"@turf/destination@npm:^7.4.0":
   version: 7.4.0
   resolution: "@turf/destination@npm:7.4.0"
   dependencies:
@@ -1737,7 +1737,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@turf/distance@npm:^7.3.5":
+"@turf/distance@npm:^7.4.0":
   version: 7.4.0
   resolution: "@turf/distance@npm:7.4.0"
   dependencies:
