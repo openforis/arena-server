@@ -1355,7 +1355,7 @@ __metadata:
     supertest: "npm:^7.3.0"
     ts-jest: "npm:^29.4.14"
     ts-node: "npm:^10.9.2"
-    typescript: "npm:^6.0.3"
+    typescript: "npm:~6.0.3"
     typescript-eslint: "npm:^8.70.1"
   languageName: unknown
   linkType: soft
@@ -8323,7 +8323,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^6.0.3":
+"typescript@npm:~6.0.3":
   version: 6.0.3
   resolution: "typescript@npm:6.0.3"
   bin:
@@ -8333,7 +8333,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^6.0.3#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A~6.0.3#optional!builtin<compat/typescript>":
   version: 6.0.3
   resolution: "typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>::version=6.0.3&hash=5786d5"
   bin:
