@@ -14,6 +14,8 @@ const rateLimitedPaths = [
   toExactPathRegExp(ApiEndpoint.auth.login()),
   toExactPathRegExp(ApiEndpoint.auth.loginTemp()),
   toExactPathRegExp(ApiEndpoint.auth.tokenRefresh()),
+  // Token is in the path; match any public printable-export download.
+  /^\/api\/public\/record-export\/[^/]+$/,
 ]
 
 export const RateLimitMiddleware: ExpressInitializer = {

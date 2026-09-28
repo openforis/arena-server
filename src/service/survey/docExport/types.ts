@@ -32,6 +32,11 @@ export interface SurveyDocOptions {
   entityNodeUuid?: string
   /** Document default print orientation; defaults to portrait. */
   orientation?: PrintOrientation
+  /**
+   * Optional QR code PNG buffer. When set, drawn on the first page only
+   * (top-right, with quiet zone). Used by printable export public links.
+   */
+  qrCodeImage?: Buffer
 }
 
 export interface SurveyDocSection<T> {
