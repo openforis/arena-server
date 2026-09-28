@@ -102,8 +102,12 @@ BEGIN
     END IF;
 
     IF had_node_keys_hierarchy_view THEN
+        -- _node_keys is built by the app from the rdb data views: recreate _node_keys_hierarchy only if it's
+        -- already internal id based (node_i_id column); a uuid based rdb schema is obsolete and must be regenerated
+        -- by the app, trying to join it on node_i_id would make the migration fail
         SELECT EXISTS (
-            SELECT 1 FROM pg_views WHERE schemaname = rdb_schema AND viewname = '_node_keys'
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = rdb_schema AND table_name = '_node_keys' AND column_name = 'node_i_id'
         ) INTO has_node_keys_view;
 
         IF has_node_keys_view THEN
