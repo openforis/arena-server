@@ -1,0 +1,5 @@
+-- This migration is irreversible: the up script permanently drops node.uuid and
+-- node.parent_uuid to reclaim their storage. Those values are randomly generated and
+-- cannot be reconstructed from i_id/p_i_id, so there is no way to undo it. The .js
+-- wrapper's exports.down throws before this file is ever read - kept only so a down
+-- script exists for the migration tooling and documents why there's nothing to run.
