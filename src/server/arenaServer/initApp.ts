@@ -1,4 +1,4 @@
-import express, { Express } from 'express'
+import express, { Express, RequestHandler } from 'express'
 import expressFileUpload from 'express-fileupload'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
@@ -21,6 +21,8 @@ export interface InitAppOptions {
   bodyParseLimit?: string
   skipPublicSchemaDbMigrations?: boolean
   skipSurveySchemaDbMigrations?: boolean
+  // registered before any other middleware (e.g. a request logger that must see the requests rejected by them)
+  initialMiddlewares?: RequestHandler[]
 }
 
 const defaultOptions: InitAppOptions = {
@@ -29,8 +31,12 @@ const defaultOptions: InitAppOptions = {
 }
 
 export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
-  const { bodyParseLimit, fileSizeLimit } = { ...defaultOptions, ...options }
+  const { bodyParseLimit, fileSizeLimit, initialMiddlewares = [] } = { ...defaultOptions, ...options }
   const app: Express = express()
+
+  for (const middleware of initialMiddlewares) {
+    app.use(middleware)
+  }
 
   if (ProcessEnv.useHttps) {
     HttpsMiddleware.init(app)
