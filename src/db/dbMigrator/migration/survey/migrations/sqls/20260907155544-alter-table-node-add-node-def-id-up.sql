@@ -60,7 +60,10 @@ BEGIN
               (
                 SELECT
                   n.record_uuid    AS record_uuid,
-                  h.*,
+                  h.node_id,
+                  h.node_i_id,
+                  h.node_def_uuid,
+                  h.node_ancestor_i_id,
                   n.id             AS node_ancestor_id,
                   nd_a.uuid        AS node_def_ancestor_uuid
                 FROM
@@ -69,6 +72,7 @@ BEGIN
                 JOIN
                   (
                     SELECT
+                      n.record_uuid                                    AS record_uuid,
                       n.id                                             AS node_id,
                       n.i_id                                           AS node_i_id,
                       nd.uuid                                          AS node_def_uuid,
@@ -78,7 +82,9 @@ BEGIN
                     JOIN node_def nd ON nd.id = n.node_def_id
                   ) h
                 ON
-                  n.i_id = h.node_ancestor_i_id
+                  -- internal ids are unique only within a record
+                  n.record_uuid = h.record_uuid
+                  AND n.i_id = h.node_ancestor_i_id
                 -- Union with root nodes
                 UNION ALL
                 SELECT
@@ -134,11 +140,13 @@ BEGIN
                   LEFT OUTER JOIN
                     %I._node_keys k_h
                   ON
-                    k_h.node_i_id = h.node_ancestor_i_id
+                    k_h.record_uuid = h.record_uuid
+                    AND k_h.node_i_id = h.node_ancestor_i_id
                   LEFT OUTER JOIN
                     %I._node_keys k_s
                   ON
-                    k_s.node_i_id = h.node_i_id
+                    k_s.record_uuid = h.record_uuid
+                    AND k_s.node_i_id = h.node_i_id
                   GROUP BY
                     1,2,3,4,5
                 )
