@@ -1,0 +1,1 @@
+-- Nothing to restore: a missing dictionary in node meta is equivalent to an empty one.
