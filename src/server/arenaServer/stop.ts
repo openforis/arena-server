@@ -1,4 +1,4 @@
-import { Server } from 'http'
+import { Server } from 'node:http'
 
 import { DB } from '../../db'
 import { Logger } from '../../log'

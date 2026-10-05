@@ -14,8 +14,6 @@ export class SimpleJob extends JobServer<SimpleJobContext, number> {
     // simulate async job
     await new Promise((resolve) => setTimeout(resolve, 500))
     this.incrementProcessedItems()
-
-    return Promise.resolve()
   }
 
   protected async generateResult(): Promise<number> {

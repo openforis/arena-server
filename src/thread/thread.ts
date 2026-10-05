@@ -1,4 +1,4 @@
-import { parentPort, workerData, isMainThread } from 'worker_threads'
+import { parentPort, workerData, isMainThread } from 'node:worker_threads'
 
 import { Logger } from '../log'
 import { WorkerErrorMessage, WorkerMessage, WorkerMessageType } from './workerMessage'

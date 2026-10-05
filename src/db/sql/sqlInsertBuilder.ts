@@ -10,7 +10,7 @@ interface ValuesByColumn {
 export class SqlInsertBuilder extends SqlBuilder {
   private _table: Table | null = null
   private _valuesByColumn: ValuesByColumn = {}
-  private _returning: Column[] = []
+  private readonly _returning: Column[] = []
 
   insertInto(table: Table): this {
     this._table = table
@@ -29,7 +29,7 @@ export class SqlInsertBuilder extends SqlBuilder {
 
   build(): string {
     if (Objects.isEmpty(this._table) || Objects.isEmpty(this._valuesByColumn))
-      throw new Error(`missingParams, ${this._table}, ${this._valuesByColumn}`)
+      throw new Error(`missingParams, ${this._table}, ${JSON.stringify(this._valuesByColumn)}`)
 
     const columnNames: string[] = []
     const valuesParams: string[] = []

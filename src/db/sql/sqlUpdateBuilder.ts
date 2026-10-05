@@ -7,9 +7,9 @@ type SetType = { column: Column | string; value: string }
 
 export class SqlUpdateBuilder extends SqlBuilder {
   private _update: Table | null = null
-  private _set: SetType[] = []
-  private _where: string[] = []
-  private _returning: Column[] = []
+  private readonly _set: SetType[] = []
+  private readonly _where: string[] = []
+  private readonly _returning: Column[] = []
 
   update(table: Table): this {
     this._update = table
@@ -40,7 +40,7 @@ export class SqlUpdateBuilder extends SqlBuilder {
 
   build(): string {
     if (Objects.isEmpty(this._update) || Objects.isEmpty(this._set))
-      throw new Error(`missingParams, ${this._update}, ${this._set}`)
+      throw new Error(`missingParams, ${this._update}, ${JSON.stringify(this._set)}`)
     const _getColumnName = (column: Column | string) => (typeof column === 'string' ? column : column.columnName)
     const _buildSetValue = (params: SetType): string => {
       const { column, value } = params

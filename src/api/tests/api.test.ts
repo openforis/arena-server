@@ -1,4 +1,4 @@
-import { Server } from 'http'
+import { Server } from 'node:http'
 
 import { ArenaServer } from '../../server'
 import { ApiTest } from './utils/apiTest'

@@ -3,8 +3,8 @@ import { Table } from '../table'
 import { SqlBuilder } from './sqlBuilder'
 
 export class SqlJoinBuilder extends SqlBuilder {
-  private _tables: Array<Table> = []
-  private _on: Array<string> = []
+  private readonly _tables: Array<Table> = []
+  private readonly _on: Array<string> = []
 
   join(table: Table): this {
     this._tables.push(table)
@@ -18,7 +18,7 @@ export class SqlJoinBuilder extends SqlBuilder {
 
   build(): string {
     if (Objects.isEmpty(this._tables) || Objects.isEmpty(this._on))
-      throw new Error(`missingParams: ${{ tables: this._tables }}, ${{ _on: this._on }}`)
+      throw new Error(`missingParams: ${JSON.stringify({ tables: this._tables, on: this._on })}`)
     return `JOIN ${this._tables.join(' ')} ON ${this._on.join(' ')}`
   }
 }

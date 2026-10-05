@@ -1,4 +1,4 @@
-import http, { Server } from 'http'
+import http, { Server } from 'node:http'
 import { createTerminus } from '@godaddy/terminus'
 
 import { DB } from '../../db'

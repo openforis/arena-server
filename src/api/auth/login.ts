@@ -92,17 +92,18 @@ const authenticationSuccessful = ({
 
       const refreshTokenProps = extractRefreshTokenProps({ req })
 
-      userAuthTokenService
-        .createUserAuthTokens({ userUuid, props: refreshTokenProps })
-        .then(({ authToken, refreshToken }) => {
-          setRefreshTokenCookie({ res, refreshToken })
-          sendUser({ res, req, user, authToken: authToken.token })
-          callback?.()
+      try {
+        const { authToken, refreshToken } = await userAuthTokenService.createUserAuthTokens({
+          userUuid,
+          props: refreshTokenProps,
         })
-        .catch((error) => {
-          next(error)
-          callback?.()
-        })
+        setRefreshTokenCookie({ res, refreshToken })
+        await sendUser({ res, req, user, authToken: authToken.token })
+      } catch (error) {
+        next(error)
+      } finally {
+        callback?.()
+      }
     }
   })
 

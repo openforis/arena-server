@@ -6,7 +6,7 @@ const mergeProps = (options: { row: any; draft: boolean }) => {
     return null
   }
   const { props = {}, props_draft: propsDraft = {}, ...rest } = row
-  const propsUpdate = draft ? { ...(props || {}), ...(propsDraft || {}) } : props
+  const propsUpdate = draft ? { ...props, ...propsDraft } : props
   return { ...rest, props: propsUpdate }
 }
 

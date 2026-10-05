@@ -6,14 +6,14 @@ import { SqlBuilder } from './sqlBuilder'
 import { SqlJoinBuilder } from './sqlJoinBuilder'
 
 export class SqlSelectBuilder extends SqlBuilder {
-  private _select: Array<Column | string> = []
-  private _from: Array<Table> = []
-  private _join: Array<SqlJoinBuilder> = []
-  private _where: Array<string> = []
-  private _groupBy: Array<Column> = []
+  private readonly _select: Array<Column | string> = []
+  private readonly _from: Array<Table> = []
+  private readonly _join: Array<SqlJoinBuilder> = []
+  private readonly _where: Array<string> = []
+  private readonly _groupBy: Array<Column> = []
   private _offset: number | null = null
   private _limit: number | null = null
-  private _orderBy: Array<Column> = []
+  private readonly _orderBy: Array<Column> = []
 
   select(...fields: Array<Column | string>): this {
     this._select.push(...fields)
