@@ -8,7 +8,7 @@ import { User2FADevice } from '../../model'
  * @param userUuid - The user UUID (to ensure the device belongs to the user)
  * @param client - Database client
  */
-export const getByDeviceUuid = async (
+export const getByDeviceUuid = (
   options: {
     deviceUuid: string
     userUuid: string

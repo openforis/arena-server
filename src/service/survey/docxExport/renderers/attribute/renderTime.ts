@@ -3,7 +3,7 @@ import { Paragraph, TextRun } from 'docx'
 import { formatNodeValue, isNodeFilled, nodeDefFormItemLabelRun, SPACING_FIELD_ROW, valueRow, label } from './common'
 import type { AttributeRenderer } from './types'
 
-export const renderTime: AttributeRenderer = async ({ nodeDef, context, node }) => {
+export const renderTime: AttributeRenderer = ({ nodeDef, context, node }) => {
   const lbl = label(nodeDef, context.lang)
   if (isNodeFilled(node)) {
     return [valueRow(lbl, formatNodeValue(nodeDef, context, node))]

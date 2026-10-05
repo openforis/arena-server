@@ -7,7 +7,7 @@ import { UserTempAuthTokenStored } from '../../model'
  * @param options - The temp auth token data
  * @param client - Database client
  */
-export const insert = async (
+export const insert = (
   options: UserTempAuthTokenStored,
   client: BaseProtocol = DB
 ): Promise<UserTempAuthTokenStored> => {

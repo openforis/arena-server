@@ -82,7 +82,7 @@ export type NodeDefinitionFetchParams = NodeDefRowTransformOptions & {
   includeAnalysis?: boolean
 }
 
-export const getNodeDefsBySurveyId = async (params: NodeDefinitionFetchParams, client = DB) => {
+export const getNodeDefsBySurveyId = (params: NodeDefinitionFetchParams, client = DB) => {
   const { surveyId, cycle, draft, includeDeleted = false, backup = false, includeAnalysis = true } = params
 
   return client.map(

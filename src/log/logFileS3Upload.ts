@@ -59,7 +59,8 @@ const uploadPendingLogFilesToS3 = async (logFolder: string, s3Storage: S3Storage
 
   for (const entry of entries) {
     if (!entry.isFile()) continue
-    await uploadLogFileToS3(logFolder, entry.name, s3Storage)
+    // sequential: every file is read and compressed in memory before uploading it, so keep only one at a time
+    await uploadLogFileToS3(logFolder, entry.name, s3Storage) // NOSONAR
   }
 }
 
@@ -69,15 +70,17 @@ const cleanupStaleLogFiles = async (logFolder: string): Promise<void> => {
   const cutoffTimestamp = getRetentionCutoffTimestamp()
   const entries = await readdir(logFolder, { withFileTypes: true })
 
-  for (const entry of entries) {
-    if (!entry.isFile()) continue
-
-    const absolutePath = path.join(logFolder, entry.name)
-    const fileStats = await stat(absolutePath)
-    if (fileStats.mtimeMs < cutoffTimestamp) {
-      await rm(absolutePath, { force: true })
-    }
-  }
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isFile())
+      .map(async (entry) => {
+        const absolutePath = path.join(logFolder, entry.name)
+        const fileStats = await stat(absolutePath)
+        if (fileStats.mtimeMs < cutoffTimestamp) {
+          await rm(absolutePath, { force: true })
+        }
+      })
+  )
 }
 
 // Prunes old log objects across all instances' folders in S3, not just the current instance's,

@@ -7,7 +7,7 @@ import { User2FADevice } from '../../model'
  * @param options - The 2FA device data to update
  * @param client - Database client
  */
-export const update = async (
+export const update = (
   options: Partial<User2FADevice> & { uuid: string },
   client: BaseProtocol = DB
 ): Promise<User2FADevice> => {

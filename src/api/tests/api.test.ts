@@ -24,6 +24,10 @@ afterAll(async () => {
 })
 
 describe('API Tests', () => {
+  test('server is listening', () => {
+    expect(server.listening).toBe(true)
+  })
+
   login()
   info()
 })

@@ -10,7 +10,7 @@ import { ApiEndpoint } from '../endpoint'
 const getUser2FAService = (): User2FAService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.user2FA) as User2FAService
 
-const checkDeviceUuid = async (req: Request, res: Response): Promise<boolean> => {
+const checkDeviceUuid = (req: Request, res: Response): boolean => {
   const { deviceUuid } = Requests.getParams(req)
   if (!deviceUuid) {
     res.status(400).json({ message: 'Device UUID is required' })
@@ -51,7 +51,7 @@ export const User2FAAuthApi: ExpressInitializer = {
         const user: User = Requests.getUser(req)
         const { deviceUuid } = Requests.getParams(req)
 
-        if (!(await checkDeviceUuid(req, res))) return
+        if (!checkDeviceUuid(req, res)) return
 
         const service = getUser2FAService()
         const device = await service.getDevice({ deviceUuid, userUuid: user.uuid })
@@ -114,7 +114,7 @@ export const User2FAAuthApi: ExpressInitializer = {
         const user: User = Requests.getUser(req)
         const { deviceUuid } = Requests.getParams(req)
 
-        if (!(await checkDeviceUuid(req, res))) return
+        if (!checkDeviceUuid(req, res)) return
 
         const service = getUser2FAService()
         await service.removeDevice({ deviceUuid, userUuid: user.uuid })
@@ -142,7 +142,7 @@ export const User2FAAuthApi: ExpressInitializer = {
         const user: User = Requests.getUser(req)
         const { deviceUuid } = Requests.getParams(req)
 
-        if (!(await checkDeviceUuid(req, res))) return
+        if (!checkDeviceUuid(req, res)) return
 
         const service = getUser2FAService()
         const backupCodes = await service.regenerateBackupCodes({ deviceUuid, userUuid: user.uuid })

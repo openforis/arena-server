@@ -30,7 +30,7 @@ export const getAll = (params: { surveyId: number }, client: BaseProtocol = DB):
  * @param params
  * @param client - Database client.
  */
-export const getByUuid = async (
+export const getByUuid = (
   params: {
     surveyId: number
     uuid: string

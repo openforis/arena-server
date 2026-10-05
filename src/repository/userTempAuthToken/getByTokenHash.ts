@@ -8,7 +8,7 @@ import { UserTempAuthTokenStored } from '../../model'
  * @param client - Database client
  * @returns The UserTempAuthTokenStored if found and not expired, null otherwise
  */
-export const getByTokenHash = async (
+export const getByTokenHash = (
   tokenHash: string,
   client: BaseProtocol = DB
 ): Promise<UserTempAuthTokenStored | null> => {

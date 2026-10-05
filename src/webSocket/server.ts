@@ -143,7 +143,7 @@ export class WebSocketServer {
     return ConnectedSocketRepository.exists(socketId)
   }
 
-  private static onClusterEvent = (event: ClusterEvent): void => {
+  private static readonly onClusterEvent = (event: ClusterEvent): void => {
     const { targetType, targetId, eventType, message } = event
 
     if (targetType === ClusterEventTargetType.socket) {

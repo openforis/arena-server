@@ -138,7 +138,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
     const { userUuid } = options
     return UserRefreshTokenRepository.revokeAll({ userUuid })
   },
-  async rotateTokens(
+  rotateTokens(
     options: {
       refreshToken: string
       refreshTokenProps: UserAuthRefreshTokenProps
@@ -147,7 +147,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
   ): Promise<{ authToken: AuthToken; refreshToken: UserAuthRefreshToken } | null> {
     const { refreshToken, refreshTokenProps } = options
     if (!refreshToken) {
-      return null
+      return Promise.resolve(null)
     }
     return dbClient.tx(async (t: pgPromise.ITask<any>) => {
       const tokenRecord = await verifyAndFetchRefreshTokenRecord({ refreshToken, userAuthTokenService: this, t })
