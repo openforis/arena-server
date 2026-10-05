@@ -16,8 +16,8 @@ export class SimpleJob extends JobServer<SimpleJobContext, number> {
     this.incrementProcessedItems()
   }
 
-  protected async generateResult(): Promise<number> {
-    return this.context.result ?? 3
+  protected generateResult(): Promise<number> {
+    return Promise.resolve(this.context.result ?? 3)
   }
 }
 
@@ -28,7 +28,7 @@ export class SimpleJobWithJobs extends SimpleJob {
     super(data, [new SimpleJob({ ...data, result: 4 }), new SimpleJob({ ...data, result: 2 })])
   }
 
-  protected async generateResult(): Promise<number> {
-    return this.innerJobs.reduce<number>((total, job) => total + (job.result ?? 0), 0)
+  protected generateResult(): Promise<number> {
+    return Promise.resolve(this.innerJobs.reduce<number>((total, job) => total + (job.result ?? 0), 0))
   }
 }

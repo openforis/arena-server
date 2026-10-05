@@ -14,7 +14,7 @@ import {
 } from './common'
 import type { AttributeRenderer } from './types'
 
-export const renderCoordinate: AttributeRenderer = async ({ nodeDef, context, node }) => {
+export const renderCoordinate: AttributeRenderer = ({ nodeDef, context, node }) => {
   const coordinateDef = nodeDef as NodeDefCoordinate
   const lbl = label(coordinateDef, context.lang)
   const hasValue = isNodeFilled(node)

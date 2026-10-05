@@ -57,8 +57,9 @@ const migrateSurveySchemas = async (params: { notifier?: SurveySchemaMigrationNo
 
   const total = surveyIdsToMigrate.length
   for (const [index, surveyId] of surveyIdsToMigrate.entries()) {
-    await migrateSurveySchema(surveyId)
-    await notifier?.({ surveyId, index, total })
+    // sequential: migrate one survey schema at a time and notify the progress in order
+    await migrateSurveySchema(surveyId) // NOSONAR
+    await notifier?.({ surveyId, index, total }) // NOSONAR
   }
 
   logger.info('survey migrations completed')

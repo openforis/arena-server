@@ -94,10 +94,7 @@ const findAndConsumeBackupCode = async (
 /**
  * Generates a new 2FA secret and QR code URL for a device.
  */
-const generateSecret = async (options: {
-  userEmail: string
-  deviceName: string
-}): Promise<{ secret: string; otpAuthUrl: string }> => {
+const generateSecret = (options: { userEmail: string; deviceName: string }): { secret: string; otpAuthUrl: string } => {
   const { userEmail, deviceName } = options
 
   const secret = generateOtpSecret()
@@ -153,7 +150,7 @@ const addDevice = async (options: {
 }): Promise<User2FADeviceForClientFirstTimeSetup> => {
   const { userUuid, userEmail, deviceName, client = DB } = options
 
-  const { secret, otpAuthUrl } = await generateSecret({ userEmail, deviceName })
+  const { secret, otpAuthUrl } = generateSecret({ userEmail, deviceName })
   const backupCodes = generateBackupCodes()
   const backupCodesHashed = hashBackupCodes(backupCodes)
   const encryptedSecret = encryptSecret(secret)

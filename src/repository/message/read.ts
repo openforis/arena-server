@@ -60,7 +60,7 @@ export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
  * @param client - Database client.
  * @returns Promise that resolves to a message or null if not found.
  */
-export const getByUuid = async (uuid: string, client: BaseProtocol = DB): Promise<Message | null> => {
+export const getByUuid = (uuid: string, client: BaseProtocol = DB): Promise<Message | null> => {
   const table = new TableMessage()
 
   const sql = new SqlSelectBuilder()

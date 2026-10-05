@@ -33,10 +33,6 @@ export const start = async (app: ArenaApp): Promise<Server> => {
 
   return new Promise<Server>((resolve, reject) => {
     const onListening = () => {
-      //TODO: schedulers
-      // await RecordPreviewCleanup.init()
-      // await TempFilesCleanup.init()
-      // await UserResetPasswordCleanup.init()
       server.removeListener('error', onError)
 
       logger.info(`server started and listening on port ${port}`)

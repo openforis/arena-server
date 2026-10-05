@@ -1,12 +1,10 @@
 import 'dotenv/config'
 
 import pgPromise from 'pg-promise'
+import { Logger } from '../log'
 import { ProcessEnv } from '../processEnv'
 
-// TODO: Add logging
-const logger = {
-  debug: console.debug,
-}
+const logger = new Logger('DB')
 
 const debugOptions = {
   query: (e: pgPromise.IEventContext) => {

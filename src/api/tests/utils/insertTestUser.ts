@@ -1,7 +1,7 @@
 import { DB } from '../../../db'
 import { mockUser } from '../mock/user'
 
-export const insertTestUser = async (): Promise<void> =>
+export const insertTestUser = (): Promise<void> =>
   DB.tx(async (tx) => {
     const { name, email } = mockUser
     const passwordEncrypted = '$2a$10$zwh0mqd3.q8T1dxsqtpNC.KW6D8CxnpavGlTbe5xM/WmolNjr145m' // Test_123

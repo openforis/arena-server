@@ -161,8 +161,9 @@ const walkEntityChildrenGrid = async <T>(
 
   type PendingCell = { promise: Promise<T[]>; colSpan?: number; rowSpan?: number }
 
+  // grid cells are rendered without the section builder, so all of them can be rendered in parallel
   const gridCellWalkOptions = withoutSectionBuilder(walkOptions)
-  const gridRows: Array<GridRow<T>> = []
+  const pendingRows: PendingCell[][] = []
   for (let y = 0; y < maxY; y++) {
     const pending: PendingCell[] = []
     for (let x = 0; x < maxX; x++) {
@@ -191,9 +192,14 @@ const walkEntityChildrenGrid = async <T>(
         rowSpan: h > 1 ? h : undefined,
       })
     }
-    const contents = await Promise.all(pending.map((p) => p.promise))
-    gridRows.push(contents.map((content, i) => ({ content, colSpan: pending[i].colSpan, rowSpan: pending[i].rowSpan })))
+    pendingRows.push(pending)
   }
+  const gridRows: Array<GridRow<T>> = await Promise.all(
+    pendingRows.map(async (pending) => {
+      const contents = await Promise.all(pending.map((p) => p.promise))
+      return contents.map((content, i) => ({ content, colSpan: pending[i].colSpan, rowSpan: pending[i].rowSpan }))
+    })
+  )
 
   return renderer.renderGridTable(gridRows, maxX)
 }
@@ -227,13 +233,13 @@ const walkEntityChildrenDefault = async <T>(
     includeAnalysis: false,
     includeLayoutElements: true,
   })
+  const walkChild = (child: NodeDef<NodeDefType>) =>
+    walkDefaultChild(renderer, parentEntity, child, context, depth, parentEntityNode, walkOptions)
   const result: T[] = []
   for (const child of children) {
-    appendElements(
-      result,
-      await walkDefaultChild(renderer, parentEntity, child, context, depth, parentEntityNode, walkOptions),
-      walkOptions
-    )
+    // sequential: children can push elements to the shared section builder, so their order must be preserved
+    const childElements = await walkChild(child) // NOSONAR
+    appendElements(result, childElements, walkOptions)
   }
   return result
 }
@@ -334,18 +340,13 @@ export const walkEntityChildren = async <T>(
   if (walkOptions?.sectionBuilder) {
     walkOptions.sectionBuilder.push(...result)
   }
+  const walkChildEntityDef = (childEntityDef: NodeDefEntity) =>
+    walkEntityDef(renderer, childEntityDef, context, depth + 1, parentEntityNode, true, walkOptions)
   for (const childEntityDef of entityDefsInOwnPage) {
     const childOrientation = resolvePrintOrientation(childEntityDef, documentDefault)
     walkOptions?.sectionBuilder?.ensureOrientation(childOrientation)
-    const childElements = await walkEntityDef(
-      renderer,
-      childEntityDef,
-      context,
-      depth + 1,
-      parentEntityNode,
-      true,
-      walkOptions
-    )
+    // sequential: each entity is added to the shared section builder, so their order must be preserved
+    const childElements = await walkChildEntityDef(childEntityDef) // NOSONAR
     if (walkOptions?.sectionBuilder) {
       walkOptions.sectionBuilder.push(...childElements)
     } else {
@@ -370,6 +371,8 @@ const walkEntityNodes = async <T>(
 ): Promise<T[]> => {
   const { record } = context
   const visibleNodes = record ? entityNodes.filter((node) => isNodeRelevantAndVisible(record, node)) : entityNodes
+  const walkEntityNodeChildren = (entityNode: ArenaNode) =>
+    walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode, walkOptions)
   const result: T[] = []
   for (let index = 0; index < visibleNodes.length; index++) {
     const entityNode = visibleNodes[index]
@@ -380,7 +383,9 @@ const walkEntityNodes = async <T>(
         walkOptions
       )
     }
-    result.push(...(await walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode, walkOptions)))
+    // sequential: entity instances can push elements to the shared section builder, so their order must be preserved
+    const entityElements = await walkEntityNodeChildren(entityNode) // NOSONAR
+    result.push(...entityElements)
   }
   return result
 }
