@@ -18,7 +18,7 @@ export class SqlJoinBuilder extends SqlBuilder {
 
   build(): string {
     if (Objects.isEmpty(this._tables) || Objects.isEmpty(this._on))
-      throw new Error(`missingParams: ${JSON.stringify({ tables: this._tables, on: this._on })}`)
+      throw new Error(`missingParams: tables: [${this._tables.join(', ')}], on: [${this._on.join(', ')}]`)
     return `JOIN ${this._tables.join(' ')} ON ${this._on.join(' ')}`
   }
 }
