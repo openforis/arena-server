@@ -7,7 +7,7 @@ export const insert = (
   client: BaseProtocol = DB
 ): Promise<DataQuerySummary> => {
   const { surveyId, item } = params
-  if (!surveyId || !item) throw new Error(`missingParams, ${params}`)
+  if (!surveyId || !item) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
   const table = new TableDataQuery(surveyId)
   const { content, props, uuid } = item

@@ -1,4 +1,4 @@
-import { Worker as _Worker } from 'worker_threads'
+import { Worker as _Worker } from 'node:worker_threads'
 
 import { Logger } from '../log'
 

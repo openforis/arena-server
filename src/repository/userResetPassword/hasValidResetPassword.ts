@@ -1,7 +1,7 @@
 import { BaseProtocol, DB, SqlSelectBuilder, TableUserResetPassword } from '../../db'
 
 export const hasValidResetPassword = (options: { userUuid: string }, client: BaseProtocol = DB): Promise<boolean> => {
-  if (!('userUuid' in options)) throw new Error(`missingParams, ${options}`)
+  if (!('userUuid' in options)) throw new Error(`missingParams, ${JSON.stringify(options)}`)
   const { userUuid } = options
   const table = new TableUserResetPassword()
 

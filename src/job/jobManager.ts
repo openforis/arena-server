@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 
 import { WebSocketEvent, WebSocketServer } from '../webSocket'
 import { Worker } from '../thread'
@@ -6,7 +6,7 @@ import { JobMessageInType, JobMessageOut, JobMessageOutType } from './jobMessage
 import { JobContext } from './jobContext'
 
 export class JobManager {
-  private static workers = new Map<string, Worker<any>>()
+  private static readonly workers = new Map<string, Worker<any>>()
 
   static cancelUserJob(userUuid: string): void {
     const worker = JobManager.workers.get(userUuid)

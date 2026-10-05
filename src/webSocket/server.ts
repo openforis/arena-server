@@ -1,4 +1,4 @@
-import { Server } from 'http'
+import { Server } from 'node:http'
 import { Socket, Server as SocketServer } from 'socket.io'
 
 import { ServiceRegistry, ServiceType, UserAuthTokenPayload, UserAuthTokenService } from '@openforis/arena-core'
@@ -25,9 +25,9 @@ const CONNECTED_SOCKET_STALE_AFTER_MS = 4 * HEARTBEAT_INTERVAL_MS
 const TTL_SWEEP_LOCK_NAME = 'connected-socket-ttl-sweep'
 
 export class WebSocketServer {
-  private static logger: Logger = new Logger(`WebSocketServer`)
-  private static socketsById = new Map<string, Socket>()
-  private static socketIdsByUserUuid = new Map<string, Set<string>>()
+  private static readonly logger: Logger = new Logger(`WebSocketServer`)
+  private static readonly socketsById = new Map<string, Socket>()
+  private static readonly socketIdsByUserUuid = new Map<string, Set<string>>()
   private static heartbeatInterval: NodeJS.Timeout | null = null
   private static ttlSweepInterval: NodeJS.Timeout | null = null
 
