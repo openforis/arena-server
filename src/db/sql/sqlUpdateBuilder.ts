@@ -39,10 +39,10 @@ export class SqlUpdateBuilder extends SqlBuilder {
   }
 
   build(): string {
-    if (Objects.isEmpty(this._update) || Objects.isEmpty(this._set))
-      throw new Error(
-        `missingParams, ${this._update}, ${this._set.map(({ column, value }) => `${String(column)} = ${value}`).join(', ')}`
-      )
+    if (Objects.isEmpty(this._update) || Objects.isEmpty(this._set)) {
+      const setSummary = this._set.map(({ column, value }) => [String(column), value].join(' = ')).join(', ')
+      throw new Error(`missingParams, ${this._update}, ${setSummary}`)
+    }
     const _getColumnName = (column: Column | string) => (typeof column === 'string' ? column : column.columnName)
     const _buildSetValue = (params: SetType): string => {
       const { column, value } = params
