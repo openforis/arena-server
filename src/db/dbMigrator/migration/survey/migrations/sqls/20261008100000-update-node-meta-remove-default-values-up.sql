@@ -1,5 +1,5 @@
 -- Remove the items having the default value from node meta to save space (a missing item is read back in the same way):
--- - empty dictionaries (they can have been stored again after the previous cleanup migration)
+-- - empty dictionaries (they may have been stored again after the previous cleanup migration)
 -- - default value / qualifier value applied flags set to false
 -- - empty or null code hierarchy
 -- Note: the updated rows leave dead tuples behind; VACUUM makes their space reusable,
