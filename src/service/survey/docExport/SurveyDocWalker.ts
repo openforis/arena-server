@@ -1,4 +1,9 @@
-import type { ArenaRecord, Node as ArenaNode, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
+import type {
+  ArenaRecord,
+  ArenaRecordNode as ArenaNode,
+  NodeDefEntity,
+  NodeDefEntityChildPosition,
+} from '@openforis/arena-core'
 import { NodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { formatNodeValue, getIsTableLayout, label } from './common'

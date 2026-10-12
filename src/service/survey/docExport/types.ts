@@ -2,7 +2,7 @@ import type {
   ArenaRecord,
   I18n,
   LanguageCode,
-  Node as ArenaNode,
+  ArenaRecordNode as ArenaNode,
   NodeDef,
   NodeDefType,
   Survey,

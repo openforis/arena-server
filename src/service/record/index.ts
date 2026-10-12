@@ -1,11 +1,11 @@
-import { Record, RecordService, User } from '@openforis/arena-core'
+import { ArenaRecord, RecordService, User } from '@openforis/arena-core'
 
 import { get, getManyByUuids } from './get'
 
 export const RecordServiceServer: RecordService = {
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  create(options: { socketId: string; record: Record; surveyId: number; user: User }): Promise<Record> {
+  create(options: { socketId: string; record: ArenaRecord; surveyId: number; user: User }): Promise<ArenaRecord> {
     throw new Error('TODO')
   },
 
@@ -19,7 +19,7 @@ export const RecordServiceServer: RecordService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getMany(options: { cycle: string; limit: number; offset: number; surveyId: number }): Promise<Record[]> {
+  getMany(options: { cycle: string; limit: number; offset: number; surveyId: number }): Promise<ArenaRecord[]> {
     throw new Error('TODO')
   },
 
@@ -27,7 +27,7 @@ export const RecordServiceServer: RecordService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update(options: { recordUuid: string; step: string; surveyId: number; user: User }): Promise<Record> {
+  update(options: { recordUuid: string; step: string; surveyId: number; user: User }): Promise<ArenaRecord> {
     throw new Error('TODO')
   },
 
@@ -39,7 +39,7 @@ export const RecordServiceServer: RecordService = {
     socketId: string
     surveyId: number
     user: User
-  }): Promise<Record> {
+  }): Promise<ArenaRecord> {
     throw new Error('TODO')
   },
 

@@ -1,5 +1,5 @@
 import {
-  Node as ArenaNode,
+  ArenaRecordNode as ArenaNode,
   CategoryItem,
   CategoryItems,
   LanguageCode,
