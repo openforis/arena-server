@@ -1,4 +1,4 @@
-import { Record } from '@openforis/arena-core'
+import { ArenaRecord } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableRecord, TableSurvey } from '../../db'
 import { dbTransformCallback } from './transformCallback'
@@ -39,7 +39,7 @@ export const get = (
     surveyId: number
   },
   client: BaseProtocol = DB
-): Promise<Record> => {
+): Promise<ArenaRecord> => {
   if (!('recordUuid' in options) || !('surveyId' in options))
     return Promise.reject(new Error(`missingParams: recordUuid or surveyId is missing`))
   const { recordUuid, surveyId } = options
@@ -50,7 +50,7 @@ export const get = (
 export const getManyByUuids = (
   { surveyId, uuids }: { surveyId: number; uuids: string[] },
   client: BaseProtocol = DB
-): Promise<Record[]> => {
+): Promise<ArenaRecord[]> => {
   if (uuids === null || uuids === undefined || !surveyId) {
     return Promise.reject(new Error(`missingParams: uuids or surveyId is missing`))
   }
