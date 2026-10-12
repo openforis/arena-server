@@ -208,6 +208,7 @@ typings/
 
 # Yarn Integrity file
 .yarn-integrity
+.yarn/install-state.gz
 
 # dotenv environment variables file
 .env
