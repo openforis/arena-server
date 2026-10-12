@@ -151,7 +151,7 @@ describe('walkSurvey', () => {
     const { survey, record, plotDef } = await buildSurveyWithOwnPagePlot()
     const rootNode = Records.getRoot(record)
     if (!rootNode) throw new Error('Expected root record node')
-    const plotNode = Records.getChildren(rootNode, plotDef.uuid)(record)[0]
+    const plotNode = Records.getChildren({ parentNode: rootNode, childDefUuid: plotDef.uuid })(record)[0]
     if (!plotNode) throw new Error('Expected plot record node')
 
     const { sections } = await walkSurvey(
