@@ -49,7 +49,7 @@ export const get = async (options: SurveyGetOptions, client = DB): Promise<Surve
   }
 
   survey.nodeDefs = nodeDefsFixed
-  Surveys.buildAndAssocNodeDefsIndex(survey)
 
-  return survey
+  // use the returned survey: buildAndAssocNodeDefsIndex will return a copy instead of updating the survey in place
+  return Surveys.buildAndAssocNodeDefsIndex(survey)
 }
