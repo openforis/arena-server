@@ -135,7 +135,7 @@ const renderGridCellContent = async <T>(params: {
   const limits = renderer.getGridCellLimits?.(maxX, item.w ?? 1)
   const childNode =
     record && parentEntityNode
-      ? Records.getChildren({ parentNode: parentEntityNode, childDefUuid: nodeDef.uuid })(record)[0]
+      ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
       : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef, context, depth, node: childNode, limits })
@@ -268,7 +268,7 @@ const walkDefaultChild = async <T>(
   if (NodeDefs.isHidden(child)) return []
   const childNode =
     record && parentEntityNode
-      ? Records.getChildren({ parentNode: parentEntityNode, childDefUuid: child.uuid })(record)[0]
+      ? Records.getChildren(parentEntityNode, child.uuid)(record)[0]
       : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })
@@ -295,13 +295,13 @@ const walkEntityAsTable = <T>(
 
   let rows: string[][] = []
   if (record && parentEntityNode) {
-    const entityNodes = Records.getChildren({ parentNode: parentEntityNode, childDefUuid: entityDef.uuid })(
+    const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(
       record
     ).filter((node) => isNodeRelevantAndVisible(record, node))
     if (entityNodes.length > 0) {
       rows = entityNodes.map((entityNode) =>
         attrDefs.map((attrDef) => {
-          const attrNode = Records.getChildren({ parentNode: entityNode, childDefUuid: attrDef.uuid })(record)[0]
+          const attrNode = Records.getChildren(entityNode, attrDef.uuid)(record)[0]
           return attrNode ? formatNodeValue(attrDef, context, attrNode) : ''
         })
       )
@@ -416,7 +416,7 @@ export const walkEntityDef = async <T>(
 
   const entityNodes: ArenaNode[] =
     record && parentEntityNode
-      ? Records.getChildren({ parentNode: parentEntityNode, childDefUuid: entityDef.uuid })(record)
+      ? Records.getChildren(parentEntityNode, entityDef.uuid)(record)
       : []
 
   if (!isRoot && record && entityNodes.length > 0 && !isMultiple && !isNodeRelevantAndVisible(record, entityNodes[0])) {
@@ -461,7 +461,7 @@ const resolveCurrentPageEntity = (
     throw new Error('Record is required for current-page export')
   }
   const entityDef = Surveys.getNodeDefByUuid({ survey, uuid: entityDefUuid })
-  const entityNode = Records.getNodeByUuid({ uuid: entityNodeUuid })(record)
+  const entityNode = Records.getNodeByUuid(entityNodeUuid)(record)
   if (!entityDef || !entityNode || !NodeDefs.isEntity(entityDef)) {
     throw new Error('Entity not found for current-page export')
   }
