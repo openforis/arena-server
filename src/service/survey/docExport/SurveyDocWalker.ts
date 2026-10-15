@@ -67,7 +67,7 @@ const withoutSectionBuilder = <T>(walkOptions?: WalkOptions<T>): WalkOptions<T> 
 // ─── Relevance / Visibility Helper ───────────────────────────────────────────
 
 const isNodeRelevantAndVisible = (record: ArenaRecord, node: ArenaNode): boolean =>
-  Records.isNodeApplicable({ node })(record) && Records.isNodeVisible({ node })(record)
+  Records.isNodeApplicable(node)(record) && Records.isNodeVisible(node)(record)
 
 // ─── Grid Helpers (shared with docx) ────────────────────────────────────────
 
