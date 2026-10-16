@@ -138,6 +138,8 @@ docker container restart arena-db
 
 **TypeScript Strictness**: Full strict mode enabled - all type issues must be resolved
 
+**TypeScript version**: TypeScript 7 (native) is used for `tsc`, installed as the `@typescript/native` alias; the `typescript` package is an alias of `@typescript/typescript6` because ts-node, ts-jest and typescript-eslint still need the TypeScript 6 JavaScript API
+
 **Asset Handling**: SQL files are code assets and must be copied to `dist/` alongside compiled TypeScript
 
 ## Package Registry
