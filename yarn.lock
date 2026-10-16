@@ -1198,12 +1198,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jsep-plugin/regex@npm:^1.0.4":
-  version: 1.0.4
-  resolution: "@jsep-plugin/regex@npm:1.0.4"
+"@jsep-plugin/regex@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@jsep-plugin/regex@npm:1.1.0"
   peerDependencies:
     jsep: ^0.4.0||^1.0.0
-  checksum: 10c0/bec7eb7ea6ab453a2672edc808644c5be3dc06b2a9d77182e18cd595b37deba6dcdb3760849d8684afc5779a86b7d2604dd525cb612a548f9ed9f31a8032ec24
+  checksum: 10c0/b698b3729de70a3de8140f0dedf1ee6c9017cc09fb841f82e91973d7ad59294f599acc0a4c933adb6ed2ad1db27b92315296d8be12999f420859745738601615
   languageName: node
   linkType: hard
 
@@ -1266,26 +1266,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openforis/arena-core@npm:^2.8.0":
-  version: 2.8.0
-  resolution: "@openforis/arena-core@npm:2.8.0"
+"@openforis/arena-core@npm:^2.9.0":
+  version: 2.9.0
+  resolution: "@openforis/arena-core@npm:2.9.0"
   dependencies:
-    "@jsep-plugin/regex": "npm:^1.0.4"
+    "@jsep-plugin/regex": "npm:^1.1.0"
     "@turf/bearing": "npm:^7.4.0"
     "@turf/destination": "npm:^7.4.0"
     "@turf/distance": "npm:^7.4.0"
     bignumber.js: "npm:^11.1.5"
     change-case: "npm:^5.4.4"
-    dayjs: "npm:^1.11.13"
-    jsep: "npm:^1.4.0"
+    dayjs: "npm:^1.11.23"
+    jsep: "npm:^1.6.0"
     lodash.differencewith: "npm:^4.5.0"
     lodash.frompairs: "npm:^4.0.1"
     lodash.isequal: "npm:^4.5.0"
     lodash.topairs: "npm:^4.3.0"
     n2words: "npm:^6.3.0"
     proj4: "npm:^2.22.0"
-    uuid: "npm:^14.0.2"
-  checksum: 10c0/ee69ab009f2d8c90861765eda137b45181bec6836886fdba6870da175b39da7f25c656bc209346fe65e36c70c0461ec0c1dc3255f7fedfeffba33fe165f01b3d
+    uuid: "npm:^14.0.3"
+  checksum: 10c0/ee5fb9e4c22cef556ddb8b7fac675577cc16d0e9cb384d9d134c4fd0a55433334c963adc0830195046ad1305154c67ea00d0a76ad3a6adf0c5ad07d226035774
   languageName: node
   linkType: hard
 
@@ -1297,7 +1297,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@godaddy/terminus": "npm:^4.12.1"
     "@machinomy/types-node-db-migrate": "npm:^0.0.2"
-    "@openforis/arena-core": "npm:^2.8.0"
+    "@openforis/arena-core": "npm:^2.9.0"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/compression": "npm:^1.8.1"
     "@types/cookie-parser": "npm:^1.4.10"
@@ -3617,7 +3617,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dayjs@npm:^1.11.13":
+"dayjs@npm:^1.11.23":
   version: 1.11.23
   resolution: "dayjs@npm:1.11.23"
   checksum: 10c0/69ab04bf19c676e44ab50cc2fca223d265f3dafd107151ef3b0f3ad74d360c37caa602abe62f87cb25d90bd9f6bee003698af47df5b0dbf10a998b7b5f3bb3f1
@@ -5831,10 +5831,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsep@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "jsep@npm:1.4.0"
-  checksum: 10c0/fe60adf47e050e22eadced42514a51a15a3cf0e2d147896584486acd8ee670fc16641101b9aeb81f4aaba382043d29744b7aac41171e8106515b14f27e0c7116
+"jsep@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "jsep@npm:1.6.0"
+  checksum: 10c0/68b706c9f8873599ecf9c408b063ce661d1f53e5bceb6c25bf59448c73b1b8d4906ee40f892ccf32d83c6dba70b3aae495f00f3855fa0049025a07eadcd672ea
   languageName: node
   linkType: hard
 
@@ -8591,12 +8591,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^14.0.2":
-  version: 14.0.2
-  resolution: "uuid@npm:14.0.2"
+"uuid@npm:^14.0.3":
+  version: 14.0.3
+  resolution: "uuid@npm:14.0.3"
   bin:
     uuid: dist-node/bin/uuid
-  checksum: 10c0/88906237004db370b013129c8372a2149f6fa1aad7a5f78fa65ddf2ba0a8663097022300d81fa01f551efee9d6bbe8c7ab140dc6d49f1b03d289f855096990c9
+  checksum: 10c0/e56e610ae3bd1ca099244e01ee5eff502675ede4601d971b80fff993ad97236c80197340113f759e6ead501ee6a8d52648f6deef1332ce9f192c4720f4891f62
   languageName: node
   linkType: hard
 
