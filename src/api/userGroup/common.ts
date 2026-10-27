@@ -44,7 +44,7 @@ export const sanitizeReadableGroupUuids = async (params: {
   props?: UserGroupProps
 }): Promise<UserGroupProps | undefined> => {
   const { surveyUuid, groupUuid, props } = params
-  if (!props || props.readableGroupUuids === undefined) return props
+  if (props?.readableGroupUuids === undefined) return props
 
   const readableGroupUuids = Array.isArray(props.readableGroupUuids) ? props.readableGroupUuids : []
   const surveyGroups = await getUserGroupService().getAll({ surveyUuid })
