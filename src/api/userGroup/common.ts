@@ -1,4 +1,4 @@
-import { ServiceRegistry, ServiceType, SurveyService, UserGroup } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, SurveyService, UserGroup, UserGroupProps } from '@openforis/arena-core'
 
 import { ServerError, ServerErrorCode } from '../../server'
 import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
@@ -33,4 +33,26 @@ export const getUserGroupBelongingToSurvey = async (params: {
     throw new ServerError('appErrors.userGroup.notFound', { groupUuid }, ServerErrorCode.NOT_FOUND)
   }
   return { surveyUuid, userGroup }
+}
+
+/**
+ * Keeps in the readable groups of a group only other groups of the same survey (without duplicates).
+ */
+export const sanitizeReadableGroupUuids = async (params: {
+  surveyUuid: string
+  groupUuid?: string
+  props?: UserGroupProps
+}): Promise<UserGroupProps | undefined> => {
+  const { surveyUuid, groupUuid, props } = params
+  if (!props || props.readableGroupUuids === undefined) return props
+
+  const readableGroupUuids = Array.isArray(props.readableGroupUuids) ? props.readableGroupUuids : []
+  const surveyGroups = await getUserGroupService().getAll({ surveyUuid })
+  const surveyGroupUuids = new Set(surveyGroups.map((group) => group.uuid))
+  return {
+    ...props,
+    readableGroupUuids: [...new Set(readableGroupUuids)].filter(
+      (uuid) => uuid !== groupUuid && surveyGroupUuids.has(uuid)
+    ),
+  }
 }

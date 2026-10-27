@@ -1,5 +1,5 @@
 import { ArenaService, UserGroup, UserGroupProps } from '@openforis/arena-core'
-import { BaseProtocol } from '../../db'
+import { BaseProtocol, DB } from '../../db'
 import { UserGroupMember, UserGroupRepository } from '../../repository/userGroup'
 
 const {
@@ -10,11 +10,22 @@ const {
   insert,
   update,
   updateProps,
-  deleteItem,
+  removeReadableGroupUuid,
+  deleteItem: deleteItemRepository,
   addMember,
   removeMember,
   getMembers,
 } = UserGroupRepository
+
+// the deleted group is also removed from the readable groups of the other groups of the survey
+const deleteItem = (params: { uuid: string }, client: BaseProtocol = DB): Promise<UserGroup | null> =>
+  client.tx(async (t) => {
+    const deleted = await deleteItemRepository(params, t)
+    if (deleted?.surveyUuid) {
+      await removeReadableGroupUuid({ surveyUuid: deleted.surveyUuid, groupUuid: params.uuid }, t)
+    }
+    return deleted
+  })
 
 export interface UserGroupService extends ArenaService {
   count(params: { surveyUuid: string }, client?: BaseProtocol): Promise<number>
