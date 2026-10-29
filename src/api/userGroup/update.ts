@@ -5,7 +5,7 @@ import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
 import { ApiAuthMiddleware } from '../middleware'
-import { getUserGroupBelongingToSurvey, getUserGroupService } from './common'
+import { getUserGroupBelongingToSurvey, getUserGroupService, sanitizeReadableGroupUuids } from './common'
 
 const { requireUserGroupManagePermission } = ApiAuthMiddleware
 
@@ -19,10 +19,11 @@ export const UserGroupUpdate: ExpressInitializer = {
           const { surveyId, groupUuid } = Requests.getParams(req)
           const { props } = req.body
 
-          await getUserGroupBelongingToSurvey({ surveyId, groupUuid })
+          const { surveyUuid } = await getUserGroupBelongingToSurvey({ surveyId, groupUuid })
+          const propsSanitized = await sanitizeReadableGroupUuids({ surveyUuid, groupUuid, props })
 
           const service = getUserGroupService()
-          const userGroupUpdated = await service.update({ uuid: groupUuid, props })
+          const userGroupUpdated = await service.update({ uuid: groupUuid, props: propsSanitized ?? props })
 
           res.json(userGroupUpdated)
         } catch (error) {
