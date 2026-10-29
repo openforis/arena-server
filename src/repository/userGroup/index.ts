@@ -1,6 +1,6 @@
 import { insert } from './insert'
 import { count, getAll, getByUuid } from './read'
-import { update, updateProps } from './update'
+import { removeReadableGroupUuid, update, updateProps } from './update'
 import { deleteItem } from './delete'
 import { getManyByUser } from './getUserGroupsByUser'
 import { addMember, removeMember, getMembers } from './members'
@@ -13,6 +13,7 @@ export const UserGroupRepository = {
   insert,
   update,
   updateProps,
+  removeReadableGroupUuid,
   deleteItem,
   addMember,
   removeMember,
