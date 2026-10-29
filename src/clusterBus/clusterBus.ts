@@ -17,6 +17,10 @@ const RELAY_MESSAGE_TTL_MS = 10 * 60_000
 const RELAY_MESSAGE_SWEEP_INTERVAL_MS = 5 * 60_000
 const RELAY_MESSAGE_SWEEP_LOCK_NAME = 'ws-relay-message-ttl-sweep'
 
+// Backoff for re-establishing the LISTEN connection after it is lost (DB restart, failover, network blip).
+const RECONNECT_INITIAL_DELAY_MS = 1000
+const RECONNECT_MAX_DELAY_MS = 30_000
+
 type InlineEnvelope = { inline: true; event: ClusterEvent }
 type RelayedEnvelope = { inline: false; relayMessageId: string }
 type Envelope = InlineEnvelope | RelayedEnvelope
@@ -31,20 +35,16 @@ export class ClusterBus {
   private static listenConnection: ListenConnection | null = null
   private static readonly handlers: ClusterEventHandler[] = []
   private static sweepInterval: NodeJS.Timeout | null = null
+  private static reconnectTimeout: NodeJS.Timeout | null = null
+  private static shuttingDown = false
 
   static async init(): Promise<void> {
     if (ClusterBus.listenConnection) return
 
-    const connection = await DB.connect({ direct: true })
-    ClusterBus.listenConnection = connection
+    ClusterBus.shuttingDown = false
+    await ClusterBus.listen()
 
-    connection.client.on('notification', (msg: { payload?: string }) => {
-      ClusterBus.onNotification(msg).catch((error) => ClusterBus.logger.error(`error handling notification: ${error}`))
-    })
-
-    await connection.none(`LISTEN ${CHANNEL}`)
-    ClusterBus.logger.info(`listening on channel "${CHANNEL}"`)
-
+    if (ClusterBus.sweepInterval) return
     ClusterBus.sweepInterval = setInterval(() => {
       runWithClusterLock({
         lockName: RELAY_MESSAGE_SWEEP_LOCK_NAME,
@@ -56,7 +56,49 @@ export class ClusterBus {
     ClusterBus.sweepInterval.unref()
   }
 
+  private static async listen(): Promise<void> {
+    const connection = await DB.connect({ direct: true, onLost: ClusterBus.onConnectionLost })
+    connection.client.on('notification', (msg: { payload?: string }) => {
+      ClusterBus.onNotification(msg).catch((error) => ClusterBus.logger.error(`error handling notification: ${error}`))
+    })
+    try {
+      await connection.none(`LISTEN ${CHANNEL}`)
+    } catch (error) {
+      await connection.done()
+      throw error
+    }
+    ClusterBus.listenConnection = connection
+    ClusterBus.logger.info(`listening on channel "${CHANNEL}"`)
+  }
+
+  private static readonly onConnectionLost = (
+    error: unknown,
+    context: { client: { removeAllListeners: (event: string) => void } }
+  ): void => {
+    ClusterBus.logger.error(`LISTEN connection lost: ${error}`)
+    context.client.removeAllListeners('notification')
+    ClusterBus.listenConnection = null
+    ClusterBus.scheduleReconnect(RECONNECT_INITIAL_DELAY_MS)
+  }
+
+  private static scheduleReconnect(delayMs: number): void {
+    if (ClusterBus.shuttingDown || ClusterBus.reconnectTimeout) return
+
+    ClusterBus.reconnectTimeout = setTimeout(() => {
+      ClusterBus.reconnectTimeout = null
+      if (ClusterBus.shuttingDown || ClusterBus.listenConnection) return
+      ClusterBus.listen().catch((error) => {
+        ClusterBus.logger.error(`error re-establishing LISTEN connection, retrying in ${delayMs}ms: ${error}`)
+        ClusterBus.scheduleReconnect(Math.min(delayMs * 2, RECONNECT_MAX_DELAY_MS))
+      })
+    }, delayMs)
+    ClusterBus.reconnectTimeout.unref()
+  }
+
   static async shutdown(): Promise<void> {
+    ClusterBus.shuttingDown = true
+    if (ClusterBus.reconnectTimeout) clearTimeout(ClusterBus.reconnectTimeout)
+    ClusterBus.reconnectTimeout = null
     if (ClusterBus.sweepInterval) clearInterval(ClusterBus.sweepInterval)
     ClusterBus.sweepInterval = null
 

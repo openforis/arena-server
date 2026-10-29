@@ -134,3 +134,7 @@ docker container restart arena-db
 ## Package Registry
 
 `@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. On release, the CI workflow (`bump-version-and-publish.yml`) publishes this package to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs (using the `NPM_TOKEN` secret).
+
+## Commits and Pull Requests
+
+Commits and PRs are made as the repository owner: never mention Claude in commit messages or PR descriptions — no `Co-Authored-By: Claude ...` trailer and no "Generated with Claude Code" line.
