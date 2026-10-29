@@ -1,4 +1,4 @@
-import { Record } from '@openforis/arena-core'
+import { ArenaRecord } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableRecord, TableSurvey } from '../../db'
 import { dbTransformCallback } from './transformCallback'
@@ -33,29 +33,29 @@ const buildRecordFetchSql = (surveyId: number, whereConditionBuilder: (tableReco
   return recordSql
 }
 
-export const get = async (
+export const get = (
   options: {
     recordUuid: string
     surveyId: number
   },
   client: BaseProtocol = DB
-): Promise<Record> => {
+): Promise<ArenaRecord> => {
   if (!('recordUuid' in options) || !('surveyId' in options))
-    throw new Error(`missingParams: recordUuid or surveyId is missing`)
+    return Promise.reject(new Error(`missingParams: recordUuid or surveyId is missing`))
   const { recordUuid, surveyId } = options
   const sql = buildRecordFetchSql(surveyId, (tableRecord: TableRecord) => `${tableRecord.uuid} = $/recordUuid/`)
   return client.one(sql, { surveyId, recordUuid }, (row) => dbTransformCallback({ surveyId, row }))
 }
 
-export const getManyByUuids = async (
+export const getManyByUuids = (
   { surveyId, uuids }: { surveyId: number; uuids: string[] },
   client: BaseProtocol = DB
-): Promise<Record[]> => {
+): Promise<ArenaRecord[]> => {
   if (uuids === null || uuids === undefined || !surveyId) {
-    throw new Error(`missingParams: uuids or surveyId is missing`)
+    return Promise.reject(new Error(`missingParams: uuids or surveyId is missing`))
   }
   if (uuids.length === 0) {
-    return []
+    return Promise.resolve([])
   }
   const sql = buildRecordFetchSql(surveyId, (tableRecord: TableRecord) => `${tableRecord.uuid} IN ($/uuids:csv/)`)
   return client.map(sql, { surveyId, uuids }, (row) => dbTransformCallback({ surveyId, row }))

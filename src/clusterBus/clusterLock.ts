@@ -11,7 +11,7 @@ const logger: Logger = new Logger('ClusterLock')
  *
  * @param params - Lock name and the function to run while holding it
  */
-export const runWithClusterLock = async (params: { lockName: string; fn: () => Promise<void> }): Promise<boolean> => {
+export const runWithClusterLock = (params: { lockName: string; fn: () => Promise<void> }): Promise<boolean> => {
   const { lockName, fn } = params
 
   return DB.task(async (task) => {

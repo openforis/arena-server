@@ -1,4 +1,4 @@
-import http, { Server } from 'http'
+import http, { Server } from 'node:http'
 import { createTerminus } from '@godaddy/terminus'
 
 import { DB } from '../../db'
@@ -33,10 +33,6 @@ export const start = async (app: ArenaApp): Promise<Server> => {
 
   return new Promise<Server>((resolve, reject) => {
     const onListening = () => {
-      //TODO: schedulers
-      // await RecordPreviewCleanup.init()
-      // await TempFilesCleanup.init()
-      // await UserResetPasswordCleanup.init()
       server.removeListener('error', onError)
 
       logger.info(`server started and listening on port ${port}`)

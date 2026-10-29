@@ -3,7 +3,7 @@ import { DataQuerySummary } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
 
-export const update = async (
+export const update = (
   params: { surveyId: number; item: DataQuerySummary },
   client: BaseProtocol = DB
 ): Promise<DataQuerySummary> => {

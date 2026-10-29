@@ -9,7 +9,7 @@ declare global {
   var api: ApiTest
 }
 
-export default (): void =>
+const loginTests = (): void =>
   describe(`Login ${ApiEndpoint.auth.login()}`, () => {
     test('Login success', async () => {
       const { body } = await globalThis.api.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
@@ -39,3 +39,5 @@ export default (): void =>
       expect(message).toBe('Missing credentials')
     })
   })
+
+export default loginTests

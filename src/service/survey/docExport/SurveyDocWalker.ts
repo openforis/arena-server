@@ -1,4 +1,9 @@
-import type { ArenaRecord, Node as ArenaNode, NodeDefEntity, NodeDefEntityChildPosition } from '@openforis/arena-core'
+import type {
+  ArenaRecord,
+  ArenaRecordNode as ArenaNode,
+  NodeDefEntity,
+  NodeDefEntityChildPosition,
+} from '@openforis/arena-core'
 import { NodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { formatNodeValue, getIsTableLayout, label } from './common'
@@ -9,7 +14,7 @@ import type { PrintOrientation, RenderContext, SurveyDocOptions, SurveyDocSectio
 // ─── Section Builder ───────────────────────────────────────────────────────────
 
 class SectionBuilder<T> {
-  private sections: SurveyDocSection<T>[] = []
+  private readonly sections: SurveyDocSection<T>[] = []
   private current: SurveyDocSection<T>
 
   constructor(initial: PrintOrientation) {
@@ -62,7 +67,7 @@ const withoutSectionBuilder = <T>(walkOptions?: WalkOptions<T>): WalkOptions<T> 
 // ─── Relevance / Visibility Helper ───────────────────────────────────────────
 
 const isNodeRelevantAndVisible = (record: ArenaRecord, node: ArenaNode): boolean =>
-  Records.isNodeApplicable({ record, node }) && Records.isNodeVisible({ record, node })
+  Records.isNodeApplicable(node)(record) && Records.isNodeVisible(node)(record)
 
 // ─── Grid Helpers (shared with docx) ────────────────────────────────────────
 
@@ -103,24 +108,35 @@ const computeGridDimensions = (layoutChildren: NodeDefEntityChildPosition[]): { 
   return { maxX, maxY }
 }
 
-const renderGridCellContent = async <T>(
-  renderer: SurveyDocRenderer<T>,
-  nodeDef: NodeDef<NodeDefType>,
-  item: NodeDefEntityChildPosition,
-  context: RenderContext,
-  depth: number,
-  parentEntityNode: ArenaNode | undefined,
-  maxX: number,
+const renderGridCellContent = async <T>(params: {
+  renderer: SurveyDocRenderer<T>
+  nodeDef: NodeDef<NodeDefType>
+  item: NodeDefEntityChildPosition
+  context: RenderContext
+  depth: number
+  parentEntityNode: ArenaNode | undefined
+  maxX: number
   walkOptions?: WalkOptions<T>
-): Promise<T[]> => {
+}): Promise<T[]> => {
+  const { renderer, nodeDef, item, context, depth, parentEntityNode, maxX, walkOptions } = params
   if (NodeDefs.isEntity(nodeDef)) {
-    return walkEntityDef(renderer, nodeDef as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions)
+    return walkEntityDef(
+      renderer,
+      nodeDef as NodeDefEntity,
+      context,
+      depth + 1,
+      parentEntityNode,
+      undefined,
+      walkOptions
+    )
   }
   if (NodeDefs.isHidden(nodeDef)) return []
   const { record } = context
   const limits = renderer.getGridCellLimits?.(maxX, item.w ?? 1)
   const childNode =
-    record && parentEntityNode ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0] : undefined
+    record && parentEntityNode
+      ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
+      : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef, context, depth, node: childNode, limits })
 }
@@ -152,8 +168,9 @@ const walkEntityChildrenGrid = async <T>(
 
   type PendingCell = { promise: Promise<T[]>; colSpan?: number; rowSpan?: number }
 
+  // grid cells are rendered without the section builder, so all of them can be rendered in parallel
   const gridCellWalkOptions = withoutSectionBuilder(walkOptions)
-  const gridRows: Array<GridRow<T>> = []
+  const pendingRows: PendingCell[][] = []
   for (let y = 0; y < maxY; y++) {
     const pending: PendingCell[] = []
     for (let x = 0; x < maxX; x++) {
@@ -168,7 +185,7 @@ const walkEntityChildrenGrid = async <T>(
       const h = item.h ?? 1
       markSpannedCells(skip, x, y, w, h)
       pending.push({
-        promise: renderGridCellContent(
+        promise: renderGridCellContent({
           renderer,
           nodeDef,
           item,
@@ -176,22 +193,31 @@ const walkEntityChildrenGrid = async <T>(
           depth,
           parentEntityNode,
           maxX,
-          gridCellWalkOptions
-        ),
+          walkOptions: gridCellWalkOptions,
+        }),
         colSpan: w > 1 ? w : undefined,
         rowSpan: h > 1 ? h : undefined,
       })
     }
-    const contents = await Promise.all(pending.map((p) => p.promise))
-    gridRows.push(contents.map((content, i) => ({ content, colSpan: pending[i].colSpan, rowSpan: pending[i].rowSpan })))
+    pendingRows.push(pending)
   }
+  const gridRows: Array<GridRow<T>> = await Promise.all(
+    pendingRows.map(async (pending) => {
+      const contents = await Promise.all(pending.map((p) => p.promise))
+      return contents.map((content, i) => ({ content, colSpan: pending[i].colSpan, rowSpan: pending[i].rowSpan }))
+    })
+  )
 
   return renderer.renderGridTable(gridRows, maxX)
 }
 
 // ─── Default (flat) Walker ────────────────────────────────────────────────────
 
-const isChildEntityOnOwnPage = (cycle: string, parentEntityDef: NodeDefEntity, childEntityDef: NodeDefEntity): boolean => {
+const isChildEntityOnOwnPage = (
+  cycle: string,
+  parentEntityDef: NodeDefEntity,
+  childEntityDef: NodeDefEntity
+): boolean => {
   const parentPageUuid = NodeDefs.getPageUuid(cycle)(parentEntityDef)
   const childPageUuid = NodeDefs.getPageUuid(cycle)(childEntityDef)
   return Boolean(childPageUuid && childPageUuid !== parentPageUuid)
@@ -205,7 +231,7 @@ const walkEntityChildrenDefault = async <T>(
   parentEntityNode?: ArenaNode,
   walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
-  const { survey, cycle, record } = context
+  const { survey, cycle } = context
   const parentEntity = entityDef as NodeDefEntity
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
@@ -214,30 +240,38 @@ const walkEntityChildrenDefault = async <T>(
     includeAnalysis: false,
     includeLayoutElements: true,
   })
+  const walkChild = (child: NodeDef<NodeDefType>) =>
+    walkDefaultChild(renderer, parentEntity, child, context, depth, parentEntityNode, walkOptions)
   const result: T[] = []
   for (const child of children) {
-    if (NodeDefs.isEntity(child)) {
-      if (isChildEntityOnOwnPage(cycle, parentEntity, child as NodeDefEntity)) continue
-      appendElements(
-        result,
-        await walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions),
-        walkOptions
-      )
-    } else {
-      if (NodeDefs.isHidden(child)) continue
-      let childNode: ArenaNode | undefined
-      if (record && parentEntityNode) {
-        childNode = Records.getChildren(parentEntityNode, child.uuid)(record)[0]
-      }
-      if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) continue
-      appendElements(
-        result,
-        await renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode }),
-        walkOptions
-      )
-    }
+    // sequential: children can push elements to the shared section builder, so their order must be preserved
+    const childElements = await walkChild(child) // NOSONAR
+    appendElements(result, childElements, walkOptions)
   }
   return result
+}
+
+const walkDefaultChild = async <T>(
+  renderer: SurveyDocRenderer<T>,
+  parentEntity: NodeDefEntity,
+  child: NodeDef<NodeDefType>,
+  context: RenderContext,
+  depth: number,
+  parentEntityNode?: ArenaNode,
+  walkOptions?: WalkOptions<T>
+): Promise<T[]> => {
+  const { cycle, record } = context
+  if (NodeDefs.isEntity(child)) {
+    if (isChildEntityOnOwnPage(cycle, parentEntity, child as NodeDefEntity)) return []
+    return walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions)
+  }
+  if (NodeDefs.isHidden(child)) return []
+  const childNode =
+    record && parentEntityNode
+      ? Records.getChildren(parentEntityNode, child.uuid)(record)[0]
+      : undefined
+  if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
+  return renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })
 }
 
 // ─── Entity Table Walker ─────────────────────────────────────────────────────
@@ -261,10 +295,9 @@ const walkEntityAsTable = <T>(
 
   let rows: string[][] = []
   if (record && parentEntityNode) {
-    const entityNodes = Records.getChildren(
-      parentEntityNode,
-      entityDef.uuid
-    )(record).filter((node) => isNodeRelevantAndVisible(record, node))
+    const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(
+      record
+    ).filter((node) => isNodeRelevantAndVisible(record, node))
     if (entityNodes.length > 0) {
       rows = entityNodes.map((entityNode) =>
         attrDefs.map((attrDef) => {
@@ -315,18 +348,13 @@ export const walkEntityChildren = async <T>(
   if (walkOptions?.sectionBuilder) {
     walkOptions.sectionBuilder.push(...result)
   }
+  const walkChildEntityDef = (childEntityDef: NodeDefEntity) =>
+    walkEntityDef(renderer, childEntityDef, context, depth + 1, parentEntityNode, true, walkOptions)
   for (const childEntityDef of entityDefsInOwnPage) {
     const childOrientation = resolvePrintOrientation(childEntityDef, documentDefault)
     walkOptions?.sectionBuilder?.ensureOrientation(childOrientation)
-    const childElements = await walkEntityDef(
-      renderer,
-      childEntityDef,
-      context,
-      depth + 1,
-      parentEntityNode,
-      true,
-      walkOptions
-    )
+    // sequential: each entity is added to the shared section builder, so their order must be preserved
+    const childElements = await walkChildEntityDef(childEntityDef) // NOSONAR
     if (walkOptions?.sectionBuilder) {
       walkOptions.sectionBuilder.push(...childElements)
     } else {
@@ -351,6 +379,8 @@ const walkEntityNodes = async <T>(
 ): Promise<T[]> => {
   const { record } = context
   const visibleNodes = record ? entityNodes.filter((node) => isNodeRelevantAndVisible(record, node)) : entityNodes
+  const walkEntityNodeChildren = (entityNode: ArenaNode) =>
+    walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode, walkOptions)
   const result: T[] = []
   for (let index = 0; index < visibleNodes.length; index++) {
     const entityNode = visibleNodes[index]
@@ -361,7 +391,9 @@ const walkEntityNodes = async <T>(
         walkOptions
       )
     }
-    result.push(...(await walkEntityChildren(renderer, entityDef, context, depth + 1, entityNode, walkOptions)))
+    // sequential: entity instances can push elements to the shared section builder, so their order must be preserved
+    const entityElements = await walkEntityNodeChildren(entityNode) // NOSONAR
+    result.push(...entityElements)
   }
   return result
 }
@@ -383,7 +415,9 @@ export const walkEntityDef = async <T>(
   const isTableLayout = getIsTableLayout(entityDef, context.cycle)
 
   const entityNodes: ArenaNode[] =
-    record && parentEntityNode ? Records.getChildren(parentEntityNode, entityDef.uuid)(record) : []
+    record && parentEntityNode
+      ? Records.getChildren(parentEntityNode, entityDef.uuid)(record)
+      : []
 
   if (!isRoot && record && entityNodes.length > 0 && !isMultiple && !isNodeRelevantAndVisible(record, entityNodes[0])) {
     return []

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
       - name: Temporarily disable "include administrators" branch protection
@@ -22,12 +22,12 @@ jobs:
           enforce_admins: 'false'
           branch: ${{ github.ref_name }}
       - name: 'Automated Version Bump'
-        uses: 'phips28/gh-action-bump-version@master'
+        uses: phips28/gh-action-bump-version@63bc5b97aade4390bf3f33416b8adb891a0f28d7 # v12.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         with:
           tag-prefix: 'v'
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Install dependencies

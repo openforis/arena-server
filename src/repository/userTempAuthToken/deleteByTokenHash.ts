@@ -8,7 +8,7 @@ import { UserTempAuthTokenStored } from '../../model'
  * @param client - Database client
  * @return The deleted UserTempAuthTokenStored or null if not found
  */
-export const deleteByTokenHash = async (
+export const deleteByTokenHash = (
   tokenHash: string,
   client: BaseProtocol = DB
 ): Promise<UserTempAuthTokenStored | null> => {

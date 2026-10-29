@@ -6,7 +6,7 @@ const defaultVersion = '2.0.0'
 
 const upsert = async (item: InfoItem): Promise<InfoItem> => {
   const oldItem = await InfoRepository.getByKey(item.key)
-  if (oldItem && oldItem.value === item.value) {
+  if (oldItem?.value === item.value) {
     return oldItem
   }
   return InfoRepository.upsert(item)

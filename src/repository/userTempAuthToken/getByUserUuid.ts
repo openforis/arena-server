@@ -8,7 +8,7 @@ import { UserTempAuthTokenStored } from '../../model'
  * @param options - Optional search options
  * @param client - Database client
  */
-export const getByUserUuid = async (
+export const getByUserUuid = (
   userUuid: string,
   options?: { includeExpired?: boolean },
   client: BaseProtocol = DB

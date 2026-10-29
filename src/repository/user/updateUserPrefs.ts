@@ -11,7 +11,7 @@ import { SqlUpdateBuilder } from '../../db/sql'
  * @param client - Database client.
  */
 
-export const updateUserPrefs = async (options: { userToUpdate: User }, client: BaseProtocol = DB): Promise<User> => {
+export const updateUserPrefs = (options: { userToUpdate: User }, client: BaseProtocol = DB): Promise<User> => {
   const { userToUpdate: user } = options
   const table = new TableUser()
   const selectFields = [table.uuid, table.name, table.email, table.prefs, table.status, table.props]

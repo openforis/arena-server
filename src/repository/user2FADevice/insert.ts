@@ -7,7 +7,7 @@ import { User2FADevice } from '../../model'
  * @param options - The 2FA device data
  * @param client - Database client
  */
-export const insert = async (
+export const insert = (
   options: Omit<User2FADevice, 'uuid' | 'dateCreated' | 'dateModified'> & { uuid?: string },
   client: BaseProtocol = DB
 ): Promise<User2FADevice> => {

@@ -75,13 +75,13 @@ export class S3Storage {
     let continuationToken: string | undefined
 
     do {
-      const response = await this.client.send(
-        new ListObjectsV2Command({
-          Bucket: this.options.bucketName,
-          Prefix: prefix,
-          ContinuationToken: continuationToken,
-        })
-      )
+      const command = new ListObjectsV2Command({
+        Bucket: this.options.bucketName,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      })
+      // sequential: each page request needs the continuation token returned by the previous one
+      const response = await this.client.send(command) // NOSONAR
 
       for (const object of response.Contents ?? []) {
         if (object.Key) {
@@ -96,14 +96,19 @@ export class S3Storage {
   }
 
   async deleteFiles(keys: string[]): Promise<void> {
+    const batches: string[][] = []
     for (let i = 0; i < keys.length; i += deleteObjectsBatchSize) {
-      const batch = keys.slice(i, i + deleteObjectsBatchSize)
-      await this.client.send(
-        new DeleteObjectsCommand({
-          Bucket: this.options.bucketName,
-          Delete: { Objects: batch.map((key) => ({ Key: key })) },
-        })
-      )
+      batches.push(keys.slice(i, i + deleteObjectsBatchSize))
     }
+    await Promise.all(
+      batches.map((batch) =>
+        this.client.send(
+          new DeleteObjectsCommand({
+            Bucket: this.options.bucketName,
+            Delete: { Objects: batch.map((key) => ({ Key: key })) },
+          })
+        )
+      )
+    )
   }
 }

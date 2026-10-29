@@ -7,7 +7,7 @@ import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableSurvey } from '../../db'
  * @param options
  * @param client - Database client.
  */
-export const get = async (
+export const get = (
   options: {
     surveyId: number
     draft?: boolean

@@ -11,7 +11,7 @@ export class SqlDeleteBuilder extends SqlBuilder {
   private _table: Table | null = null
   private _whereRaw: string | null = null
   private _whereValues: ValuesByColumn = {}
-  private _returning: Column[] = []
+  private readonly _returning: Column[] = []
 
   deleteFrom(table: Table): this {
     this._table = table
@@ -41,7 +41,7 @@ export class SqlDeleteBuilder extends SqlBuilder {
 
   build(): string {
     if (Objects.isEmpty(this._table) || (Objects.isEmpty(this._whereValues) && Objects.isEmpty(this._whereRaw)))
-      throw new Error(`missingParams, ${this._table}, ${this._whereValues}`)
+      throw new Error(`missingParams, ${this._table}, ${JSON.stringify(this._whereValues)}`)
 
     const whereCondition =
       this._whereRaw ??

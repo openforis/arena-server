@@ -21,7 +21,7 @@ export const getAll = (client: BaseProtocol = DB): Promise<InfoItem[]> => {
  * @param key - The info item key.
  * @param client - Database client.
  */
-export const getByKey = async (key: InfoItemKey, client: BaseProtocol = DB): Promise<InfoItem | null> => {
+export const getByKey = (key: InfoItemKey, client: BaseProtocol = DB): Promise<InfoItem | null> => {
   const table = new TableInfo()
   const sql = new SqlSelectBuilder()
     .select(table.keyName, table.keyValue, table.modifiedDate)

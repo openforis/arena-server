@@ -138,8 +138,14 @@ docker container restart arena-db
 
 **TypeScript Strictness**: Full strict mode enabled - all type issues must be resolved
 
+**TypeScript version**: TypeScript 7 (native) is used for `tsc`, installed as the `@typescript/native` alias; the `typescript` package is an alias of `@typescript/typescript6` because ts-node, ts-jest and typescript-eslint still need the TypeScript 6 JavaScript API
+
 **Asset Handling**: SQL files are code assets and must be copied to `dist/` alongside compiled TypeScript
 
 ## Package Registry
 
 `@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. On release, the CI workflow (`bump-version-and-publish.yml`) publishes this package to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs (using the `NPM_TOKEN` secret).
+
+## Commits and Pull Requests
+
+Commits and PRs are made as the repository owner: never mention Claude in commit messages or PR descriptions — no `Co-Authored-By: Claude ...` trailer and no "Generated with Claude Code" line.

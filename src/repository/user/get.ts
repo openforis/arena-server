@@ -12,7 +12,7 @@ type getOptionsType = { userUuid: string } | { email: string } | { email: string
  * @param client - Database client.
  */
 export const get = async (options: getOptionsType, client: BaseProtocol = DB): Promise<User | null> => {
-  if (!('userUuid' in options) && !('email' in options)) throw new Error(`missingParams, ${options}`)
+  if (!('userUuid' in options) && !('email' in options)) throw new Error(`missingParams, ${JSON.stringify(options)}`)
 
   const table = new TableUser()
   const selectFields = [table.uuid, table.name, table.email, table.prefs, table.status, table.props]

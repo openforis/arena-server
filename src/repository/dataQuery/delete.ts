@@ -7,7 +7,7 @@ export const deleteItem = (
   client: BaseProtocol = DB
 ): Promise<DataQuerySummary | null> => {
   const { surveyId, uuid } = params
-  if (!surveyId || !uuid) throw new Error(`missingParams, ${params}`)
+  if (!surveyId || !uuid) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
   const table = new TableDataQuery(surveyId)
 

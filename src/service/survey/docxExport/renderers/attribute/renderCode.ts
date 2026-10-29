@@ -14,7 +14,7 @@ import {
 } from './common'
 import type { AttributeRenderer } from './types'
 
-export const renderCode: AttributeRenderer = async ({ nodeDef, context, node }) => {
+export const renderCode: AttributeRenderer = ({ nodeDef, context, node }) => {
   const codeDef = nodeDef as NodeDefCode
   const { survey, lang } = context
   const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef: codeDef }) : []

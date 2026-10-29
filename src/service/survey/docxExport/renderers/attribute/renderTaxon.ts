@@ -14,7 +14,7 @@ import {
 } from './common'
 import type { AttributeRenderer } from './types'
 
-export const renderTaxon: AttributeRenderer = async ({ nodeDef, context, node }) => {
+export const renderTaxon: AttributeRenderer = ({ nodeDef, context, node }) => {
   const lbl = label(nodeDef, context.lang)
   const hasValue = isNodeFilled(node)
   const taxon = hasValue ? node.refData?.taxon : undefined

@@ -1,0 +1,1 @@
+-- Nothing to restore: a missing item in node meta is equivalent to one having the default value.

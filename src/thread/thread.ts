@@ -1,4 +1,4 @@
-import { parentPort, workerData, isMainThread } from 'worker_threads'
+import { parentPort, workerData, isMainThread } from 'node:worker_threads'
 
 import { Logger } from '../log'
 import { WorkerErrorMessage, WorkerMessage, WorkerMessageType } from './workerMessage'
@@ -23,8 +23,6 @@ export abstract class Thread<MessageIn extends WorkerMessage<any>, MessageOut ex
   protected postMessage(msg: MessageOut | WorkerErrorMessage): void {
     if (parentPort) {
       parentPort.postMessage(msg)
-      //TODO: in Arena we passed user and surveyId. can't we get in worker directly instead?
-      // parentPort.postMessage({ user: this.params.user, surveyId: this.params.surveyId, msg })
     }
   }
 

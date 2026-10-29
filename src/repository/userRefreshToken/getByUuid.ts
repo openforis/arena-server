@@ -9,7 +9,7 @@ import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserRefreshToken } from '
  * @param options - Optional search options
  * @param client - Database client
  */
-export const getByUuid = async (
+export const getByUuid = (
   uuid: string,
   options?: { includeRevoked?: boolean },
   client: BaseProtocol = DB

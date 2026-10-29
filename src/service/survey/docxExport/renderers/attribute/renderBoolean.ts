@@ -5,7 +5,7 @@ import type { NodeDefBoolean } from '@openforis/arena-core'
 import { checkboxRun, getBooleanValueLabel, isNodeFilled, nodeDefFormItemLabelRun, SPACING_FIELD_ROW } from './common'
 import type { AttributeRenderer } from './types'
 
-export const renderBoolean: AttributeRenderer = async ({ nodeDef, context, node }) => {
+export const renderBoolean: AttributeRenderer = ({ nodeDef, context, node }) => {
   const boolDef = nodeDef as NodeDefBoolean
   const hasValue = isNodeFilled(node)
   const isTrue = hasValue && (node.value === true || node.value === 'true')

@@ -1,10 +1,10 @@
-import { Objects, Record, Validation, ValidationFactory } from '@openforis/arena-core'
+import { Objects, ArenaRecord, Validation, ValidationFactory } from '@openforis/arena-core'
 
 export const dbTransformCallback = (options: {
   row: any
   surveyId: number
   includeValidationFields?: boolean
-}): Record => {
+}): ArenaRecord => {
   const { row, surveyId, includeValidationFields = true } = options
 
   const { validation, ...rest } = row

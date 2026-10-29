@@ -20,6 +20,7 @@ const initInfoApiTests = (): void =>
       expect(appInfo.version).toBe(ProcessEnv.applicationVersion)
       expect(config.fileUploadLimit).toBe(ProcessEnv.fileUploadLimit)
       expect(config.experimentalFeatures).toBe(ProcessEnv.experimentalFeatures)
+      expect(config.activityLogDisabled).toBe(ProcessEnv.activityLogDisabled)
     })
   })
 

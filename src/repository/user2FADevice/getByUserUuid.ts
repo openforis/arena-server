@@ -7,7 +7,7 @@ import { User2FADevice } from '../../model'
  * @param userUuid - The user UUID
  * @param client - Database client
  */
-export const getByUserUuid = async (userUuid: string, client: BaseProtocol = DB): Promise<User2FADevice[]> => {
+export const getByUserUuid = (userUuid: string, client: BaseProtocol = DB): Promise<User2FADevice[]> => {
   const table = new TableUser2FADevice()
 
   const sql = new SqlSelectBuilder()
@@ -25,7 +25,7 @@ export const getByUserUuid = async (userUuid: string, client: BaseProtocol = DB)
  * @param userUuid - The user UUID
  * @param client - Database client
  */
-export const getEnabledByUserUuid = async (userUuid: string, client: BaseProtocol = DB): Promise<User2FADevice[]> => {
+export const getEnabledByUserUuid = (userUuid: string, client: BaseProtocol = DB): Promise<User2FADevice[]> => {
   const table = new TableUser2FADevice()
 
   const sql = new SqlSelectBuilder()

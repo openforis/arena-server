@@ -7,7 +7,7 @@ export type SurveyIdAppVersion = { id: number; appVersion: string | null }
  *
  * @param client - Database client.
  */
-export const getAllIdsAndAppVersions = async (client: BaseProtocol = DB): Promise<Array<SurveyIdAppVersion>> => {
+export const getAllIdsAndAppVersions = (client: BaseProtocol = DB): Promise<Array<SurveyIdAppVersion>> => {
   const table = new TableSurvey()
   const sql = new SqlSelectBuilder().select(table.id, table.appVersion).from(table).build()
 

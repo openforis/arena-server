@@ -1,10 +1,12 @@
-import { Server } from 'http'
+import { Server } from 'node:http'
 
 import { ArenaServer } from '../../server'
 import { ApiTest } from './utils/apiTest'
 import { insertTestUser } from './utils/insertTestUser'
 import login from './auth/login'
 import info from './info'
+import tokenType from './auth/tokenType'
+import dataQuery from './dataQuery'
 
 declare global {
   var api: ApiTest
@@ -24,6 +26,12 @@ afterAll(async () => {
 })
 
 describe('API Tests', () => {
+  test('server is listening', () => {
+    expect(server.listening).toBe(true)
+  })
+
   login()
   info()
+  tokenType()
+  dataQuery()
 })

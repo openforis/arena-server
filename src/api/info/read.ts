@@ -15,6 +15,7 @@ export const InfoRead: ExpressInitializer = {
         version: ProcessEnv.applicationVersion,
       }
       const config = {
+        activityLogDisabled: ProcessEnv.activityLogDisabled,
         aiFeaturesEnabled: ProcessEnv.aiFeaturesEnabled,
         experimentalFeatures: ProcessEnv.experimentalFeatures,
         fileUploadLimit: ProcessEnv.fileUploadLimit,
