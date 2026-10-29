@@ -68,6 +68,14 @@ export enum NodeEnv {
   test = 'test',
 }
 
+// dev/test fallbacks are public (they are in this repo): never use them in production
+const getSecret = (env: NodeJS.ProcessEnv, name: string, devFallback: string): string => {
+  const value = env[name]
+  if (value) return value
+  if (env.NODE_ENV === NodeEnv.production) throw new Error(`${name} environment variable is required in production`)
+  return devFallback
+}
+
 export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
   const dbUrl = env.DATABASE_URL
   const parsedDbUrl = parseDbUrl(dbUrl)
@@ -164,8 +172,8 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     mapApiKeyPlanet: env.MAP_API_KEY_PLANET,
 
     // Security
-    userAuthTokenSecret: env.USER_AUTH_TOKEN_SECRET || 'user-auth-token-secret',
-    user2FASecret: env.USER_2FA_SECRET || 'user-2fa-secret',
+    userAuthTokenSecret: getSecret(env, 'USER_AUTH_TOKEN_SECRET', 'user-auth-token-secret'),
+    user2FASecret: getSecret(env, 'USER_2FA_SECRET', 'user-2fa-secret'),
 
     // SYSTEM ADMIN USER
     adminEmail: env.ADMIN_EMAIL,
