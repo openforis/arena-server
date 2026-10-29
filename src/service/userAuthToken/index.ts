@@ -38,6 +38,12 @@ const logger = new Logger('UserAuthTokenService')
 const signToken = (payload: UserTokenPayload, expiresInSeconds: number): string =>
   jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds, algorithm: jwtAlgorithm })
 
+/**
+ * Refresh tokens (with `uuid`) and download tokens (with `fileName`) are signed with the same secret
+ * and also carry `userUuid`: only a payload with neither is an access token.
+ */
+export const isAccessTokenPayload = (payload: object): boolean => !('uuid' in payload) && !('fileName' in payload)
+
 const createUserAuthTokenPayload = ({ userUuid }: { userUuid: string }): UserAuthTokenPayload => ({ userUuid })
 
 const createDownloadAuthTokenPayload = ({
