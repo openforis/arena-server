@@ -51,6 +51,19 @@ describe('ClusterBus', () => {
     expect(received[0].message).toEqual(bigMessage)
   })
 
+  test('reconnects and keeps delivering after the LISTEN connection is lost', async () => {
+    const listenPid = (ClusterBus as any).listenConnection.client.processID
+    await DB.one('SELECT pg_terminate_backend($1)', [listenPid])
+
+    await waitFor(() => {
+      const connection = (ClusterBus as any).listenConnection
+      return Boolean(connection) && connection.client.processID !== listenPid
+    }, 10_000)
+
+    await ClusterBus.publish({ targetType: 'test', targetId: 'after-reconnect', eventType: 'ping', message: {} })
+    await waitFor(() => received.some((event) => event.targetId === 'after-reconnect'))
+  }, 15_000)
+
   test('publish never throws, even if the event cannot be delivered', async () => {
     const circular: Record<string, unknown> = {}
     circular.self = circular // not JSON-serializable
