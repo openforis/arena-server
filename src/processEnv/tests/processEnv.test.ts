@@ -102,3 +102,27 @@ describe('ProcessEnv DATABASE_URL parsing', () => {
     expect(ProcessEnv.pgDatabase).toBe('fallback-db')
   })
 })
+
+describe('ProcessEnv secrets', () => {
+  const secretNames = ['USER_AUTH_TOKEN_SECRET', 'USER_2FA_SECRET']
+
+  test.each(secretNames)('throws in production when %s is missing', (secretName) => {
+    const env: NodeJS.ProcessEnv = { USER_AUTH_TOKEN_SECRET: 'a', USER_2FA_SECRET: 'b', NODE_ENV: 'production' }
+    delete env[secretName]
+
+    expect(() => buildProcessEnv(env)).toThrow(`${secretName} environment variable is required in production`)
+  })
+
+  test('uses the configured secrets in production', () => {
+    const ProcessEnv = buildProcessEnv({ USER_AUTH_TOKEN_SECRET: 'a', USER_2FA_SECRET: 'b', NODE_ENV: 'production' })
+
+    expect(ProcessEnv.userAuthTokenSecret).toBe('a')
+    expect(ProcessEnv.user2FASecret).toBe('b')
+  })
+
+  test('falls back to dev secrets outside production', () => {
+    const ProcessEnv = buildProcessEnv({ NODE_ENV: 'development' })
+
+    expect(ProcessEnv.userAuthTokenSecret).toBe('user-auth-token-secret')
+  })
+})
