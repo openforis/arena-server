@@ -1,5 +1,4 @@
 import { auth } from './auth'
-import { chain } from './chain'
 import { dataQuery } from './dataQuery'
 import { info } from './info'
 import { message } from './message'
@@ -8,7 +7,6 @@ import { userGroup } from './userGroup'
 
 export const ApiEndpoint = {
   auth,
-  chain,
   dataQuery,
   info,
   message,

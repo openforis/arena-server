@@ -61,38 +61,27 @@ Arena Server is a Node.js/Express/PostgreSQL backend service library for the Ope
 
 **Repository Pattern** (`src/repository/`)
 
-- Data access layer organized by entity (authGroup, user, survey, record, chain, dataQuery)
+- Data access layer organized by entity (authGroup, user, survey, record, dataQuery, job, ...)
 - Each repository exports focused data access functions
 - Uses raw SQL queries stored in `.sql` files for complex operations
 - SQL files are copied to `dist/` during build
 
 **API Layer** (`src/api/`)
 
-- Modular API structure: Auth, Chain, DataQuery
+- Modular API structure: Auth, DataQuery, Info, Message, User2FAAuth, UserGroup
 - Each module implements `ExpressInitializer` interface with `init(express)` method
 - `ApiEndpoint` and `ApiAuthMiddleware` utilities for route definition
 - Middleware in `src/server/middleware/` handles cross-cutting concerns
 
-**Job System** (`src/job/`)
+**Jobs**
 
-- Background job processing with worker threads
-- `JobServer` - Abstract base class for implementing jobs
-- `JobManager` - Manages job lifecycle and communication
-- `JobRegistry` - Registers available job types
-- Jobs communicate via message passing (`JobMessageIn`/`JobMessageOut`)
+- Job execution lives in the arena app; this package only provides `JobRepository` (the `job` table used to track jobs across dynos)
 
 **WebSocket** (`src/webSocket/`)
 
 - Real-time communication using Socket.IO
 - `WebSocketServer` manages connections
 - `WebSocketEvent` enum defines event types
-
-**Worker Threads** (`src/thread/`)
-
-- `Worker` - Base class for worker implementations
-- `Thread` - Thread management utilities
-- `WorkerCache` - Caching for worker results
-- Used by job system for parallel processing
 
 ### Package Structure
 
