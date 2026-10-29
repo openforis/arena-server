@@ -31,9 +31,6 @@ export {
 } from './db'
 export type { BaseProtocol, SurveySchemaMigrationNotifier, SurveySchemaMigrationNotifierParams } from './db'
 
-export { JobManager, JobServer, JobMessageInType, JobMessageOutType, JobRegistry } from './job'
-export type { JobContext, JobMessageIn, JobMessageOut } from './job'
-
 export { Logger } from './log'
 
 export { S3Storage } from './fileStorage/s3Storage'
@@ -51,9 +48,6 @@ export type { JobRow } from './repository'
 
 export type { SurveyDocxOptions, SurveyPdfOptions } from './service/survey'
 export { SurveyDocxGenerator, SurveyPdfGenerator } from './service/survey'
-
-export { Worker, Thread, WorkerMessageType, WorkerCache } from './thread'
-export type { WorkerErrorMessage, WorkerMessage } from './thread'
 
 export { WebSocketEvent, WebSocketServer } from './webSocket'
 
