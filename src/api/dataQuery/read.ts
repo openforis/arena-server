@@ -8,27 +8,34 @@ import { DataQueryService } from '../../service'
 import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
+import { ApiAuthMiddleware } from '../middleware'
+
+const { requireSurveyViewPermission } = ApiAuthMiddleware
 
 const getDataQueryService = (): DataQueryService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.dataQuery) as DataQueryService
 
 export const DataQueryRead: ExpressInitializer = {
   init: (express: Express): void => {
-    express.get(ApiEndpoint.dataQuery.dataQueriesCount(':surveyId'), async (req, res, next) => {
-      try {
-        const { surveyId } = Requests.getParams(req)
+    express.get(
+      ApiEndpoint.dataQuery.dataQueriesCount(':surveyId'),
+      requireSurveyViewPermission,
+      async (req, res, next) => {
+        try {
+          const { surveyId } = Requests.getParams(req)
 
-        const service = getDataQueryService()
+          const service = getDataQueryService()
 
-        const count = await service.count({ surveyId })
+          const count = await service.count({ surveyId })
 
-        res.json({ count })
-      } catch (error) {
-        next(error)
+          res.json({ count })
+        } catch (error) {
+          next(error)
+        }
       }
-    })
+    )
 
-    express.get(ApiEndpoint.dataQuery.dataQueries(':surveyId'), async (req, res, next) => {
+    express.get(ApiEndpoint.dataQuery.dataQueries(':surveyId'), requireSurveyViewPermission, async (req, res, next) => {
       try {
         const { surveyId } = Requests.getParams(req)
 
@@ -42,18 +49,22 @@ export const DataQueryRead: ExpressInitializer = {
       }
     })
 
-    express.get(ApiEndpoint.dataQuery.dataQuery(':surveyId', ':querySummaryUuid'), async (req, res, next) => {
-      try {
-        const { surveyId, querySummaryUuid } = Requests.getParams(req)
+    express.get(
+      ApiEndpoint.dataQuery.dataQuery(':surveyId', ':querySummaryUuid'),
+      requireSurveyViewPermission,
+      async (req, res, next) => {
+        try {
+          const { surveyId, querySummaryUuid } = Requests.getParams(req)
 
-        const service = getDataQueryService()
+          const service = getDataQueryService()
 
-        const dataQuerySummary = await service.getByUuid({ surveyId, uuid: querySummaryUuid })
+          const dataQuerySummary = await service.getByUuid({ surveyId, uuid: querySummaryUuid })
 
-        res.json(dataQuerySummary)
-      } catch (error) {
-        next(error)
+          res.json(dataQuerySummary)
+        } catch (error) {
+          next(error)
+        }
       }
-    })
+    )
   },
 }
