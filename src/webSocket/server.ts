@@ -5,6 +5,7 @@ import { ServiceRegistry, ServiceType, UserAuthTokenPayload, UserAuthTokenServic
 
 import { ClusterBus, ClusterEvent, runWithClusterLock } from '../clusterBus'
 import { ConnectedSocketRepository } from '../repository'
+import { isAccessTokenPayload } from '../service/userAuthToken'
 import { Logger } from '../log'
 import { ArenaApp } from '../server'
 import { WebSocketEvent } from './event'
@@ -41,6 +42,7 @@ export class WebSocketServer {
     try {
       const service: UserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
       const jwtPayload: UserAuthTokenPayload = service.verifyAuthToken(token)
+      if (!isAccessTokenPayload(jwtPayload)) throw new Error('not an access token')
       const { userUuid } = jwtPayload
       return userUuid
     } catch (error) {
