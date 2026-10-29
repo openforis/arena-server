@@ -41,3 +41,30 @@ export const updateProps = (
 
   return client.one<UserGroup>(sql, [props, uuid], (row) => DBs.transformCallback({ row }))
 }
+
+// Removes a (deleted) group from the readable groups of the other groups of the survey.
+export const removeReadableGroupUuid = (
+  params: { surveyUuid: string; groupUuid: string },
+  client: BaseProtocol = DB
+): Promise<null> => {
+  const { surveyUuid, groupUuid } = params
+  const table = new TableUserGroup()
+  const readableGroupUuidsPath = `${table.props} -> 'readableGroupUuids'`
+
+  const sql = new SqlUpdateBuilder()
+    .update(table)
+    .set(
+      table.props,
+      `jsonb_set(${table.props}, '{readableGroupUuids}', COALESCE(
+        (SELECT jsonb_agg(item) FROM jsonb_array_elements(${readableGroupUuidsPath}) AS item WHERE item <> to_jsonb($1::text)),
+        '[]'::jsonb
+      ))`
+    )
+    .set(table.dateModified, dateModifiedNow)
+    .where(
+      `${table.surveyUuid} = $2 AND jsonb_typeof(${readableGroupUuidsPath}) = 'array' AND ${readableGroupUuidsPath} ? $1`
+    )
+    .build()
+
+  return client.none(sql, [groupUuid, surveyUuid])
+}
