@@ -144,7 +144,7 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     analysisOutputDir: env.ANALYSIS_OUTPUT_DIR,
 
     // Rate limiting
-    rateLimitEnabled: isTrue(env.RATE_LIMIT_ENABLED),
+    rateLimitEnabled: isTrue(env.RATE_LIMIT_ENABLED ?? String(env.NODE_ENV === NodeEnv.production)),
     rateLimitWindowMs: Number(env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     rateLimitRequestsPerWindow: Number(env.RATE_LIMIT_REQUESTS_PER_WINDOW) || 100,
 
