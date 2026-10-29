@@ -42,9 +42,10 @@ export const initApp = (options: InitAppOptions = defaultOptions): ArenaApp => {
     HttpsMiddleware.init(app)
   }
 
-  RateLimitMiddleware.init(app)
-
   app.use(express.json({ limit: bodyParseLimit }))
+
+  // after JSON parsing: the login limiter by account reads the email from the body
+  RateLimitMiddleware.init(app)
 
   app.use(
     expressFileUpload({

@@ -5,6 +5,7 @@ export {
   TableConnectedSocket,
   TableInfo,
   TableJob,
+  TableRateLimitHit,
   TableRecordSocketAssociation,
   TableSurvey,
   TableUser,
