@@ -5,6 +5,7 @@ import { ApiTest } from './utils/apiTest'
 import { insertTestUser } from './utils/insertTestUser'
 import login from './auth/login'
 import info from './info'
+import dataQuery from './dataQuery'
 
 declare global {
   var api: ApiTest
@@ -30,4 +31,5 @@ describe('API Tests', () => {
 
   login()
   info()
+  dataQuery()
 })

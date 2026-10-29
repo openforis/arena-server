@@ -8,25 +8,32 @@ import { DataQueryService } from '../../service'
 import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
+import { ApiAuthMiddleware } from '../middleware'
+
+const { requireSurveyViewPermission } = ApiAuthMiddleware
 
 const getDataQueryService = (): DataQueryService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.dataQuery)
 
 export const DataQueryCreate: ExpressInitializer = {
   init: (express: Express): void => {
-    express.post(ApiEndpoint.dataQuery.dataQuery(':surveyId', ':queryUuid'), async (req, res, next) => {
-      try {
-        const { surveyId } = Requests.getParams(req)
-        const querySummary = req.body
+    express.post(
+      ApiEndpoint.dataQuery.dataQuery(':surveyId', ':queryUuid'),
+      requireSurveyViewPermission,
+      async (req, res, next) => {
+        try {
+          const { surveyId } = Requests.getParams(req)
+          const querySummary = req.body
 
-        const service = getDataQueryService()
+          const service = getDataQueryService()
 
-        const querySummaryInserted = await service.insert({ surveyId, item: querySummary })
+          const querySummaryInserted = await service.insert({ surveyId, item: querySummary })
 
-        res.json(querySummaryInserted)
-      } catch (error) {
-        next(error)
+          res.json(querySummaryInserted)
+        } catch (error) {
+          next(error)
+        }
       }
-    })
+    )
   },
 }
