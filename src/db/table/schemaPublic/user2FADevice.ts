@@ -8,6 +8,7 @@ export class TableUser2FADevice extends TableSchemaPublic {
   readonly secret: Column = new Column(this, 'secret', ColumnType.varchar)
   readonly enabled: Column = new Column(this, 'enabled', ColumnType.boolean)
   readonly backupCodes: Column = new Column(this, 'backup_codes', ColumnType.jsonb)
+  readonly lastUsedTimeStep: Column = new Column(this, 'last_used_time_step', ColumnType.integer)
   readonly dateCreated: Column = new Column(this, 'date_created', ColumnType.timeStamp)
   readonly dateModified: Column = new Column(this, 'date_modified', ColumnType.timeStamp)
 
@@ -23,6 +24,7 @@ export class TableUser2FADevice extends TableSchemaPublic {
       this.secret,
       this.enabled,
       this.backupCodes,
+      this.lastUsedTimeStep,
       this.dateCreated,
       this.dateModified,
     ]

@@ -5,11 +5,12 @@ export type User2FADevice = {
   secret: string
   enabled: boolean
   backupCodes: string[]
+  lastUsedTimeStep?: number | null // TOTP time step of the last accepted code (codes at or before it are rejected)
   dateCreated: Date
   dateModified: Date
 }
 
-export type User2FADeviceForClient = Omit<User2FADevice, 'secret' | 'backupCodes'>
+export type User2FADeviceForClient = Omit<User2FADevice, 'secret' | 'backupCodes' | 'lastUsedTimeStep'>
 
 export type User2FADeviceForClientFirstTimeSetup = User2FADeviceForClient & {
   backupCodes: string[] // Plain backup codes are only returned at setup time (not stored in DB in plain form)
