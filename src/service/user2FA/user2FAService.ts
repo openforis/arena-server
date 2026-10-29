@@ -123,16 +123,23 @@ const generateBackupCodes = (): string[] => {
 /**
  * Verifies a TOTP token against a secret.
  */
-const verifyToken = (options: { secret: string; token: string }): boolean => {
-  const { secret, token } = options
+const verifyTokenTimeStep = (options: { secret: string; token: string; afterTimeStep?: number }): number | null => {
+  const { secret, token, afterTimeStep } = options
+  // otplib throws on malformed tokens (e.g. a backup code that did not match): treat them as invalid
+  if (!/^\d{6}$/.test(token)) return null
   const result = verifySync({
     secret,
     token,
     // Allow for clock skew: 2 TOTP windows on either side of current time.
     epochTolerance: 60,
+    // Reject codes at or before the last accepted one (replay)
+    afterTimeStep,
   })
-  return result.valid
+  // timeStep is only in TOTP results (verifySync's result type also covers HOTP)
+  return result.valid && 'timeStep' in result ? result.timeStep : null
 }
+
+const verifyToken = (options: { secret: string; token: string }): boolean => verifyTokenTimeStep(options) !== null
 
 const to2FADeviceForClient = (device: User2FADevice): User2FADeviceForClient => {
   const { uuid, userUuid, deviceName, enabled, dateCreated, dateModified } = device
@@ -301,17 +308,21 @@ const verifyLogin = async (options: { userUuid: string; token: string; client?: 
 
   // Check if token matches any enabled device
   for (const device of enabledDevices) {
-    const { uuid: deviceUuid, backupCodes } = device
+    const { uuid: deviceUuid, backupCodes, lastUsedTimeStep } = device
     // Check if it's a backup code
     const { matched, updatedCodes } = await findAndConsumeBackupCode(backupCodes, token)
     if (matched) {
-      await User2FADeviceRepository.update({ uuid: deviceUuid, backupCodes: updatedCodes ?? [] }, client)
-      return true
+      // false if a concurrent login consumed the same code first
+      return User2FADeviceRepository.replaceBackupCodes(
+        { uuid: deviceUuid, expectedBackupCodes: backupCodes, backupCodes: updatedCodes ?? [] },
+        client
+      )
     }
     // Verify TOTP token
     const secret = decryptSecret(device.secret)
-    if (verifyToken({ secret, token })) {
-      return true
+    const timeStep = verifyTokenTimeStep({ secret, token, afterTimeStep: lastUsedTimeStep ?? undefined })
+    if (timeStep !== null) {
+      return User2FADeviceRepository.markTimeStepUsed({ uuid: deviceUuid, timeStep }, client)
     }
   }
   return false
