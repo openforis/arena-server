@@ -24,6 +24,8 @@ import {
   jwtDownloadTokenExpireMs,
   jwtExpiresMs,
   jwtRefreshTokenExpireMs,
+  jwtRefreshTokenMobileExpireMs,
+  arenaMobileAppId,
 } from './userAuthTokenServiceConstants'
 
 const logger = new Logger('UserAuthTokenService')
@@ -80,15 +82,19 @@ const createUserAuthToken = ({
   return createAuthTokenFromPayload(payload, jwtExpiresMs)
 }
 
+const getRefreshTokenExpireMs = (props: UserAuthRefreshTokenProps): number =>
+  props?.appInfo?.appId === arenaMobileAppId ? jwtRefreshTokenMobileExpireMs : jwtRefreshTokenExpireMs
+
 const createAndStoreRefreshToken = (
   { userUuid, props }: { userUuid: string; props: UserAuthRefreshTokenProps },
   client: pgPromise.IBaseProtocol<any> = DB
 ): Promise<UserAuthRefreshToken> => {
   const uuid = UUIDs.v4()
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + jwtRefreshTokenExpireMs)
+  const expireMs = getRefreshTokenExpireMs(props)
+  const expiresAt = new Date(now.getTime() + expireMs)
   const payload: UserAuthRefreshTokenPayload = { ...createUserAuthTokenPayload({ userUuid }), uuid }
-  const token = signToken(payload, jwtRefreshTokenExpireMs / 1000)
+  const token = signToken(payload, expireMs / 1000)
   const refreshToken = { uuid, userUuid, token, dateCreated: now, expiresAt, props }
   return UserRefreshTokenRepository.insert(refreshToken, client)
 }
@@ -179,4 +185,4 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
   },
 }
 
-export { jwtExpiresMs, jwtRefreshTokenExpireMs } from './userAuthTokenServiceConstants'
+export { jwtExpiresMs, jwtRefreshTokenExpireMs, jwtRefreshTokenMobileExpireMs } from './userAuthTokenServiceConstants'
