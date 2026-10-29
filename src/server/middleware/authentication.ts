@@ -19,6 +19,7 @@ import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
 
+import { isAccessTokenPayload } from '../../service/userAuthToken'
 import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceConstants'
 
 const logger = new Logger('AuthenticationMiddleware')
@@ -112,6 +113,10 @@ const jwtStrategy = new JWTStrategy(
     algorithms: jwtAlgorithms,
   },
   (req: Request, jwtPayload: UserAuthTokenPayload, done) => {
+    if (!isAccessTokenPayload(jwtPayload)) {
+      done(null, false)
+      return
+    }
     const { userUuid } = jwtPayload
     const service: UserService = ServiceRegistry.getInstance().getService(ServiceType.user)
     service
