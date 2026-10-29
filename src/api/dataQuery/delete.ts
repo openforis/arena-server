@@ -8,24 +8,31 @@ import { DataQueryService } from '../../service'
 import { Requests } from '../../utils'
 
 import { ApiEndpoint } from '../endpoint'
+import { ApiAuthMiddleware } from '../middleware'
+
+const { requireSurveyViewPermission } = ApiAuthMiddleware
 
 const getDataQueryService = (): DataQueryService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.dataQuery)
 
 export const DataQueryDelete: ExpressInitializer = {
   init: (express: Express): void => {
-    express.delete(ApiEndpoint.dataQuery.dataQuery(':surveyId', ':queryUuid'), async (req, res, next) => {
-      try {
-        const { surveyId, queryUuid } = Requests.getParams(req)
+    express.delete(
+      ApiEndpoint.dataQuery.dataQuery(':surveyId', ':queryUuid'),
+      requireSurveyViewPermission,
+      async (req, res, next) => {
+        try {
+          const { surveyId, queryUuid } = Requests.getParams(req)
 
-        const service = getDataQueryService()
+          const service = getDataQueryService()
 
-        const querySummaryUpdated = await service.deleteItem({ surveyId, uuid: queryUuid })
+          const querySummaryUpdated = await service.deleteItem({ surveyId, uuid: queryUuid })
 
-        res.json(querySummaryUpdated)
-      } catch (error) {
-        next(error)
+          res.json(querySummaryUpdated)
+        } catch (error) {
+          next(error)
+        }
       }
-    })
+    )
   },
 }
