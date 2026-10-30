@@ -39,15 +39,16 @@ const pathsAllowedWithoutAuthentication = [
 ]
 
 /**
- * List of API path prefixes used to identify API requests.
+ * Matches the API paths. Case-insensitive like express routing: otherwise `/API/...` would be
+ * treated as a page request and reach the API routes without authentication.
  */
-const apiPaths = ['/api/', '/auth/']
+const apiPathRegexp = /^\/(api|auth)\//i
 
 /**
  * Determines whether the incoming request should be treated as an API request.
  *
- * Only requests whose path starts with one of the prefixes in `apiPaths`
- * (currently `/api/` and `/auth/`) are considered API requests. These routes
+ * Only requests whose path matches `apiPathRegexp` (currently `/api/` and
+ * `/auth/`, in any case) are considered API requests. These routes
  * are subject to API-specific authentication and may return 401 responses when
  * the user is not authenticated or authorized.
  *
@@ -55,7 +56,7 @@ const apiPaths = ['/api/', '/auth/']
  * routes) are treated as non-API requests and follow their own authentication
  * and error-handling rules, separate from the API authentication flow.
  */
-const isApiRequest = (req: Request): boolean => apiPaths.some((path) => req.path.startsWith(path))
+const isApiRequest = (req: Request): boolean => apiPathRegexp.test(req.path)
 
 const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, done) => {
   const sendError = (message: string) => done(null, false, { message })
