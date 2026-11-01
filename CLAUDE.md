@@ -133,7 +133,7 @@ docker container restart arena-db
 
 ## Package Registry
 
-`@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. On release, the CI workflow (`bump-version-and-publish.yml`) publishes this package to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs (using the `NPM_TOKEN` secret).
+`@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. On release, the CI workflow (`bump-version-and-publish.yml`) publishes this package to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs via npm Trusted Publishing (GitHub OIDC, `id-token: write` permission), so no npm token secret is needed. The trusted publisher (repository `openforis/arena-server`, workflow `bump-version-and-publish.yml`) is configured in the package settings on npmjs.com.
 
 ## Commits and Pull Requests
 

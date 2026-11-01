@@ -10,6 +10,9 @@ on:
 jobs:
   publish-new-version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for npm Trusted Publishing (OIDC)
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v7
@@ -37,14 +40,15 @@ jobs:
         run: yarn npm publish
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      # npmjs: drop the GitHub-specific registry config (publishConfig) before publishing
+      # npmjs: published via npm Trusted Publishing (OIDC), no NPM_TOKEN secret needed.
+      # Requires npm >= 11.5.1 and a trusted publisher configured on npmjs.com for this
+      # repository and workflow file (bump-version-and-publish.yml).
+      # The GitHub-specific registry config (publishConfig) is dropped before publishing.
       - name: Publish to npmjs
         run: |
+          npm install -g npm@latest
           npm pkg delete publishConfig
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > "$RUNNER_TEMP/npmjs.npmrc"
-          npm publish --registry https://registry.npmjs.org/ --access public --userconfig "$RUNNER_TEMP/npmjs.npmrc"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --registry https://registry.npmjs.org/ --access public
       - name: Enable "include administrators" branch protection
         if: always() # Force to always run this step to ensure "include administrators" is always turned back on
         uses: ./.github/actions/toggle-branch-protection
