@@ -99,5 +99,11 @@ jobs:
             echo "::notice::version $VERSION already published to npmjs: skipped"
             exit 0
           fi
+          # the OIDC request variables are only set when the job has the id-token: write permission
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::OIDC token not available: the job did not get the id-token: write permission"
+            exit 1
+          fi
           npm pkg delete publishConfig
-          npm publish --registry https://registry.npmjs.org/ --access public --provenance
+          # verbose logging shows the outcome of the OIDC token exchange with npmjs (trusted publisher match)
+          npm publish --registry https://registry.npmjs.org/ --access public --provenance --loglevel verbose
