@@ -41,6 +41,10 @@ const sendUserSurvey = async (options: { res: Response; user: User; authToken: s
     let survey = null
     if (surveyId) {
       survey = await surveyService.get({ surveyId, draft: false, validate: false })
+      // the current survey pref can point to any survey: handle a survey the user cannot view as not found
+      if (!Authorizer.canViewSurvey(user, survey)) {
+        throw new Error('the user cannot view the survey')
+      }
     }
     if (survey && surveyId && Authorizer.canEditSurvey(user, survey)) {
       survey = await surveyService.get({ surveyId, draft: true, validate: true })
