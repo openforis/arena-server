@@ -47,6 +47,7 @@ export {
 export type { JobRow } from './repository'
 
 export type { SurveyDocxOptions, SurveyPdfOptions } from './service/survey'
+export type { SurveyDataMigrationService } from './service'
 export { SurveyDocxGenerator, SurveyPdfGenerator } from './service/survey'
 
 export { WebSocketEvent, WebSocketServer } from './webSocket'
