@@ -1,8 +1,10 @@
-import { User, UserFactory } from '@openforis/arena-core'
+import { ServiceRegistry, User, UserFactory } from '@openforis/arena-core'
 import { AuthGroupName } from '@openforis/arena-core/dist/auth/authGroup'
 
 import { DB } from '../../../../db'
 import { ApiEndpoint } from '../../../endpoint'
+import { ServerServiceType } from '../../../../server'
+import { SurveyDataMigrationServiceServer } from '../../../../service'
 import { mockUser, mockUserInvalid } from '../../mock/user'
 import { ApiTest } from '../../utils/apiTest'
 import { passwordEncrypted } from '../../utils/insertTestUser'
@@ -69,6 +71,27 @@ const loginTests = (): void =>
         // the survey pref is removed
         expect(body.user.prefs?.surveys?.[surveyId]).not.toBeDefined()
       } finally {
+        await DB.none('DELETE FROM survey WHERE id = $1', [surveyId])
+      }
+    })
+
+    test('Login with surveyId keeps the current survey pref while its data migration is pending', async () => {
+      const surveyId = await insertSurveyAsCurrentOfUserWithoutRoles()
+      const serviceRegistry = ServiceRegistry.getInstance()
+      serviceRegistry.registerService(ServerServiceType.surveyDataMigration, {
+        isPending: async ({ surveyId: surveyIdParam }: { surveyId: number }) => surveyIdParam === surveyId,
+      })
+      try {
+        const { body } = await globalThis.api
+          .post(ApiEndpoint.auth.login({ includeSurvey: true }))
+          .send(userWithoutRoles)
+          .expect(200)
+        expect(body.survey).not.toBeDefined()
+        // the survey pref is kept
+        expect(body.user.prefs?.surveys?.current).toBe(surveyId)
+        expect(body.user.prefs?.surveys?.[surveyId]).toBeDefined()
+      } finally {
+        serviceRegistry.registerService(ServerServiceType.surveyDataMigration, SurveyDataMigrationServiceServer)
         await DB.none('DELETE FROM survey WHERE id = $1', [surveyId])
       }
     })

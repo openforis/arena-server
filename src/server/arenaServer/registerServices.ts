@@ -5,6 +5,7 @@ import {
   MessageServiceServer,
   RecordServiceServer,
   SurveyServiceServer,
+  SurveyDataMigrationServiceServer,
   UserAuthTokenServiceServer,
   UserTempAuthTokenServiceServer,
   UserServiceServer,
@@ -22,6 +23,7 @@ export const registerServices = (): ServiceRegistry =>
     .registerService(ServiceType.user, UserServiceServer)
     .registerService(ServerServiceType.dataQuery, DataQueryServiceServer)
     .registerService(ServerServiceType.message, MessageServiceServer)
+    .registerService(ServerServiceType.surveyDataMigration, SurveyDataMigrationServiceServer)
     .registerService(ServerServiceType.userTempAuthToken, UserTempAuthTokenServiceServer)
     .registerService(ServerServiceType.user2FA, User2FAServiceServer)
     .registerService(ServerServiceType.userGroup, UserGroupServiceServer)

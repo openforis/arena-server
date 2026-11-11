@@ -6,6 +6,7 @@ import {
   Objects,
   ServiceRegistry,
   ServiceType,
+  Survey,
   SurveyService,
   User,
   UserAuthTokenService,
@@ -16,7 +17,7 @@ import {
 
 import { Logger } from '../../log'
 import { ExpressInitializer, ServerServiceType } from '../../server'
-import { UserTempAuthTokenService, User2FAService } from '../../service'
+import { SurveyDataMigrationService, UserTempAuthTokenService, User2FAService } from '../../service'
 import { Requests } from '../../utils'
 import { ApiEndpoint } from '../endpoint'
 import { extractRefreshTokenProps, setRefreshTokenCookie } from './authApiCommon'
@@ -32,33 +33,52 @@ export const deletePrefSurvey = (user: User): User => {
   return _user
 }
 
-const sendUserSurvey = async (options: { res: Response; user: User; authToken: string }) => {
-  const { res, user, authToken } = options
-  const serviceRegistry = ServiceRegistry.getInstance()
-  const surveyId = user.prefs?.surveys?.current
+const isSurveyDataMigrationPending = async (surveyId: number): Promise<boolean> => {
+  const service = ServiceRegistry.getInstance().getService(
+    ServerServiceType.surveyDataMigration
+  ) as SurveyDataMigrationService
+  return service.isPending({ surveyId })
+}
+
+// survey of the current survey pref, or null if not found or the user cannot view it
+const fetchCurrentSurvey = async (options: { user: User; surveyId: number }): Promise<Survey | null> => {
+  const { user, surveyId } = options
+  const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
   try {
-    const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
-    let survey = null
-    if (surveyId) {
-      survey = await surveyService.get({ surveyId, draft: false, validate: false })
-      // the current survey pref can point to any survey: handle a survey the user cannot view as not found
-      if (!Authorizer.canViewSurvey(user, survey)) {
-        throw new Error('the user cannot view the survey')
-      }
-    }
-    if (survey && surveyId && Authorizer.canEditSurvey(user, survey)) {
-      survey = await surveyService.get({ surveyId, draft: true, validate: true })
-    }
-    res.json({ user, survey, authToken })
+    const survey = await surveyService.get({ surveyId, draft: false, validate: false })
+    // the current survey pref can point to any survey: a survey the user cannot view is handled as not found
+    if (!Authorizer.canViewSurvey(user, survey)) return null
+    return Authorizer.canEditSurvey(user, survey)
+      ? await surveyService.get({ surveyId, draft: true, validate: true })
+      : survey
   } catch (error: any) {
     logger.error(`error loading survey with id ${surveyId}: ${error.toString()}`)
-    // Survey not found with user pref
-    // removing user pref
-    const userToUpdate = deletePrefSurvey(user)
-    const userService = serviceRegistry.getService(ServiceType.user) as UserService
-    const userUpdated = await userService.updateUserPrefs({ userToUpdate })
-    res.json({ user: userUpdated, authToken })
+    return null
   }
+}
+
+const sendUserSurvey = async (options: { res: Response; user: User; authToken: string }) => {
+  const { res, user, authToken } = options
+  const surveyId = user.prefs?.surveys?.current
+  if (!surveyId) {
+    res.json({ user, survey: null, authToken })
+    return
+  }
+  // survey temporarily unavailable: keep the survey pref
+  if (await isSurveyDataMigrationPending(surveyId)) {
+    res.json({ user, authToken })
+    return
+  }
+  const survey = await fetchCurrentSurvey({ user, surveyId })
+  if (survey) {
+    res.json({ user, survey, authToken })
+    return
+  }
+  // survey not found or not viewable by the user: remove the survey pref
+  const userToUpdate = deletePrefSurvey(user)
+  const userService = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+  const userUpdated = await userService.updateUserPrefs({ userToUpdate })
+  res.json({ user: userUpdated, authToken })
 }
 
 const sendUser = async (options: { res: Response; req: Request; user: User; authToken: string }) => {
