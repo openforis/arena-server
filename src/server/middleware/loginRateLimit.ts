@@ -18,7 +18,7 @@ const getAccountKey = (body: unknown): string | undefined => {
   const email = (body as { email?: unknown } | undefined)?.email
   if (typeof email !== 'string') return undefined
   const normalized = email.trim().toLowerCase()
-  return normalized ? normalized : undefined
+  return normalized || undefined
 }
 
 /**
@@ -27,14 +27,12 @@ const getAccountKey = (body: unknown): string | undefined => {
  * Must be registered after the JSON body parser, since the account limiter reads the email from the request body.
  * Counters are kept in memory, so they are per server instance.
  */
-export const createLoginRateLimiters = (
-  options: LoginRateLimitOptions = {
-    windowMs: ProcessEnv.loginRateLimitWindowMs,
-    maxFailedAttemptsPerIp: ProcessEnv.loginRateLimitMaxFailedAttemptsPerIp,
-    maxFailedAttemptsPerAccount: ProcessEnv.loginRateLimitMaxFailedAttemptsPerAccount,
-  }
-): RequestHandler[] => {
-  const { windowMs, maxFailedAttemptsPerIp, maxFailedAttemptsPerAccount } = options
+export const createLoginRateLimiters = (options: Partial<LoginRateLimitOptions> = {}): RequestHandler[] => {
+  const {
+    windowMs = ProcessEnv.loginRateLimitWindowMs,
+    maxFailedAttemptsPerIp = ProcessEnv.loginRateLimitMaxFailedAttemptsPerIp,
+    maxFailedAttemptsPerAccount = ProcessEnv.loginRateLimitMaxFailedAttemptsPerAccount,
+  } = options
 
   const perIpLimiter = rateLimit({
     windowMs,
