@@ -24,6 +24,7 @@ export {
   TableJob,
   TableNodeDef,
   TableRecord,
+  TableRateLimitHit,
   TableRecordSocketAssociation,
   TableSurvey,
   TableUser,
