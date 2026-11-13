@@ -16,6 +16,8 @@ import {
 } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
+import { ProcessEnv } from '../../processEnv'
+import { createLoginRateLimiters } from '../../server/middleware/loginRateLimit'
 import { ExpressInitializer, ServerServiceType } from '../../server'
 import { SurveyDataMigrationService, UserTempAuthTokenService, User2FAService } from '../../service'
 import { Requests } from '../../utils'
@@ -167,7 +169,8 @@ const handle2FARequired = async ({
 
 export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
-    express.post(ApiEndpoint.auth.login(), (req: Request, res: Response, next) => {
+    const loginRateLimiters = ProcessEnv.loginRateLimitEnabled ? createLoginRateLimiters() : []
+    express.post(ApiEndpoint.auth.login(), ...loginRateLimiters, (req: Request, res: Response, next) => {
       passport.authenticate('local', { session: false }, async (err: any, user: User, info: any) => {
         if (err) {
           return next(err)
