@@ -68,11 +68,16 @@ export enum NodeEnv {
   test = 'test',
 }
 
-// dev/test fallbacks are public (they are in this repo): never use them in production
+const nodeEnvsAllowingSecretFallbacks = new Set<string>([NodeEnv.development, NodeEnv.test])
+
+// dev/test fallbacks are public (they are in this repo): use them only when NODE_ENV is explicitly development or test,
+// so that a deployment with a missing or misconfigured NODE_ENV cannot start with them
 const getSecret = (env: NodeJS.ProcessEnv, name: string, devFallback: string): string => {
   const value = env[name]
   if (value) return value
-  if (env.NODE_ENV === NodeEnv.production) throw new Error(`${name} environment variable is required in production`)
+  if (!env.NODE_ENV || !nodeEnvsAllowingSecretFallbacks.has(env.NODE_ENV)) {
+    throw new Error(`${name} environment variable is required unless NODE_ENV is development or test`)
+  }
   return devFallback
 }
 
@@ -147,6 +152,11 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     rateLimitEnabled: isTrue(env.RATE_LIMIT_ENABLED),
     rateLimitWindowMs: Number(env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     rateLimitRequestsPerWindow: Number(env.RATE_LIMIT_REQUESTS_PER_WINDOW) || 100,
+    // Login rate limiting (failed attempts only): enabled unless LOGIN_RATE_LIMIT_ENABLED is false
+    loginRateLimitEnabled: isTrue(env.LOGIN_RATE_LIMIT_ENABLED ?? 'true'),
+    loginRateLimitWindowMs: Number(env.LOGIN_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    loginRateLimitMaxFailedAttemptsPerIp: Number(env.LOGIN_RATE_LIMIT_MAX_FAILED_ATTEMPTS_PER_IP) || 50,
+    loginRateLimitMaxFailedAttemptsPerAccount: Number(env.LOGIN_RATE_LIMIT_MAX_FAILED_ATTEMPTS_PER_ACCOUNT) || 10,
 
     // Logging
     disableLogging: env.NODE_ENV === 'test' && isTrue(env.DISABLE_LOGS),

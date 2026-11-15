@@ -133,8 +133,12 @@ docker container restart arena-db
 
 ## Package Registry
 
-`@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. On release, the CI workflow (`bump-version-and-publish.yml`) publishes this package to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs (using the `NPM_TOKEN` secret).
+`@openforis/arena-core` is installed from npmjs, so no authentication or `.npmrc` is needed to install dependencies. Releases are split into two workflows: on every merge to `master`, `release.yml` bumps the version and pushes the commit with a `v*` tag (using `ACCESS_TOKEN`); the tag push triggers `publish.yml`, which runs the tests and then publishes, in independent jobs, to GitHub Packages (using `ACCESS_TOKEN`) and to npmjs via npm Trusted Publishing (GitHub OIDC, `id-token: write` permission), so no npm token secret is needed. The trusted publisher (repository `openforis/arena-server`, workflow `publish.yml`) is configured in the package settings on npmjs.com. Publish jobs skip versions already in their registry, so `publish.yml` can be re-run, or started manually on an existing `v*` tag.
 
 ## Commits and Pull Requests
 
 Commits and PRs are made as the repository owner: never mention Claude in commit messages or PR descriptions — no `Co-Authored-By: Claude ...` trailer and no "Generated with Claude Code" line.
+
+## Commits and Pull Requests
+
+- No Claude attribution: never add a `Co-Authored-By: Claude` trailer, a "Generated with Claude Code" line or a session link to commits and pull requests.

@@ -20,6 +20,13 @@ const rateLimitedPaths = [
 
 export const RateLimitMiddleware: ExpressInitializer = {
   init(express: Express): void {
+    if (ProcessEnv.useHttps && (ProcessEnv.rateLimitEnabled || ProcessEnv.loginRateLimitEnabled)) {
+      // running behind a proxy (e.g. Heroku, AWS ELB, Nginx) - trust the X-Forwarded-* headers
+      // so that rate limiters use the client IP and not the proxy one
+      const proxies = 1 // number of proxies between user and server
+      express.set('trust proxy', proxies)
+    }
+
     if (!ProcessEnv.rateLimitEnabled) {
       logger.debug('Rate limiting is disabled')
       return
@@ -39,12 +46,6 @@ export const RateLimitMiddleware: ExpressInitializer = {
 
     for (const rateLimitedPath of rateLimitedPaths) {
       express.use(rateLimitedPath, limiter)
-    }
-
-    if (ProcessEnv.useHttps) {
-      // running behind a proxy (e.g. Heroku, AWS ELB, Nginx) - trust the X-Forwarded-* headers
-      const proxies = 1 // number of proxies between user and server
-      express.set('trust proxy', proxies)
     }
   },
 }

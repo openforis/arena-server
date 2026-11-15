@@ -19,4 +19,24 @@ describe('initApp', () => {
     expect(response.status).toBe(401)
     expect(statuses).toEqual([401])
   })
+
+  // express routing is case-insensitive: these paths would reach the API routes
+  test.each(['/API/surveys', '/Api/surveys', '/AUTH/login', '/API/public/record-export/token'])(
+    'rejects unauthenticated API requests regardless of the path case: %s',
+    async (path) => {
+      const app = initApp()
+
+      const response = await request(app.express).get(path)
+
+      expect(response.status).toBe(401)
+    }
+  )
+
+  test('lets unauthenticated page requests continue', async () => {
+    const app = initApp()
+
+    const response = await request(app.express).get('/app/home')
+
+    expect(response.status).toBe(404)
+  })
 })

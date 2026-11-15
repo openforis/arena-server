@@ -1,10 +1,11 @@
 import { DB } from '../../../db'
 import { mockUser } from '../mock/user'
 
+export const passwordEncrypted = '$2a$10$zwh0mqd3.q8T1dxsqtpNC.KW6D8CxnpavGlTbe5xM/WmolNjr145m' // Test_123
+
 export const insertTestUser = (): Promise<void> =>
   DB.tx(async (tx) => {
     const { name, email } = mockUser
-    const passwordEncrypted = '$2a$10$zwh0mqd3.q8T1dxsqtpNC.KW6D8CxnpavGlTbe5xM/WmolNjr145m' // Test_123
 
     const userDb = await tx.oneOrNone(
       `SELECT *

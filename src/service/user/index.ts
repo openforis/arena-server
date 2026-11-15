@@ -1,6 +1,7 @@
 import { User, UserService } from '@openforis/arena-core'
 
 import { get } from './get'
+import { updateUserPrefs } from './updateUserPrefs'
 
 export const UserServiceServer: UserService = {
   // @ts-ignore
@@ -42,11 +43,7 @@ export const UserServiceServer: UserService = {
     throw new Error('TODO')
   },
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateUserPrefs(options: { userToUpdate: User }): Promise<User> {
-    throw new Error('TODO')
-  },
+  updateUserPrefs,
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
