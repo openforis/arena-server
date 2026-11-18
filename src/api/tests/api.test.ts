@@ -7,6 +7,7 @@ import login from './auth/login'
 import info from './info'
 import tokenType from './auth/tokenType'
 import dataQuery from './dataQuery'
+import externalLogin from './auth/externalLogin'
 
 declare global {
   var api: ApiTest
@@ -34,4 +35,5 @@ describe('API Tests', () => {
   info()
   tokenType()
   dataQuery()
+  externalLogin()
 })

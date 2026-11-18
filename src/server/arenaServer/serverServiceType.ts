@@ -5,4 +5,5 @@ export enum ServerServiceType {
   userTempAuthToken = 'userTempAuthToken',
   user2FA = 'user2FA',
   userGroup = 'userGroup',
+  authProvider = 'authProvider',
 }

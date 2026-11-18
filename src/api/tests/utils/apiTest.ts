@@ -28,6 +28,15 @@ export class ApiTest {
     return this.withAuthToken(this.agent.post(url).set('Accept', 'application/json'))
   }
 
+  // request without the Accept header and the auth token (e.g. browser navigations)
+  public getRaw(url: string): Test {
+    return this.agent.get(url)
+  }
+
+  public getAuthToken(): string | undefined {
+    return this.authToken
+  }
+
   public async login(): Promise<void> {
     const req = await this.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
     const { body = {} } = req

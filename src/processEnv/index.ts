@@ -1,6 +1,12 @@
 import os from 'node:os'
 import path from 'node:path'
 
+const removeTrailingSlashes = (value: string): string => {
+  let result = value
+  while (result.endsWith('/')) result = result.slice(0, -1)
+  return result
+}
+
 const isTrue = (val: any): boolean => String(val).toLocaleLowerCase() === 'true' || String(val) === '1'
 
 const getJson = (val: string | undefined): unknown => {
@@ -184,6 +190,14 @@ export const buildProcessEnv = (env: NodeJS.ProcessEnv = process.env) => {
     // Security
     userAuthTokenSecret: getSecret(env, 'USER_AUTH_TOKEN_SECRET', 'user-auth-token-secret'),
     user2FASecret: getSecret(env, 'USER_2FA_SECRET', 'user-2fa-secret'),
+
+    // External login providers
+    // public base URL of the app (e.g. https://arena.example.org): used to build the providers redirect URIs
+    arenaPublicUrl: removeTrailingSlashes(env.ARENA_PUBLIC_URL ?? ''),
+    // 64 hex chars (32 bytes): encryption key of the client secrets of the providers stored in the DB
+    authProviderSecretEncryptionKey: env.AUTH_PROVIDER_SECRET_ENCRYPTION_KEY,
+    // path of a JSON file, or inline JSON, with the providers defined by the server configuration
+    authProvidersConfig: env.AUTH_PROVIDERS_CONFIG,
 
     // SYSTEM ADMIN USER
     adminEmail: env.ADMIN_EMAIL,

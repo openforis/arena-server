@@ -1334,6 +1334,8 @@ __metadata:
     lint-staged: "npm:^17.6.0"
     log4js: "npm:^6.9.1"
     npm-run-all: "npm:^4.1.5"
+    oauth2-mock-server: "npm:^9.3.0"
+    openid-client: "npm:^6"
     otplib: "npm:^13.5.0"
     passport: "npm:^0.7.0"
     passport-jwt: "npm:^4.0.1"
@@ -3161,6 +3163,13 @@ __metadata:
   bin:
     baseline-browser-mapping: dist/cli.cjs
   checksum: 10c0/50aa1ebd997bf3fef7c3623c79c82f89217bf490debf291f9d7746366be50b5feb66e2404dabd8f374a2ada00f9b558f5961f1fee37691c858203bdefdb6c861
+  languageName: node
+  linkType: hard
+
+"basic-auth@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "basic-auth@npm:3.1.0"
+  checksum: 10c0/b81095162f858ce06e9cba6ccef5571ae04f9d8210943b813f956ae280add2e1941cd28577106f0e591624e1e86911fe18824383a9be89e1c3b3627c3fcb037c
   languageName: node
   linkType: hard
 
@@ -5903,6 +5912,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.2.12, jose@npm:^6.2.15":
+  version: 6.2.17
+  resolution: "jose@npm:6.2.17"
+  checksum: 10c0/1a00d44656e38664c54a8b2d903b6c947b3fc4275f7ede2462f74e50ce320359ea324deba15652dcc158c14ed99135a2382a4c5718be350923a9e583bea727db
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -6622,6 +6638,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"oauth2-mock-server@npm:^9.3.0":
+  version: 9.3.0
+  resolution: "oauth2-mock-server@npm:9.3.0"
+  dependencies:
+    basic-auth: "npm:^3.0.0"
+    jose: "npm:^6.2.12"
+  bin:
+    oauth2-mock-server: dist/oauth2-mock-server.mjs
+  checksum: 10c0/f392f5e6419581a9fbecf2ebee78ed0c4ea275419be0dee100341b466d300b26a9b3c7f120e151db27ba5a10d863733f5391213dbc934a8a44a8bb371c9a8bfb
+  languageName: node
+  linkType: hard
+
+"oauth4webapi@npm:^3.8.8":
+  version: 3.8.8
+  resolution: "oauth4webapi@npm:3.8.8"
+  checksum: 10c0/1f7d35ba8d7d5aa9ce9ec5959a4611ed2b5dd7830172b1546749b91dda8c53f7934e669c6f81e912c64e3ae4fc681d4d6ce149b42cc9d17db97162bf8765e028
+  languageName: node
+  linkType: hard
+
 "object-assign@npm:^4":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
@@ -6688,6 +6723,16 @@ __metadata:
   dependencies:
     mimic-fn: "npm:^2.1.0"
   checksum: 10c0/ffcef6fbb2692c3c40749f31ea2e22677a876daea92959b8a80b521d95cca7a668c884d8b2045d1d8ee7d56796aa405c405462af112a1477594cc63531baeb8f
+  languageName: node
+  linkType: hard
+
+"openid-client@npm:^6":
+  version: 6.9.0
+  resolution: "openid-client@npm:6.9.0"
+  dependencies:
+    jose: "npm:^6.2.15"
+    oauth4webapi: "npm:^3.8.8"
+  checksum: 10c0/546f9404f869f8168ed6760ab764f4c7105d8a712879caa801c7a65da0d5c57166536700578df56638bbd701b73696439bdbff91c150ea3550d25e32c8ef5e9d
   languageName: node
   linkType: hard
 
