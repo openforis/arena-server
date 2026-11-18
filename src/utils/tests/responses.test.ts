@@ -26,6 +26,14 @@ describe('Responses.sendError', () => {
     expect(res.body.params.text).toContain('some_table')
   })
 
+  test('handles a missing error', () => {
+    const res = mockResponse()
+    Responses.sendError(res, undefined)
+
+    expect(res.statusCode).toBe(500)
+    expect(res.body.key).toBe('appErrors.generic')
+  })
+
   test('sends key, params and status code of app errors', () => {
     const res = mockResponse()
     Responses.sendError(

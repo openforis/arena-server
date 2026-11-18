@@ -20,7 +20,7 @@ const sendError = (res: Response, error: any): void => {
     res.status(error?.statusCode ?? ServerErrorCode.INTERNAL_SERVER_ERROR).json(
       getError({
         key: 'appErrors.generic',
-        params: { text: `Could not serve: ${error.toString()}` },
+        params: { text: `Could not serve: ${String(error)}` },
       })
     )
   }
