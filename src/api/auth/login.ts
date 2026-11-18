@@ -83,7 +83,7 @@ const sendUserSurvey = async (options: { res: Response; user: User; authToken: s
   res.json({ user: userUpdated, authToken })
 }
 
-const sendUser = async (options: { res: Response; req: Request; user: User; authToken: string }) => {
+export const sendUser = async (options: { res: Response; req: Request; user: User; authToken: string }) => {
   const { res, req, user, authToken } = options
   const { includeSurvey } = Requests.getParams(req)
   if (includeSurvey) {
@@ -91,6 +91,27 @@ const sendUser = async (options: { res: Response; req: Request; user: User; auth
   } else {
     res.json({ user, authToken })
   }
+}
+
+/**
+ * Creates the access and refresh tokens of a user and sets the refresh token cookie; returns the access token.
+ */
+export const createSessionTokens = async ({
+  req,
+  res,
+  userUuid,
+}: {
+  req: Request
+  res: Response
+  userUuid: string
+}): Promise<string> => {
+  const userAuthTokenService: UserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
+  const { authToken, refreshToken } = await userAuthTokenService.createUserAuthTokens({
+    userUuid,
+    props: extractRefreshTokenProps({ req }),
+  })
+  setRefreshTokenCookie({ res, refreshToken })
+  return authToken.token
 }
 
 const authenticationSuccessful = ({
@@ -111,20 +132,9 @@ const authenticationSuccessful = ({
       next(err)
       callback?.()
     } else {
-      const { uuid: userUuid } = user
-
-      const serviceRegistry = ServiceRegistry.getInstance()
-      const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
-
-      const refreshTokenProps = extractRefreshTokenProps({ req })
-
       try {
-        const { authToken, refreshToken } = await userAuthTokenService.createUserAuthTokens({
-          userUuid,
-          props: refreshTokenProps,
-        })
-        setRefreshTokenCookie({ res, refreshToken })
-        await sendUser({ res, req, user, authToken: authToken.token })
+        const authToken = await createSessionTokens({ req, res, userUuid: user.uuid })
+        await sendUser({ res, req, user, authToken })
       } catch (error) {
         next(error)
       } finally {

@@ -27,6 +27,11 @@ const pathsAllowedWithoutAuthentication = [
   /^\/auth\/login\/temp\/?$/,
   /^\/auth\/reset-password(\/.*)?$/,
   /^\/auth\/token\/refresh\/?$/,
+  // external login providers (the ticket and test result endpoints require authentication)
+  /^\/auth\/providers\/?$/,
+  /^\/auth\/providers\/[a-z0-9-]+\/icon\/?$/,
+  /^\/auth\/oidc\/[a-z0-9][a-z0-9-]*(\/callback)?\/?$/,
+  /^\/auth\/oidc\/_2fa\/?$/,
   /^\/api\/public\/.*$/,
   /^\/api\/surveyTemplates\/?$/,
   /^\/api\/user\/request-access\/?$/,

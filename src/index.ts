@@ -33,6 +33,16 @@ export type { BaseProtocol, SurveySchemaMigrationNotifier, SurveySchemaMigration
 
 export { Logger } from './log'
 
+export { AuthProviderIconKind, AuthProviderSource, AuthProviderType } from './model'
+export type {
+  AuthProvider,
+  AuthProviderForLogin,
+  AuthProviderProps,
+  AuthProviderWithSecret,
+  ExternalIdentity,
+  UserExternalIdentity,
+} from './model'
+
 export { S3Storage } from './fileStorage/s3Storage'
 export type { S3StorageOptions } from './fileStorage/s3Storage'
 
@@ -47,7 +57,9 @@ export {
 export type { JobRow } from './repository'
 
 export type { SurveyDocxOptions, SurveyPdfOptions } from './service/survey'
-export type { SurveyDataMigrationService } from './service'
+export type { SurveyDataMigrationService, AuthProviderService, AuthProviderInput } from './service'
+export { AuthProviderErrorKeys } from './service'
+export { ExternalLoginErrorKeys } from './service/externalLogin'
 export { SurveyDocxGenerator, SurveyPdfGenerator } from './service/survey'
 
 export { WebSocketEvent, WebSocketServer } from './webSocket'
