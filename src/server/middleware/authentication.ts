@@ -15,11 +15,14 @@ import {
   ValidatorErrorKeys,
 } from '@openforis/arena-core'
 
+import { Logger } from '../../log'
 import { ProcessEnv } from '../../processEnv'
 import { ExpressInitializer } from '../expressInitializer'
 
 import { isAccessTokenPayload } from '../../service/userAuthToken'
 import { jwtAlgorithms } from '../../service/userAuthToken/userAuthTokenServiceConstants'
+
+const logger = new Logger('AuthenticationMiddleware')
 
 const pathsAllowedWithoutAuthentication = [
   /^\/$/,
@@ -89,6 +92,7 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
 
     done(null, user)
   } catch (error: any) {
+    logger.error(`error verifying user credentials: ${error}`)
     sendError(error.toString())
   }
 }
