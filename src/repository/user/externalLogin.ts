@@ -10,12 +10,12 @@ export interface UserForExternalLogin {
   hasPassword: boolean
 }
 
-const gmailDomains = ['gmail.com', 'googlemail.com']
+const gmailDomains = new Set(['gmail.com', 'googlemail.com'])
 
 // same normalization as normalizeEmail, in SQL: Gmail ignores dots and "+suffix" in the local part
-const normalizedEmailSql = `CASE
+const normalizedEmailSql = String.raw`CASE
     WHEN lower(split_part(email, '@', 2)) IN ('gmail.com', 'googlemail.com')
-    THEN regexp_replace(lower(split_part(email, '@', 1)), '\\+.*$|\\.', '', 'g') || '@gmail.com'
+    THEN regexp_replace(lower(split_part(email, '@', 1)), '\+.*$|\.', '', 'g') || '@gmail.com'
     ELSE lower(email)
   END`
 
@@ -29,8 +29,10 @@ export const normalizeEmail = (email: string): string => {
   if (atIndex < 0) return lower
   const local = lower.substring(0, atIndex)
   const domain = lower.substring(atIndex + 1)
-  if (!gmailDomains.includes(domain)) return lower
-  return `${local.replace(/\+.*$/, '').replaceAll('.', '')}@gmail.com`
+  if (!gmailDomains.has(domain)) return lower
+  const plusIndex = local.indexOf('+')
+  const localWithoutSuffix = plusIndex < 0 ? local : local.substring(0, plusIndex)
+  return `${localWithoutSuffix.replaceAll('.', '')}@gmail.com`
 }
 
 const userSelectFields = `uuid, name, email, status, password IS NOT NULL AS has_password`

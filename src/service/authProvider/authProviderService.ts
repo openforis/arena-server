@@ -27,7 +27,7 @@ import { decryptSecret, encryptSecret, isSecretEncryptionAvailable } from './sec
 // changes made by other cluster instances are picked up within this time
 const cacheTtlMs = 60 * 1000
 
-const allowedIconMimes = ['image/png', 'image/svg+xml']
+const allowedIconMimes = new Set(['image/png', 'image/svg+xml'])
 const maxIconSizeBytes = 100 * 1024
 
 export const AuthProviderErrorKeys = {
@@ -198,7 +198,7 @@ const setIcon = async (
 ): Promise<void> => {
   const { id, file, mime } = params
   await getDbProviderOrThrow(id, client)
-  if (file && (!mime || !allowedIconMimes.includes(mime) || file.length > maxIconSizeBytes)) {
+  if (file && (!mime || !allowedIconMimes.has(mime) || file.length > maxIconSizeBytes)) {
     throw new ServerError(AuthProviderErrorKeys.iconInvalid, { maxIconSizeBytes }, ServerErrorCode.BAD_REQUEST)
   }
   await AuthProviderRepository.setIcon({ id, file, mime: file ? mime : null }, client)

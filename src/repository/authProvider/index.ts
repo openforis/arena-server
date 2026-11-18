@@ -58,14 +58,15 @@ const update = (
 }
 
 const updateOrders = async (orderById: Record<string, number>, client: BaseProtocol = DB): Promise<void> => {
-  await client.tx(async (tx) => {
-    for (const [id, order] of Object.entries(orderById)) {
-      await tx.none(
-        `UPDATE auth_provider SET props = jsonb_set(props, '{order}', to_jsonb($/order/::int)) WHERE id = $/id/`,
-        { id, order }
-      )
-    }
-  })
+  const entries = Object.entries(orderById)
+  if (entries.length === 0) return
+  await client.none(
+    `UPDATE auth_provider p
+     SET props = jsonb_set(p.props, '{order}', to_jsonb(v.ord))
+     FROM (SELECT unnest($/ids/::text[]) AS id, unnest($/orders/::int[]) AS ord) v
+     WHERE p.id = v.id`,
+    { ids: entries.map(([id]) => id), orders: entries.map(([, order]) => order) }
+  )
 }
 
 const setIcon = async (

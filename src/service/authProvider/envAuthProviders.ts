@@ -51,7 +51,9 @@ export const getEnvAuthProviders = (): AuthProviderWithSecret[] => {
   try {
     const items = readConfig(config)
     if (!Array.isArray(items)) throw new Error('an array of providers is expected')
-    cache = items.map(toProvider).filter((provider): provider is AuthProviderWithSecret => provider !== null)
+    cache = items
+      .map((item, index) => toProvider(item, index))
+      .filter((provider): provider is AuthProviderWithSecret => provider !== null)
   } catch (error: any) {
     logger.error(`error reading AUTH_PROVIDERS_CONFIG: ${error.message}`)
     cache = []

@@ -134,9 +134,7 @@ const renderGridCellContent = async <T>(params: {
   const { record } = context
   const limits = renderer.getGridCellLimits?.(maxX, item.w ?? 1)
   const childNode =
-    record && parentEntityNode
-      ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
-      : undefined
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0] : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef, context, depth, node: childNode, limits })
 }
@@ -267,9 +265,7 @@ const walkDefaultChild = async <T>(
   }
   if (NodeDefs.isHidden(child)) return []
   const childNode =
-    record && parentEntityNode
-      ? Records.getChildren(parentEntityNode, child.uuid)(record)[0]
-      : undefined
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, child.uuid)(record)[0] : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })
 }
@@ -295,9 +291,10 @@ const walkEntityAsTable = <T>(
 
   let rows: string[][] = []
   if (record && parentEntityNode) {
-    const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(
-      record
-    ).filter((node) => isNodeRelevantAndVisible(record, node))
+    const entityNodes = Records.getChildren(
+      parentEntityNode,
+      entityDef.uuid
+    )(record).filter((node) => isNodeRelevantAndVisible(record, node))
     if (entityNodes.length > 0) {
       rows = entityNodes.map((entityNode) =>
         attrDefs.map((attrDef) => {
@@ -415,9 +412,7 @@ export const walkEntityDef = async <T>(
   const isTableLayout = getIsTableLayout(entityDef, context.cycle)
 
   const entityNodes: ArenaNode[] =
-    record && parentEntityNode
-      ? Records.getChildren(parentEntityNode, entityDef.uuid)(record)
-      : []
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, entityDef.uuid)(record) : []
 
   if (!isRoot && record && entityNodes.length > 0 && !isMultiple && !isNodeRelevantAndVisible(record, entityNodes[0])) {
     return []

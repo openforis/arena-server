@@ -262,7 +262,7 @@ const handleTwoFactor = async (req: Request, res: Response): Promise<void> => {
   await sendUser({ req, res, user, authToken })
 }
 
-const handleTicket = async (req: Request, res: Response): Promise<void> => {
+const handleTicket = (req: Request, res: Response): void => {
   const { providerId } = req.params as { providerId: string }
   const { mode } = Requests.getParams(req)
   const user = Requests.getUser(req)

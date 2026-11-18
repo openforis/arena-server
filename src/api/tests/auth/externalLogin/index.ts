@@ -29,9 +29,9 @@ const getAuthProviderService = (): AuthProviderService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.authProvider) as AuthProviderService
 
 const getCookies = (res: Response): string[] => {
-  const header = res.headers['set-cookie'] as unknown
+  const header = res.headers['set-cookie'] as string | string[] | undefined
   if (!header) return []
-  return Array.isArray(header) ? header : [String(header)]
+  return Array.isArray(header) ? header : [header]
 }
 
 const getCookie = (res: Response, name: string): string | undefined =>
@@ -107,6 +107,15 @@ const externalLoginTests = (): void =>
       // no secrets or connection settings in the public list
       expect(JSON.stringify(body)).not.toContain('arena-test-secret')
       expect(JSON.stringify(body)).not.toContain('arena-test"')
+    })
+
+    test('reorders the providers', async () => {
+      const service = getAuthProviderService()
+      await service.update({ id: providerId, props: { order: 5 } })
+      expect((await service.get(providerId))?.order).toBe(5)
+      await service.reorder(['not-existing', providerId])
+      const provider = await service.get(providerId)
+      expect(provider?.order).toBe(1)
     })
 
     test('refuses an unknown user', async () => {
