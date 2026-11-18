@@ -83,8 +83,15 @@ const buildSurveyWithOwnPagePlot = async () => {
 describe('walkSurvey', () => {
   test('full export default: one portrait section with survey title', async () => {
     const user = UserFactory.createInstance({ email: 'test@example.com', name: 'Test User' })
-    const survey = await new SurveyBuilder(user, entityDef('cluster', integerDef('cluster_id').key())).build()
-    const record = new RecordBuilder(user, survey, entity('cluster', attribute('cluster_id', 10))).build()
+    const survey = await new SurveyBuilder(
+      user,
+      entityDef('cluster', integerDef('cluster_id').key())
+    ).build()
+    const record = new RecordBuilder(
+      user,
+      survey,
+      entity('cluster', attribute('cluster_id', 10))
+    ).build()
     const surveyLabel = Surveys.getLabel(LanguageCode.en)(survey)
 
     const { sections, surveyName } = await walkSurvey({ survey, record, i18n, cycle }, stringRenderer)

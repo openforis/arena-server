@@ -169,7 +169,8 @@ const generateSurveyDocx = async (options: SurveyDocxOptions): Promise<SurveyDoc
     sections: docSections.map((section, index) => {
       const isFirstSection = index === 0
       const footersConfig = buildFootersConfig(footerImage, pageNumbering, isFirstSection)
-      const topMargin = DOCX_BASE_MARGIN_TWIPS + (isFirstSection || !headerOnFirstPageOnly ? headerMarginTwips : 0)
+      const topMargin =
+        DOCX_BASE_MARGIN_TWIPS + (isFirstSection || !headerOnFirstPageOnly ? headerMarginTwips : 0)
       const firstSectionDecorations: Paragraph[] = []
       if (isFirstSection && headerImage && headerOnFirstPageOnly) {
         firstSectionDecorations.push(buildDocxImageParagraph(headerImage, DOCX_MARGIN_GAP_TWIPS))
