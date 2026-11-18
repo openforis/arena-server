@@ -93,7 +93,7 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
     done(null, user)
   } catch (error: any) {
     logger.error(`error verifying user credentials: ${error}`)
-    sendError('appErrors.generic')
+    sendError(error.toString())
   }
 }
 

@@ -17,10 +17,12 @@ const sendError = (res: Response, error: any): void => {
   } else if (isAppError(error)) {
     res.status(error.statusCode ?? ServerErrorCode.INTERNAL_SERVER_ERROR).json(getError(error))
   } else {
-    // details of unexpected errors (e.g. SQL errors) stay in the server log, not in the response
-    res
-      .status(error?.statusCode ?? ServerErrorCode.INTERNAL_SERVER_ERROR)
-      .json(getError({ key: 'appErrors.generic', params: { text: 'Internal server error' } }))
+    res.status(error?.statusCode ?? ServerErrorCode.INTERNAL_SERVER_ERROR).json(
+      getError({
+        key: 'appErrors.generic',
+        params: { text: `Could not serve: ${error.toString()}` },
+      })
+    )
   }
 }
 

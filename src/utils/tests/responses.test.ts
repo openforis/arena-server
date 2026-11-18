@@ -17,13 +17,13 @@ const mockResponse = () => {
 }
 
 describe('Responses.sendError', () => {
-  test('does not expose the message of unexpected errors', () => {
+  test('sends unexpected errors as generic errors with their details', () => {
     const res = mockResponse()
-    Responses.sendError(res, new Error('relation "survey_1.secret_table" does not exist'))
+    Responses.sendError(res, new Error('relation "survey_1.some_table" does not exist'))
 
     expect(res.statusCode).toBe(500)
-    expect(JSON.stringify(res.body)).not.toContain('secret_table')
     expect(res.body.key).toBe('appErrors.generic')
+    expect(res.body.params.text).toContain('some_table')
   })
 
   test('sends key, params and status code of app errors', () => {
