@@ -1,6 +1,5 @@
-import { NodeDefsFixer, Survey, Surveys } from '@openforis/arena-core'
+import { ArenaNodeDefMap, NodeDefsFixer, ArenaSurvey, Surveys } from '@openforis/arena-core'
 
-import { NodeDefMap } from '@openforis/arena-core/dist/nodeDef'
 import { Logger } from '../../log'
 import { SurveyRepository } from '../../repository'
 import type { NodeDefinitionFetchParams } from '../../repository/nodeDef'
@@ -17,7 +16,7 @@ export interface SurveyGetOptions {
   nodeDefOptions?: Omit<NodeDefinitionFetchParams, 'surveyId'> // nodeDefOptions are used to fetch node defs to be associated to the survey, if not provided node defs won't be fetched and associated
 }
 
-export const get = async (options: SurveyGetOptions, client = DB): Promise<Survey> => {
+export const get = async (options: SurveyGetOptions, client = DB): Promise<ArenaSurvey> => {
   const { nodeDefOptions, ...repoOptions } = options
   const { backup } = repoOptions
 
@@ -33,7 +32,7 @@ export const get = async (options: SurveyGetOptions, client = DB): Promise<Surve
   }
   const nodeDefsArray = await NodeDefRepository.getNodeDefsBySurveyId({ surveyId, ...nodeDefOptions }, client)
 
-  const nodeDefsDictionary: NodeDefMap = {}
+  const nodeDefsDictionary: ArenaNodeDefMap = {}
   for (const nodeDef of nodeDefsArray) {
     nodeDefsDictionary[nodeDef.uuid] = nodeDef
   }

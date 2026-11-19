@@ -1,4 +1,4 @@
-import { UserAuthRefreshTokenProps } from '@openforis/arena-core'
+import { ArenaUserAuthRefreshTokenProps } from '@openforis/arena-core'
 
 import { UserAuthTokenServiceServer } from '../../../../service/userAuthToken'
 import { ApiEndpoint } from '../../../endpoint'
@@ -23,7 +23,7 @@ const tokenTypeTests = (): void =>
       const userUuid = await loginAndGetUserUuid()
       const { authToken } = await UserAuthTokenServiceServer.createUserAuthTokens({
         userUuid,
-        props: { userAgent: 'test' } as UserAuthRefreshTokenProps,
+        props: { userAgent: 'test' } as ArenaUserAuthRefreshTokenProps,
       })
       await getInfoWithToken(authToken.token).expect(200)
     })
@@ -32,7 +32,7 @@ const tokenTypeTests = (): void =>
       const userUuid = await loginAndGetUserUuid()
       const { refreshToken } = await UserAuthTokenServiceServer.createUserAuthTokens({
         userUuid,
-        props: { userAgent: 'test' } as UserAuthRefreshTokenProps,
+        props: { userAgent: 'test' } as ArenaUserAuthRefreshTokenProps,
       })
       await getInfoWithToken(refreshToken.token).expect(401)
     })

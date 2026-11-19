@@ -1,12 +1,12 @@
-import { DataQuerySummary } from '@openforis/arena-core'
+import { ArenaDataQuerySummary } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, TableDataQuery } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
 
 export const update = (
-  params: { surveyId: number; item: DataQuerySummary },
+  params: { surveyId: number; item: ArenaDataQuerySummary },
   client: BaseProtocol = DB
-): Promise<DataQuerySummary> => {
+): Promise<ArenaDataQuerySummary> => {
   const { surveyId, item } = params
 
   const table = new TableDataQuery(surveyId)

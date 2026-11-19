@@ -1,6 +1,6 @@
 import { Express } from 'express'
 
-import { AppInfo } from '@openforis/arena-core'
+import { ArenaAppInfo } from '@openforis/arena-core'
 
 import { ArenaServerConstants } from '../../model'
 import { ProcessEnv } from '../../processEnv'
@@ -10,7 +10,7 @@ import { ApiEndpoint } from '../endpoint'
 export const InfoRead: ExpressInitializer = {
   init: (express: Express): void => {
     express.get(ApiEndpoint.info.info(), (_req, res, _next) => {
-      const appInfo: AppInfo = {
+      const appInfo: ArenaAppInfo = {
         appId: ArenaServerConstants.appId,
         version: ProcessEnv.applicationVersion,
       }

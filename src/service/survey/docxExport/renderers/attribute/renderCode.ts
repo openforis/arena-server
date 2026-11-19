@@ -1,7 +1,7 @@
 import { Paragraph } from 'docx'
 
-import type { NodeDefCode } from '@openforis/arena-core'
-import { NodeValues, Surveys } from '@openforis/arena-core'
+import type { ArenaNodeDefCode } from '@openforis/arena-core'
+import { RecordNodeValues, Surveys } from '@openforis/arena-core'
 
 import {
   checkboxRun,
@@ -15,14 +15,14 @@ import {
 import type { AttributeRenderer } from './types'
 
 export const renderCode: AttributeRenderer = ({ nodeDef, context, node }) => {
-  const codeDef = nodeDef as NodeDefCode
+  const codeDef = nodeDef as ArenaNodeDefCode
   const { survey, lang } = context
   const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef: codeDef }) : []
 
   const lbl = label(codeDef, lang)
   const isCheckboxLayout =
     codeDef.props?.layout && Object.values(codeDef.props.layout).some((l: any) => l?.renderType === 'checkbox')
-  const selectedItemUuid = node ? NodeValues.getItemUuid(node) : undefined
+  const selectedItemUuid = node ? RecordNodeValues.getItemUuid(node) : undefined
   const showAsCheckboxes = (isCheckboxLayout || items.length <= 8) && items.length > 0
 
   if (showAsCheckboxes) {

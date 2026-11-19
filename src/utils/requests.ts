@@ -1,5 +1,5 @@
 import { Request } from 'express'
-import { User } from '@openforis/arena-core'
+import { ArenaUser } from '@openforis/arena-core'
 
 const getParams = (req: Request): Record<string, any> => {
   const params = { ...req.query, ...req.params, ...req.body }
@@ -50,7 +50,7 @@ const getBooleanParam =
 
 const getServerUrl = (request: Request): string => `${request.protocol}://${request.get('host')}`
 const getUrl = (request: Request): string => request.url
-const getUser = (request: Request): User => request.user
+const getUser = (request: Request): ArenaUser => request.user
 const isHttps = (request: Request): boolean => request.secure || request.header('x-forwarded-proto') === 'https'
 
 const getHeader =

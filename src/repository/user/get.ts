@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { User, UserStatus } from '@openforis/arena-core'
+import { ArenaUser, UserStatus } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlSelectBuilder, TableUser } from '../../db'
 
@@ -11,7 +11,7 @@ type getOptionsType = { userUuid: string } | { email: string } | { email: string
  * @param options: getOptionsType - The options to filter the user by. Must include either `userUuid`, `email`, or both `email` and `password`.
  * @param client - Database client.
  */
-export const get = async (options: getOptionsType, client: BaseProtocol = DB): Promise<User | null> => {
+export const get = async (options: getOptionsType, client: BaseProtocol = DB): Promise<ArenaUser | null> => {
   if (!('userUuid' in options) && !('email' in options)) throw new Error(`missingParams, ${JSON.stringify(options)}`)
 
   const table = new TableUser()
@@ -38,7 +38,7 @@ export const get = async (options: getOptionsType, client: BaseProtocol = DB): P
     .where(`${filterByColumn} = $1`)
     .build()
 
-  const user = await client.oneOrNone<User>(sql, [filterByValue])
+  const user = await client.oneOrNone<ArenaUser>(sql, [filterByValue])
   if (!user) {
     return null
   }

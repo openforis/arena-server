@@ -1,7 +1,7 @@
-import { User, UserService, UserStatus } from '@openforis/arena-core'
+import { ArenaUser, ArenaUserService, UserStatus } from '@openforis/arena-core'
 import { AuthGroupRepository, UserRepository, UserResetPasswordRepository } from '../../repository'
 
-const _initializeUser = async (user: User): Promise<User> => {
+const _initializeUser = async (user: ArenaUser): Promise<ArenaUser> => {
   // Assoc auth groups
   let userUpdated = {
     ...user,
@@ -20,7 +20,7 @@ const _initializeUser = async (user: User): Promise<User> => {
   return userUpdated
 }
 
-export const get: UserService['get'] = async (options) => {
+export const get: ArenaUserService['get'] = async (options) => {
   const user = await UserRepository.get(options)
   if (user) return _initializeUser(user)
   return null

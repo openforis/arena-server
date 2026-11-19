@@ -1,6 +1,6 @@
-import { Message, MessageStatus } from '@openforis/arena-core'
+import { ArenaMessage, MessageStatus } from '@openforis/arena-core'
 
-export const transformCallbackSafe = (row: any): Message | null => {
+export const transformCallbackSafe = (row: any): ArenaMessage | null => {
   if (!row) return null
   return {
     uuid: row.uuid,
@@ -12,4 +12,4 @@ export const transformCallbackSafe = (row: any): Message | null => {
   }
 }
 
-export const transformCallback = (row: any): Message => transformCallbackSafe(row)!
+export const transformCallback = (row: any): ArenaMessage => transformCallbackSafe(row)!

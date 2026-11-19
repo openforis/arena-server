@@ -1,25 +1,25 @@
-import { User, UserService } from '@openforis/arena-core'
+import { ArenaUser, ArenaUserService } from '@openforis/arena-core'
 
 import { get } from './get'
 import { updateUserPrefs } from './updateUserPrefs'
 
-export const UserServiceServer: UserService = {
+export const UserServiceServer: ArenaUserService = {
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   create(options: {
-    user: User
+    user: ArenaUser
     surveyId: number
     surveyCycleKey: string
     userToInviteParam: string
     urlServer: string
     repeatInvitation?: boolean
-  }): Promise<Array<User>> {
+  }): Promise<Array<ArenaUser>> {
     throw new Error('TODO')
   },
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  count(options: { user: User; surveyId: number }): Promise<number> {
+  count(options: { user: ArenaUser; surveyId: number }): Promise<number> {
     throw new Error('TODO')
   },
 
@@ -27,7 +27,7 @@ export const UserServiceServer: UserService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getMany(options: { surveyId: number; limit?: number; offset?: number; user: User }): Promise<Array<User>> {
+  getMany(options: { surveyId: number; limit?: number; offset?: number; user: ArenaUser }): Promise<Array<ArenaUser>> {
     throw new Error('TODO')
   },
 
@@ -39,7 +39,12 @@ export const UserServiceServer: UserService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update(options: { user: User; surveyId: number; userToUpdate: User; filePath?: string }): Promise<User> {
+  update(options: {
+    user: ArenaUser
+    surveyId: number
+    userToUpdate: ArenaUser
+    filePath?: string
+  }): Promise<ArenaUser> {
     throw new Error('TODO')
   },
 
@@ -47,7 +52,7 @@ export const UserServiceServer: UserService = {
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  delete(options: { surveyId: number; user: User; userUuid: string }): Promise<void> {
+  delete(options: { surveyId: number; user: ArenaUser; userUuid: string }): Promise<void> {
     throw new Error('TODO')
   },
 }

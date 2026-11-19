@@ -1,6 +1,6 @@
 import { Paragraph, TextRun } from 'docx'
 
-import { NodeValues } from '@openforis/arena-core'
+import { RecordNodeValues } from '@openforis/arena-core'
 
 import { isNodeBlank, label, nodeDefFormItemLabelRun, SPACING_FIELD_ROW, valueRow } from './common'
 import { renderImage } from './renderImage'
@@ -8,7 +8,7 @@ import type { AttributeRenderer, RenderContext } from './types'
 
 const getFileNameToDisplay = (node?: Parameters<AttributeRenderer>[0]['node']): string =>
   node
-    ? (NodeValues.getFileNameCalculated(node) ?? NodeValues.getFileName(node) ?? '[attached file]')
+    ? (RecordNodeValues.getFileNameCalculated(node) ?? RecordNodeValues.getFileName(node) ?? '[attached file]')
     : '[attached file]'
 
 const renderFilePlaceholder = (
@@ -42,12 +42,12 @@ const tryRenderImageFile = async ({
   const fileNameToDisplay = getFileNameToDisplay(node)
   if (!fileProvider) return null
 
-  const fileUuid = NodeValues.getFileUuid(node)
+  const fileUuid = RecordNodeValues.getFileUuid(node)
   if (!fileUuid) return null
 
   try {
     const fileData = await fileProvider(fileUuid)
-    const fileName = NodeValues.getFileName(node) ?? fileUuid
+    const fileName = RecordNodeValues.getFileName(node) ?? fileUuid
     const imageParagraphs = renderImage(fileName, lbl, fileData, limits)
     return imageParagraphs ?? [valueRow(lbl, fileNameToDisplay)]
   } catch {

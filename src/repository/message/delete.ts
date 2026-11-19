@@ -1,4 +1,4 @@
-import { Message } from '@openforis/arena-core'
+import { ArenaMessage } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlDeleteBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
@@ -10,7 +10,7 @@ import { transformCallback } from './utils'
  * @param uuid - The message UUID.
  * @param client - Database client.
  */
-export const deleteByUuid = (uuid: string, client: BaseProtocol = DB): Promise<Message | null> => {
+export const deleteByUuid = (uuid: string, client: BaseProtocol = DB): Promise<ArenaMessage | null> => {
   const table = new TableMessage()
 
   const values = { [table.uuid.columnName]: uuid }
@@ -21,5 +21,5 @@ export const deleteByUuid = (uuid: string, client: BaseProtocol = DB): Promise<M
     .returning(table.uuid, table.status, table.props, table.createdByUserUuid, table.dateCreated, table.dateModified)
     .build()
 
-  return client.oneOrNone<Message>(sql, values, transformCallback)
+  return client.oneOrNone<ArenaMessage>(sql, values, transformCallback)
 }

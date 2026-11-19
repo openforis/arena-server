@@ -1,5 +1,10 @@
-import type { NodeDefBoolean, NodeDefCode, NodeDefCoordinate, NodeDefTaxon } from '@openforis/arena-core'
-import { NodeDefs, NodeDefType, NodeValues, Surveys, Taxa } from '@openforis/arena-core'
+import type {
+  ArenaNodeDefBoolean,
+  ArenaNodeDefCode,
+  ArenaNodeDefCoordinate,
+  ArenaNodeDefTaxon,
+} from '@openforis/arena-core'
+import { NodeDefs, NodeDefType, RecordNodeValues, Surveys, Taxa } from '@openforis/arena-core'
 
 import type { GridRow, SurveyDocRenderer } from '../docExport/SurveyDocRenderer'
 import {
@@ -83,13 +88,13 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
   async renderAttribute({ nodeDef, context, depth, node, limits }: AttributeRendererArgs): Promise<PdfElement[]> {
     switch (nodeDef.type) {
       case NodeDefType.boolean:
-        return this.renderBoolean({ nodeDef: nodeDef as NodeDefBoolean, context, node })
+        return this.renderBoolean({ nodeDef: nodeDef as ArenaNodeDefBoolean, context, node })
       case NodeDefType.code:
-        return this.renderCode({ nodeDef: nodeDef as NodeDefCode, context, node })
+        return this.renderCode({ nodeDef: nodeDef as ArenaNodeDefCode, context, node })
       case NodeDefType.coordinate:
-        return this.renderCoordinate({ nodeDef: nodeDef as NodeDefCoordinate, context, node })
+        return this.renderCoordinate({ nodeDef: nodeDef as ArenaNodeDefCoordinate, context, node })
       case NodeDefType.taxon:
-        return this.renderTaxon({ nodeDef: nodeDef as NodeDefTaxon, context, node })
+        return this.renderTaxon({ nodeDef: nodeDef as ArenaNodeDefTaxon, context, node })
       case NodeDefType.file:
         return this.renderFile({ nodeDef, context, depth, node, limits })
       case NodeDefType.formHeader:
@@ -118,7 +123,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
     context,
     node,
   }: {
-    nodeDef: NodeDefBoolean
+    nodeDef: ArenaNodeDefBoolean
     context: AttributeRendererArgs['context']
     node: AttributeRendererArgs['node']
   }): PdfElement[] {
@@ -141,7 +146,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
     context,
     node,
   }: {
-    nodeDef: NodeDefCode
+    nodeDef: ArenaNodeDefCode
     context: AttributeRendererArgs['context']
     node: AttributeRendererArgs['node']
   }): PdfElement[] {
@@ -149,7 +154,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
     const { survey, lang } = context
     const items = survey.refData ? Surveys.getCategoryItemsByNodeDef({ survey, nodeDef }) : []
 
-    const selectedItemUuid = node ? NodeValues.getItemUuid(node) : undefined
+    const selectedItemUuid = node ? RecordNodeValues.getItemUuid(node) : undefined
     const showAsCheckboxes = items.length > 0 && items.length <= 8
 
     if (showAsCheckboxes) {
@@ -182,7 +187,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
     context,
     node,
   }: {
-    nodeDef: NodeDefCoordinate
+    nodeDef: ArenaNodeDefCoordinate
     context: AttributeRendererArgs['context']
     node: AttributeRendererArgs['node']
   }): PdfElement[] {
@@ -209,15 +214,15 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
     context,
     node,
   }: {
-    nodeDef: NodeDefTaxon
+    nodeDef: ArenaNodeDefTaxon
     context: AttributeRendererArgs['context']
     node: AttributeRendererArgs['node']
   }): PdfElement[] {
     const lbl = label(nodeDef, context.lang)
     const hasValue = isNodeFilled(node)
     const taxon = hasValue ? node.refData?.taxon : undefined
-    const vernacularNameVisible = NodeDefs.isFieldVisible(NodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
-    const vernacularNameUuid = node ? NodeValues.getVernacularNameUuid(node) : undefined
+    const vernacularNameVisible = NodeDefs.isFieldVisible(RecordNodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
+    const vernacularNameUuid = node ? RecordNodeValues.getVernacularNameUuid(node) : undefined
     const { vernacularName } =
       vernacularNameUuid && taxon ? Taxa.getVernacularNameAndLang(vernacularNameUuid)(taxon) : {}
 
@@ -260,7 +265,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
 
     const nodeDefFile = nodeDef as typeof nodeDef & { props?: { fileType?: string } }
     if (nodeDefFile.props?.fileType === 'image' && context.fileProvider) {
-      const fileUuid = NodeValues.getFileUuid(node!)
+      const fileUuid = RecordNodeValues.getFileUuid(node!)
       if (fileUuid) {
         try {
           const buffer = await context.fileProvider(fileUuid)
@@ -277,7 +282,7 @@ export class PdfSurveyDocRenderer implements SurveyDocRenderer<PdfElement> {
       }
     }
 
-    const attachedFileName = node ? (NodeValues.getFileName(node) ?? '[attached file]') : '[attached file]'
+    const attachedFileName = node ? (RecordNodeValues.getFileName(node) ?? '[attached file]') : '[attached file]'
     return [{ kind: 'fieldRow', label: lbl, value: attachedFileName }]
   }
 }

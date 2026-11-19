@@ -1,4 +1,4 @@
-import { UserAuthRefreshToken } from '@openforis/arena-core'
+import { ArenaUserAuthRefreshToken } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserRefreshToken } from '../../db'
 
@@ -13,7 +13,7 @@ export const getByUuid = (
   uuid: string,
   options?: { includeRevoked?: boolean },
   client: BaseProtocol = DB
-): Promise<UserAuthRefreshToken | null> => {
+): Promise<ArenaUserAuthRefreshToken | null> => {
   const { includeRevoked = false } = options ?? {}
 
   const table = new TableUserRefreshToken()
@@ -28,5 +28,5 @@ export const getByUuid = (
     )
     .build()
 
-  return client.oneOrNone<UserAuthRefreshToken>(sql, { uuid }, (row) => DBs.transformCallback({ row }))
+  return client.oneOrNone<ArenaUserAuthRefreshToken>(sql, { uuid }, (row) => DBs.transformCallback({ row }))
 }

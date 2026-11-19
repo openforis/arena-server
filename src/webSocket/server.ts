@@ -1,7 +1,12 @@
 import { Server } from 'node:http'
 import { Socket, Server as SocketServer } from 'socket.io'
 
-import { ServiceRegistry, ServiceType, UserAuthTokenPayload, UserAuthTokenService } from '@openforis/arena-core'
+import {
+  ServiceRegistry,
+  ServiceType,
+  ArenaUserAuthTokenPayload,
+  ArenaUserAuthTokenService,
+} from '@openforis/arena-core'
 
 import { ClusterBus, ClusterEvent, runWithClusterLock } from '../clusterBus'
 import { ConnectedSocketRepository } from '../repository'
@@ -40,8 +45,8 @@ export class WebSocketServer {
       return null
     }
     try {
-      const service: UserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
-      const jwtPayload: UserAuthTokenPayload = service.verifyAuthToken(token)
+      const service: ArenaUserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
+      const jwtPayload: ArenaUserAuthTokenPayload = service.verifyAuthToken(token)
       if (!isAccessTokenPayload(jwtPayload)) throw new Error('not an access token')
       const { userUuid } = jwtPayload
       return userUuid

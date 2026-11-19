@@ -1,9 +1,9 @@
 import { AuthGroupRepository, UserRepository } from '../../repository'
-import { User, UserService } from '@openforis/arena-core'
+import { ArenaUser, ArenaUserService } from '@openforis/arena-core'
 
-export const updateUserPrefs: UserService['updateUserPrefs'] = async (options: {
-  userToUpdate: User
-}): Promise<User> => {
+export const updateUserPrefs: ArenaUserService['updateUserPrefs'] = async (options: {
+  userToUpdate: ArenaUser
+}): Promise<ArenaUser> => {
   const { userToUpdate } = options
   const user = await UserRepository.updateUserPrefs({ userToUpdate })
   return {

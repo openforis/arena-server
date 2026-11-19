@@ -1,8 +1,8 @@
 import { describe, expect, test } from '@jest/globals'
 import {
-  I18n,
+  ArenaI18n,
   LanguageCode,
-  NodeDefEntity,
+  ArenaNodeDefEntity,
   Objects,
   Records,
   RecordBuilder,
@@ -23,7 +23,7 @@ const { attribute, entity } = RecordNodeBuilders
 
 const cycle = '0'
 
-const i18n: I18n = {
+const i18n: ArenaI18n = {
   t: (key: string) => key,
   exists: () => false,
 }
@@ -38,7 +38,7 @@ const stringRenderer: SurveyDocRenderer<string> = {
   renderEntityTable: () => [],
 }
 
-const setOwnPage = (pageNodeDef: NodeDefEntity, parentNodeDef: NodeDefEntity): void => {
+const setOwnPage = (pageNodeDef: ArenaNodeDefEntity, parentNodeDef: ArenaNodeDefEntity): void => {
   const pageUuid = UUIDs.v4()
   Objects.setInPath({ obj: pageNodeDef, path: ['props', 'layout', cycle, 'pageUuid'], value: pageUuid })
   const indexChildren =
@@ -50,7 +50,7 @@ const setOwnPage = (pageNodeDef: NodeDefEntity, parentNodeDef: NodeDefEntity): v
   })
 }
 
-const setPrintOrientation = (entityDef: NodeDefEntity, orientation: PrintOrientation): void => {
+const setPrintOrientation = (entityDef: ArenaNodeDefEntity, orientation: PrintOrientation): void => {
   Objects.setInPath({ obj: entityDef, path: ['props', 'printOrientation'], value: orientation })
 }
 
@@ -61,8 +61,8 @@ const buildSurveyWithOwnPagePlot = async () => {
     entityDef('cluster', integerDef('cluster_id').key(), entityDef('plot', integerDef('plot_id').key()).multiple())
   ).build()
 
-  const rootDef = Surveys.getNodeDefRoot({ survey }) as NodeDefEntity
-  const plotDef = Surveys.getNodeDefByName({ survey, name: 'plot' }) as NodeDefEntity
+  const rootDef = Surveys.getNodeDefRoot({ survey }) as ArenaNodeDefEntity
+  const plotDef = Surveys.getNodeDefByName({ survey, name: 'plot' }) as ArenaNodeDefEntity
   setOwnPage(plotDef, rootDef)
   setPrintOrientation(plotDef, 'landscape')
 
@@ -83,15 +83,8 @@ const buildSurveyWithOwnPagePlot = async () => {
 describe('walkSurvey', () => {
   test('full export default: one portrait section with survey title', async () => {
     const user = UserFactory.createInstance({ email: 'test@example.com', name: 'Test User' })
-    const survey = await new SurveyBuilder(
-      user,
-      entityDef('cluster', integerDef('cluster_id').key())
-    ).build()
-    const record = new RecordBuilder(
-      user,
-      survey,
-      entity('cluster', attribute('cluster_id', 10))
-    ).build()
+    const survey = await new SurveyBuilder(user, entityDef('cluster', integerDef('cluster_id').key())).build()
+    const record = new RecordBuilder(user, survey, entity('cluster', attribute('cluster_id', 10))).build()
     const surveyLabel = Surveys.getLabel(LanguageCode.en)(survey)
 
     const { sections, surveyName } = await walkSurvey({ survey, record, i18n, cycle }, stringRenderer)

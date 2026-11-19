@@ -1,5 +1,5 @@
 import { Objects, Strings } from '@openforis/arena-core'
-import type { NodeDefPropsAdvanced } from '@openforis/arena-core'
+import type { ArenaNodeDefPropsAdvanced } from '@openforis/arena-core'
 import { DB, DBs, Schemata } from '../../db'
 
 const nodeDefSelectFields = `id, uuid, parent_uuid, type, deleted, analysis, virtual, 
@@ -12,7 +12,7 @@ const advancedPropKeysDraftToTrack = [
   'defaultValues',
   'fileNameExpression',
   'validations',
-] as const satisfies ReadonlyArray<keyof NodeDefPropsAdvanced>
+] as const satisfies ReadonlyArray<keyof ArenaNodeDefPropsAdvanced>
 
 const rowPropertyByAdvancedPropKeys: Record<(typeof advancedPropKeysDraftToTrack)[number], string> =
   advancedPropKeysDraftToTrack.reduce(

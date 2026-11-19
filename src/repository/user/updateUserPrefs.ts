@@ -1,4 +1,4 @@
-import { Objects, User } from '@openforis/arena-core'
+import { Objects, ArenaUser } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, TableUser } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
@@ -11,7 +11,10 @@ import { SqlUpdateBuilder } from '../../db/sql'
  * @param client - Database client.
  */
 
-export const updateUserPrefs = (options: { userToUpdate: User }, client: BaseProtocol = DB): Promise<User> => {
+export const updateUserPrefs = (
+  options: { userToUpdate: ArenaUser },
+  client: BaseProtocol = DB
+): Promise<ArenaUser> => {
   const { userToUpdate: user } = options
   const table = new TableUser()
   const selectFields = [table.uuid, table.name, table.email, table.prefs, table.status, table.props]

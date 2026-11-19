@@ -1,11 +1,11 @@
-import { DataQuerySummary } from '@openforis/arena-core'
+import { ArenaDataQuerySummary } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, SqlDeleteBuilder, TableDataQuery } from '../../db'
 
 export const deleteItem = (
   params: { surveyId: number; uuid: string },
   client: BaseProtocol = DB
-): Promise<DataQuerySummary | null> => {
+): Promise<ArenaDataQuerySummary | null> => {
   const { surveyId, uuid } = params
   if (!surveyId || !uuid) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
@@ -21,5 +21,5 @@ export const deleteItem = (
     .returning(...table.summaryColumns)
     .build()
 
-  return client.oneOrNone<DataQuerySummary>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.oneOrNone<ArenaDataQuerySummary>(sql, values, (row) => DBs.transformCallback({ row }))
 }

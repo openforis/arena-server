@@ -1,4 +1,4 @@
-import { Message, MessageStatus, UUIDs } from '@openforis/arena-core'
+import { ArenaMessage, MessageStatus, UUIDs } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlInsertBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
@@ -10,7 +10,7 @@ import { transformCallback } from './utils'
  * @param message - Message data to insert.
  * @param client - Database client.
  */
-export const create = (message: Partial<Message>, client: BaseProtocol = DB): Promise<Message> => {
+export const create = (message: Partial<ArenaMessage>, client: BaseProtocol = DB): Promise<ArenaMessage> => {
   const table = new TableMessage()
 
   const { uuid = UUIDs.v4(), status = MessageStatus.Draft, props = {}, createdByUserUuid } = message

@@ -1,4 +1,10 @@
-import { ServiceRegistry, ServiceType, SurveyService, UserGroup, UserGroupProps } from '@openforis/arena-core'
+import {
+  ServiceRegistry,
+  ServiceType,
+  ArenaSurveyService,
+  ArenaUserGroup,
+  ArenaUserGroupProps,
+} from '@openforis/arena-core'
 
 import { ServerError, ServerErrorCode } from '../../server'
 import { ServerServiceType } from '../../server/arenaServer/serverServiceType'
@@ -8,7 +14,7 @@ export const getUserGroupService = (): UserGroupService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.userGroup) as UserGroupService
 
 export const getSurveyUuid = async (surveyId: number): Promise<string> => {
-  const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+  const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as ArenaSurveyService
   const survey = await surveyService.get({ surveyId })
   return survey.uuid
 }
@@ -21,7 +27,7 @@ export const getSurveyUuid = async (surveyId: number): Promise<string> => {
 export const getUserGroupBelongingToSurvey = async (params: {
   surveyId: number
   groupUuid: string
-}): Promise<{ surveyUuid: string; userGroup: UserGroup }> => {
+}): Promise<{ surveyUuid: string; userGroup: ArenaUserGroup }> => {
   const { surveyId, groupUuid } = params
 
   const surveyUuid = await getSurveyUuid(surveyId)
@@ -41,8 +47,8 @@ export const getUserGroupBelongingToSurvey = async (params: {
 export const sanitizeReadableGroupUuids = async (params: {
   surveyUuid: string
   groupUuid?: string
-  props?: UserGroupProps
-}): Promise<UserGroupProps | undefined> => {
+  props?: ArenaUserGroupProps
+}): Promise<ArenaUserGroupProps | undefined> => {
   const { surveyUuid, groupUuid, props } = params
   if (props?.readableGroupUuids === undefined) return props
 

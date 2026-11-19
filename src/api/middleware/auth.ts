@@ -1,21 +1,21 @@
 import { NextFunction, Request, Response } from 'express'
 import {
   Authorizer,
-  DownloadAuthTokenPayload,
-  RecordService,
+  ArenaDownloadAuthTokenPayload,
+  ArenaRecordService,
   ServiceRegistry,
   ServiceType,
-  SurveyService,
-  User,
-  UserAuthTokenService,
+  ArenaSurveyService,
+  ArenaUser,
+  ArenaUserAuthTokenService,
   Users,
-  UserService,
+  ArenaUserService,
 } from '@openforis/arena-core'
 import { UnauthorizedError } from '../../server/error'
 import { Requests } from '../../utils'
 import { jwtDownloadTokenParamName } from '../auth/authApiCommon'
 
-type PermissionFn = (user: User, ...args: Array<any>) => boolean
+type PermissionFn = (user: ArenaUser, ...args: Array<any>) => boolean
 
 const sendUnauthorizedError = ({ req = null, next }: { req?: Request | null; next: NextFunction }) => {
   const user = req ? Requests.getUser(req) : null
@@ -55,7 +55,7 @@ const requireSurveyPermission =
   (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const { surveyId } = Requests.getParams(req)
-      const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+      const service = ServiceRegistry.getInstance().getService(ServiceType.survey) as ArenaSurveyService
       const survey = await service.get({ surveyId })
 
       checkPermission(req, next, permissionFn, survey)
@@ -68,7 +68,7 @@ const requireRecordPermission =
   (permissionFn: PermissionFn) => async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const { surveyId, recordUuid } = Requests.getParams(req)
-      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
+      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as ArenaRecordService
       const record = await service.get({ surveyId, recordUuid })
 
       checkPermission(req, next, permissionFn, record)
@@ -83,7 +83,7 @@ const requireRecordsPermission =
       const { surveyId } = Requests.getParams(req)
       const recordUuids: string[] = Requests.getArrayParam<string>('recordUuids')(req)
       const user = Requests.getUser(req)
-      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as RecordService
+      const service = ServiceRegistry.getInstance().getService(ServiceType.record) as ArenaRecordService
       const records = await service.getManyByUuids({ surveyId, uuids: recordUuids })
       const hasPermission = records.every((record) => permissionFn(user, record))
       if (hasPermission) {
@@ -101,8 +101,8 @@ const requireUserPermission =
     try {
       const { surveyId, userUuid } = Requests.getParams(req)
       const serviceRegistry = ServiceRegistry.getInstance()
-      const surveyService = serviceRegistry.getService(ServiceType.survey) as SurveyService
-      const userService = serviceRegistry.getService(ServiceType.user) as UserService
+      const surveyService = serviceRegistry.getService(ServiceType.survey) as ArenaSurveyService
+      const userService = serviceRegistry.getService(ServiceType.user) as ArenaUserService
       const survey = surveyId ? await surveyService.get({ surveyId }) : undefined
       const userToEdit = await userService.get({ userUuid })
 
@@ -133,8 +133,8 @@ const requireDownloadToken = (req: Request, res: Response, next: NextFunction) =
   try {
     // verify token
     const serviceRegistry = ServiceRegistry.getInstance()
-    const userAuthTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
-    const payload: DownloadAuthTokenPayload = userAuthTokenService.verifyAuthToken(token)
+    const userAuthTokenService: ArenaUserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
+    const payload: ArenaDownloadAuthTokenPayload = userAuthTokenService.verifyAuthToken(token)
 
     const { fileName } = payload
 

@@ -1,4 +1,4 @@
-import { DataQuerySummary } from '@openforis/arena-core'
+import { ArenaDataQuerySummary } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableDataQuery } from '../../db'
 import { SqlSelectCountBuilder } from '../../db/sql'
@@ -10,7 +10,7 @@ export const count = (params: { surveyId: number }, client: BaseProtocol = DB): 
   return client.one(sql, {}, DBs.transformCallbackCount)
 }
 
-export const getAll = (params: { surveyId: number }, client: BaseProtocol = DB): Promise<DataQuerySummary[]> => {
+export const getAll = (params: { surveyId: number }, client: BaseProtocol = DB): Promise<ArenaDataQuerySummary[]> => {
   const { surveyId } = params
   if (!surveyId) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
@@ -21,7 +21,7 @@ export const getAll = (params: { surveyId: number }, client: BaseProtocol = DB):
     .from(table)
     .build()
 
-  return client.map<DataQuerySummary>(sql, [surveyId], (row) => DBs.transformCallback({ row }))
+  return client.map<ArenaDataQuerySummary>(sql, [surveyId], (row) => DBs.transformCallback({ row }))
 }
 
 /**
@@ -36,7 +36,7 @@ export const getByUuid = (
     uuid: string
   },
   client: BaseProtocol = DB
-): Promise<DataQuerySummary> => {
+): Promise<ArenaDataQuerySummary> => {
   const { surveyId, uuid } = params
 
   const table = new TableDataQuery(surveyId)
@@ -46,7 +46,7 @@ export const getByUuid = (
     .where(`${table.uuid} = $1`)
     .build()
 
-  return client.one<DataQuerySummary>(sql, [uuid], (row) =>
+  return client.one<ArenaDataQuerySummary>(sql, [uuid], (row) =>
     DBs.transformCallback({ row, skip: [table.content.columnName] })
   )
 }

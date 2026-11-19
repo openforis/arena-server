@@ -1,11 +1,11 @@
-import { DataQuerySummary } from '@openforis/arena-core'
+import { ArenaDataQuerySummary } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableDataQuery } from '../../db'
 
 export const insert = (
-  params: { surveyId: number; item: DataQuerySummary },
+  params: { surveyId: number; item: ArenaDataQuerySummary },
   client: BaseProtocol = DB
-): Promise<DataQuerySummary> => {
+): Promise<ArenaDataQuerySummary> => {
   const { surveyId, item } = params
   if (!surveyId || !item) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
@@ -24,5 +24,5 @@ export const insert = (
     .returning(...table.summaryColumns)
     .build()
 
-  return client.one<DataQuerySummary>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<ArenaDataQuerySummary>(sql, values, (row) => DBs.transformCallback({ row }))
 }

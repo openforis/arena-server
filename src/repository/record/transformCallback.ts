@@ -1,4 +1,4 @@
-import { Objects, ArenaRecord, Validation, ValidationFactory } from '@openforis/arena-core'
+import { Objects, ArenaRecord, ArenaValidation, ValidationFactory } from '@openforis/arena-core'
 
 export const dbTransformCallback = (options: {
   row: any
@@ -9,7 +9,7 @@ export const dbTransformCallback = (options: {
 
   const { validation, ...rest } = row
 
-  const validationUpdated: Validation = includeValidationFields
+  const validationUpdated: ArenaValidation = includeValidationFields
     ? validation
     : {
         ...ValidationFactory.createInstance({ valid: validation.valid }),

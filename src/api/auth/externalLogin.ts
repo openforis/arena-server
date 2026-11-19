@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto'
 import { CookieOptions, Express, Request, Response } from 'express'
 
-import { ServiceRegistry, ServiceType, User, UserService, Users, UUIDs } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, ArenaUser, ArenaUserService, Users, UUIDs } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
 import { AuthProviderWithSecret, ExternalIdentity } from '../../model'
@@ -52,7 +52,8 @@ const getAuthProviderService = (): AuthProviderService =>
 const getUser2FAService = (): User2FAService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.user2FA) as User2FAService
 
-const getUserService = (): UserService => ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+const getUserService = (): ArenaUserService =>
+  ServiceRegistry.getInstance().getService(ServiceType.user) as ArenaUserService
 
 const cookieOptions = (maxAge: number): CookieOptions => ({
   httpOnly: true,
@@ -288,7 +289,7 @@ const handleTwoFactor = async (req: Request, res: Response): Promise<void> => {
     return
   }
   res.clearCookie(pendingTwoFactorCookieName, { path: cookiePath })
-  const user = (await getUserService().get({ userUuid })) as User
+  const user = (await getUserService().get({ userUuid })) as ArenaUser
   const authToken = await createSessionTokens({ req, res, userUuid })
   await sendUser({ req, res, user, authToken })
 }
@@ -320,7 +321,7 @@ const handleMobileToken = async (req: Request, res: Response): Promise<void> => 
   if (await isTwoFactorRequired(provider, userUuid)) {
     if (!twoFactorToken) {
       // shown by the app, so that it is clear that the code is the one of the Arena account
-      const user = (await getUserService().get({ userUuid })) as User
+      const user = (await getUserService().get({ userUuid })) as ArenaUser
       res.json({ twoFactorRequired: true, email: user.email })
       return
     }
@@ -329,7 +330,7 @@ const handleMobileToken = async (req: Request, res: Response): Promise<void> => 
       return
     }
   }
-  const user = (await getUserService().get({ userUuid })) as User
+  const user = (await getUserService().get({ userUuid })) as ArenaUser
   const authToken = await createSessionTokens({ req, res, userUuid })
   await sendUser({ req, res, user, authToken })
 }

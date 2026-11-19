@@ -1,4 +1,4 @@
-import { Message, MessageStatus } from '@openforis/arena-core'
+import { ArenaMessage, MessageStatus } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlSelectBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
@@ -24,7 +24,7 @@ export const count = (client: BaseProtocol = DB): Promise<number> => {
  * @param client - Database client.
  * @returns Promise that resolves to an array of messages.
  */
-export const getAll = (client: BaseProtocol = DB): Promise<Message[]> => {
+export const getAll = (client: BaseProtocol = DB): Promise<ArenaMessage[]> => {
   const table = new TableMessage()
 
   const sql = new SqlSelectBuilder()
@@ -32,7 +32,7 @@ export const getAll = (client: BaseProtocol = DB): Promise<Message[]> => {
     .from(table)
     .build()
 
-  return client.map<Message>(sql, [], transformCallback)
+  return client.map<ArenaMessage>(sql, [], transformCallback)
 }
 
 /**
@@ -41,7 +41,7 @@ export const getAll = (client: BaseProtocol = DB): Promise<Message[]> => {
  * @param client - Database client.
  * @returns Promise that resolves to an array of sent messages.
  */
-export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
+export const getAllSent = (client: BaseProtocol = DB): Promise<ArenaMessage[]> => {
   const table = new TableMessage()
 
   const sql = new SqlSelectBuilder()
@@ -50,7 +50,7 @@ export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
     .where(`${table.status} = $1`)
     .build()
 
-  return client.map<Message>(sql, [MessageStatus.Sent], transformCallback)
+  return client.map<ArenaMessage>(sql, [MessageStatus.Sent], transformCallback)
 }
 
 /**
@@ -60,7 +60,7 @@ export const getAllSent = (client: BaseProtocol = DB): Promise<Message[]> => {
  * @param client - Database client.
  * @returns Promise that resolves to a message or null if not found.
  */
-export const getByUuid = (uuid: string, client: BaseProtocol = DB): Promise<Message | null> => {
+export const getByUuid = (uuid: string, client: BaseProtocol = DB): Promise<ArenaMessage | null> => {
   const table = new TableMessage()
 
   const sql = new SqlSelectBuilder()
@@ -69,5 +69,5 @@ export const getByUuid = (uuid: string, client: BaseProtocol = DB): Promise<Mess
     .where(`${table.uuid} = $1`)
     .build()
 
-  return client.oneOrNone<Message | null>(sql, [uuid], transformCallback)
+  return client.oneOrNone<ArenaMessage | null>(sql, [uuid], transformCallback)
 }

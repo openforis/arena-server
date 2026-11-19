@@ -1,4 +1,4 @@
-import { UserGroup } from '@openforis/arena-core'
+import { ArenaUserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, TableUserGroup } from '../../db'
 import { SqlUpdateBuilder } from '../../db/sql'
 
@@ -6,9 +6,9 @@ const dateModifiedNow = "(now() AT TIME ZONE 'UTC')"
 
 // Full props replace.
 export const update = (
-  params: { uuid: string; props: UserGroup['props'] },
+  params: { uuid: string; props: ArenaUserGroup['props'] },
   client: BaseProtocol = DB
-): Promise<UserGroup> => {
+): Promise<ArenaUserGroup> => {
   const { uuid, props } = params
   const table = new TableUserGroup()
 
@@ -20,14 +20,14 @@ export const update = (
     .returning(...table.summaryColumns)
     .build()
 
-  return client.one<UserGroup>(sql, [props, uuid], (row) => DBs.transformCallback({ row }))
+  return client.one<ArenaUserGroup>(sql, [props, uuid], (row) => DBs.transformCallback({ row }))
 }
 
 // Partial props merge.
 export const updateProps = (
-  params: { uuid: string; props: Partial<UserGroup['props']> },
+  params: { uuid: string; props: Partial<ArenaUserGroup['props']> },
   client: BaseProtocol = DB
-): Promise<UserGroup> => {
+): Promise<ArenaUserGroup> => {
   const { uuid, props } = params
   const table = new TableUserGroup()
 
@@ -39,7 +39,7 @@ export const updateProps = (
     .returning(...table.summaryColumns)
     .build()
 
-  return client.one<UserGroup>(sql, [props, uuid], (row) => DBs.transformCallback({ row }))
+  return client.one<ArenaUserGroup>(sql, [props, uuid], (row) => DBs.transformCallback({ row }))
 }
 
 // Removes a (deleted) group from the readable groups of the other groups of the survey.

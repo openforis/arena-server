@@ -1,18 +1,18 @@
 import {
   ArenaRecordNode as ArenaNode,
-  CategoryItem,
+  ArenaCategoryItem,
   CategoryItems,
   LanguageCode,
-  NodeDef,
-  NodeDefBoolean,
-  NodeDefCoordinate,
-  NodeDefEntity,
+  ArenaNodeDef,
+  ArenaNodeDefBoolean,
+  ArenaNodeDefCoordinate,
+  ArenaNodeDefEntity,
   NodeDefEntityRenderType,
   NodeDefs,
   NodeDefType,
-  Nodes,
-  NodeValueFormatter,
-  NodeValues,
+  RecordNodes,
+  RecordNodeValueFormatter,
+  RecordNodeValues,
   Objects,
   Strings,
   Taxa,
@@ -23,10 +23,10 @@ import type { RenderContext } from './types'
 export const EMPTY_FIELD = '________________________________'
 export const EMPTY_SHORT = '___________'
 
-export const label = (nodeDef: NodeDef<NodeDefType>, lang: LanguageCode): string =>
+export const label = (nodeDef: ArenaNodeDef<NodeDefType>, lang: LanguageCode): string =>
   NodeDefs.getLabelOrName(nodeDef, lang)
 
-export const getCategoryItemLabel = (item: CategoryItem, lang: LanguageCode): string => {
+export const getCategoryItemLabel = (item: ArenaCategoryItem, lang: LanguageCode): string => {
   const itemLabel = CategoryItems.getLabel(item, lang)
   return Objects.isEmpty(itemLabel) ? CategoryItems.getCode(item) : itemLabel
 }
@@ -36,7 +36,7 @@ export const getCommonLabel = (context: RenderContext, key: string, fallback: st
   return context.i18n?.exists(translationKey) ? context.i18n.t(translationKey) : fallback
 }
 
-export const getBooleanValueLabel = (context: RenderContext, nodeDef: NodeDefBoolean, value: boolean): string => {
+export const getBooleanValueLabel = (context: RenderContext, nodeDef: ArenaNodeDefBoolean, value: boolean): string => {
   const labelType = nodeDef.props.labelValue
   if (labelType === 'trueFalse') {
     return value ? getCommonLabel(context, 'true', 'True') : getCommonLabel(context, 'false', 'False')
@@ -44,12 +44,16 @@ export const getBooleanValueLabel = (context: RenderContext, nodeDef: NodeDefBoo
   return value ? getCommonLabel(context, 'yes', 'Yes') : getCommonLabel(context, 'no', 'No')
 }
 
-export const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderContext, node: ArenaNode): string => {
-  if (Nodes.isValueBlank(node)) return ''
+export const formatNodeValue = (
+  nodeDef: ArenaNodeDef<NodeDefType>,
+  context: RenderContext,
+  node: ArenaNode
+): string => {
+  if (RecordNodes.isValueBlank(node)) return ''
   const { survey, lang, cycle } = context
   switch (nodeDef.type) {
     case NodeDefType.boolean: {
-      const boolDef = nodeDef as NodeDefBoolean
+      const boolDef = nodeDef as ArenaNodeDefBoolean
       return getBooleanValueLabel(context, boolDef, node.value === true || node.value === 'true')
     }
     case NodeDefType.taxon: {
@@ -60,14 +64,14 @@ export const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderCo
       return `${sciName} (${code})`
     }
     case NodeDefType.file:
-      return NodeValues.getFileName(node) ?? ''
+      return RecordNodeValues.getFileName(node) ?? ''
     case NodeDefType.code: {
       const refItem = node.refData?.categoryItem
       if (refItem) return getCategoryItemLabel(refItem, lang)
-      return NodeValues.getValueCode(node.value) ?? ''
+      return RecordNodeValues.getValueCode(node.value) ?? ''
     }
     default: {
-      const formatted = NodeValueFormatter.format({
+      const formatted = RecordNodeValueFormatter.format({
         survey,
         cycle,
         nodeDef,
@@ -81,15 +85,15 @@ export const formatNodeValue = (nodeDef: NodeDef<NodeDefType>, context: RenderCo
   }
 }
 
-export const getValueFields = (nodeDef: NodeDefCoordinate): string[] => [
-  NodeValues.ValuePropsCoordinate.srs,
-  NodeValues.ValuePropsCoordinate.x,
-  NodeValues.ValuePropsCoordinate.y,
+export const getValueFields = (nodeDef: ArenaNodeDefCoordinate): string[] => [
+  RecordNodeValues.ValuePropsCoordinate.srs,
+  RecordNodeValues.ValuePropsCoordinate.x,
+  RecordNodeValues.ValuePropsCoordinate.y,
   ...NodeDefs.getCoordinateAdditionalFields(nodeDef),
 ]
 
 export const getCoordinateLabelByField = (
-  nodeDef: NodeDefCoordinate,
+  nodeDef: ArenaNodeDefCoordinate,
   context: RenderContext
 ): Record<string, string> => {
   const valueFields = getValueFields(nodeDef)
@@ -113,9 +117,9 @@ export const getCoordinateLabelByField = (
   return labelByField
 }
 
-export const isNodeBlank = (node?: ArenaNode): boolean => !node || Nodes.isValueBlank(node)
+export const isNodeBlank = (node?: ArenaNode): boolean => !node || RecordNodes.isValueBlank(node)
 
 export const isNodeFilled = (node?: ArenaNode): node is ArenaNode => !isNodeBlank(node)
 
-export const getIsTableLayout = (entityDef: NodeDefEntity, cycle: string): boolean =>
+export const getIsTableLayout = (entityDef: ArenaNodeDefEntity, cycle: string): boolean =>
   NodeDefs.getLayoutRenderType(cycle)(entityDef) === NodeDefEntityRenderType.table

@@ -1,5 +1,4 @@
-import { ServiceRegistry, User, UserFactory } from '@openforis/arena-core'
-import { AuthGroupName } from '@openforis/arena-core/dist/auth/authGroup'
+import { AuthGroupName, ServiceRegistry, ArenaUser, UserFactory } from '@openforis/arena-core'
 
 import { DB } from '../../../../db'
 import { ApiEndpoint } from '../../../endpoint'
@@ -13,7 +12,7 @@ declare global {
   var api: ApiTest
 }
 
-const userWithoutRoles: User = {
+const userWithoutRoles: ArenaUser = {
   ...UserFactory.createInstance({ email: 'test-no-roles@openforis-arena.org', name: 'Tester without roles' }),
   password: 'Test_123',
 }
@@ -43,7 +42,7 @@ const loginTests = (): void =>
     test('Login success', async () => {
       const { body } = await globalThis.api.post(ApiEndpoint.auth.login()).send(mockUser).expect(200)
 
-      const user: User = body.user
+      const user: ArenaUser = body.user
       expect(user).toBeDefined()
       expect(user.uuid).toBeDefined()
       expect(body.survey).not.toBeDefined() // only with param
