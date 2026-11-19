@@ -1,5 +1,4 @@
-import { ServiceRegistry, ArenaUser, UserFactory } from '@openforis/arena-core'
-import { AuthGroupName } from '@openforis/arena-core'
+import { AuthGroupName, ServiceRegistry, ArenaUser, UserFactory } from '@openforis/arena-core'
 
 import { DB } from '../../../../db'
 import { ApiEndpoint } from '../../../endpoint'

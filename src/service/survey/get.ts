@@ -1,6 +1,5 @@
-import { NodeDefsFixer, ArenaSurvey, Surveys } from '@openforis/arena-core'
+import { ArenaNodeDefMap, NodeDefsFixer, ArenaSurvey, Surveys } from '@openforis/arena-core'
 
-import { ArenaNodeDefMap } from '@openforis/arena-core'
 import { Logger } from '../../log'
 import { SurveyRepository } from '../../repository'
 import type { NodeDefinitionFetchParams } from '../../repository/nodeDef'
