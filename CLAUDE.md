@@ -141,5 +141,5 @@ Commits and PRs are made as the repository owner.
 
 - Branch names: give new branches a short, meaningful name describing the change.
 - No Claude attribution: never add a `Co-Authored-By: Claude` trailer, a "Generated with Claude Code" line, a `Claude-Session` line or a session link to commits, pull requests, PR/issue comments, reviews or code comments.
-- Assign every PR you open to `SteRiccio`.
+- Assign every PR you open to the GitHub user you are working for.
 - Watch every PR you open (subscribe to its activity) and fix CI failures and review findings until it is green.
