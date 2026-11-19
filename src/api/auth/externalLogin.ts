@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto'
 import { CookieOptions, Express, Request, Response } from 'express'
 
-import { ServiceRegistry, ServiceType, User, UserService, Users } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, User, UserService, Users, UUIDs } from '@openforis/arena-core'
 
 import { Logger } from '../../log'
 import { AuthProviderWithSecret, ExternalIdentity } from '../../model'
@@ -45,7 +45,6 @@ const codeChallengeRegExp = /^[\w-]{43}$/
 
 // only relative app paths, to avoid open redirects
 const returnToRegExp = /^\/app\/[\w/-]{0,200}$/
-const uuidRegExp = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const getAuthProviderService = (): AuthProviderService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.authProvider) as AuthProviderService
@@ -100,7 +99,9 @@ const getStartMode = (
     return { mode: verified.mode, userUuid: verified.userUuid }
   }
   if (invitation) {
-    return uuidRegExp.test(invitation) ? { mode: ExternalLoginMode.invitation, invitationUuid: invitation } : null
+    return typeof invitation === 'string' && UUIDs.isUuid(invitation)
+      ? { mode: ExternalLoginMode.invitation, invitationUuid: invitation }
+      : null
   }
   return { mode: ExternalLoginMode.login }
 }
