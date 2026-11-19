@@ -35,6 +35,7 @@ const pathsAllowedWithoutAuthentication = [
   /^\/auth\/providers\/[a-z0-9-]+\/icon\/?$/,
   /^\/auth\/oidc\/[a-z0-9][a-z0-9-]*(\/callback)?\/?$/,
   /^\/auth\/oidc\/_2fa\/?$/,
+  /^\/auth\/oidc\/_mobile-token\/?$/,
   /^\/api\/public\/.*$/,
   /^\/api\/surveyTemplates\/?$/,
   /^\/api\/user\/request-access\/?$/,

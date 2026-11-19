@@ -1,3 +1,5 @@
+import * as crypto from 'node:crypto'
+
 import { ServiceRegistry, UserStatus } from '@openforis/arena-core'
 import { generateSync } from 'otplib'
 import { Response } from 'supertest'
@@ -24,6 +26,12 @@ const invitedEmail = `invited@${testEmailDomain}`
 const gmailUserEmail = 'Ext.Login.Tester@gmail.com'
 
 const mockProvider = new MockOidcProvider()
+
+const mobileRedirectUri = 'org.openforis.arena-mobile://external-login'
+const mobileCodeVerifier = 'arena-mobile-test-code-verifier-0123456789-abcdefghijklmnopqrstuvwxyz'
+const mobileCodeChallenge = crypto.createHash('sha256').update(mobileCodeVerifier).digest('base64url')
+
+const getMobileCode = (location: string): string | null => new URL(location).searchParams.get('code')
 
 const getAuthProviderService = (): AuthProviderService =>
   ServiceRegistry.getInstance().getService(ServerServiceType.authProvider) as AuthProviderService
@@ -199,6 +207,36 @@ const externalLoginTests = (): void =>
       expect(getErrorKey(res.headers.location)).toBe(ExternalLoginErrorKeys.flowInvalid)
     })
 
+    test('Arena Mobile: redirects to the app with a code exchanged for the session tokens', async () => {
+      const { location, callbackRes } = await runFlow({
+        claims: { sub: 'tester-1', email: mockUser.email, email_verified: true },
+        query: { mobileCodeChallenge },
+      })
+      expect(location.startsWith(`${mobileRedirectUri}?`)).toBe(true)
+      expect(getCookie(callbackRes, 'refreshToken')).toBeUndefined()
+      const code = getMobileCode(location)
+      await globalThis.api
+        .post(ApiEndpoint.auth.externalLoginMobileToken())
+        .send({ code, codeVerifier: `${mobileCodeVerifier}-wrong` })
+        .expect(401)
+      const res = await globalThis.api
+        .post(ApiEndpoint.auth.externalLoginMobileToken())
+        .send({ code, codeVerifier: mobileCodeVerifier })
+        .expect(200)
+      expect(res.body.authToken).toBeDefined()
+      expect(res.body.user.email).toBe(mockUser.email)
+      expect(getCookie(res, 'refreshToken')).toBeDefined()
+    })
+
+    test('Arena Mobile: sends the errors to the app', async () => {
+      const { location } = await runFlow({
+        claims: { sub: 'unknown-1', email: `nobody@${testEmailDomain}`, email_verified: true },
+        query: { mobileCodeChallenge },
+      })
+      expect(location.startsWith(`${mobileRedirectUri}?`)).toBe(true)
+      expect(getErrorKey(location)).toBe(ExternalLoginErrorKeys.userNotFound)
+    })
+
     test('links an identity to the logged-in user', async () => {
       await globalThis.api.login()
       const { body } = await globalThis.api
@@ -250,6 +288,28 @@ const externalLoginTests = (): void =>
           .expect(200)
         expect(body.authToken).toBeDefined()
         expect(body.user.email).toBe(mockUser.email)
+
+        // Arena Mobile: the 2FA code is sent with the code exchange
+        const { location: mobileLocation } = await runFlow({
+          claims: { sub: 'tester-1', email: mockUser.email, email_verified: true },
+          query: { mobileCodeChallenge },
+        })
+        const code = getMobileCode(mobileLocation)
+        const { body: twoFactorBody } = await globalThis.api
+          .post(ApiEndpoint.auth.externalLoginMobileToken())
+          .send({ code, codeVerifier: mobileCodeVerifier })
+          .expect(200)
+        expect(twoFactorBody).toEqual({ twoFactorRequired: true })
+        await globalThis.api
+          .post(ApiEndpoint.auth.externalLoginMobileToken())
+          .send({ code, codeVerifier: mobileCodeVerifier, twoFactorToken: '000000' })
+          .expect(401)
+        const { body: mobileBody } = await globalThis.api
+          .post(ApiEndpoint.auth.externalLoginMobileToken())
+          // the TOTP code of this time step was used above: it cannot be used twice
+          .send({ code, codeVerifier: mobileCodeVerifier, twoFactorToken: device.backupCodes[0] })
+          .expect(200)
+        expect(mobileBody.authToken).toBeDefined()
       } finally {
         await DB.none(`DELETE FROM user_2fa_device WHERE device_name = 'external login test'`)
         await getAuthProviderService().update({ id: providerId, props: { requireArena2FA: false } })
