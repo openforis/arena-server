@@ -2,10 +2,9 @@ import type {
   ArenaRecord,
   ArenaI18n,
   LanguageCode,
-  ArenaRecordNode as ArenaNode,
-  ArenaNodeDef,
-  NodeDefType,
+  ArenaRecordNode,
   ArenaSurvey,
+  ArenaAnyNodeDef,
 } from '@openforis/arena-core'
 
 export type PrintOrientation = 'portrait' | 'landscape'
@@ -59,9 +58,9 @@ export interface RenderLimits {
 }
 
 export interface AttributeRendererArgs {
-  nodeDef: ArenaNodeDef<NodeDefType>
+  nodeDef: ArenaAnyNodeDef
   context: RenderContext
   depth: number
-  node?: ArenaNode
+  node?: ArenaRecordNode
   limits?: RenderLimits
 }

@@ -1,6 +1,6 @@
 import { CheckBox, HeadingLevel, Paragraph, TextRun, type IParagraphOptions } from 'docx'
 
-import type { ArenaNodeDef, ArenaNodeDefCoordinate, ArenaNodeDefEntity, NodeDefType } from '@openforis/arena-core'
+import type { ArenaNodeDefCoordinate, ArenaNodeDefEntity, ArenaAnyNodeDef } from '@openforis/arena-core'
 import { NodeDefs } from '@openforis/arena-core'
 
 import { EMPTY_FIELD } from '../../../docExport/common'
@@ -55,7 +55,7 @@ export const getFormHeaderLevelByDepth = (depth: number): (typeof HeadingLevel)[
 export const formItemLabelRun = (labelText: string, trailingSpace = true): TextRun =>
   new TextRun({ text: `${labelText}:${trailingSpace ? ' ' : ''}`, bold: true })
 
-export const nodeDefFormItemLabelRun = (nodeDef: ArenaNodeDef<NodeDefType>, context: RenderContext): TextRun =>
+export const nodeDefFormItemLabelRun = (nodeDef: ArenaAnyNodeDef, context: RenderContext): TextRun =>
   formItemLabelRun(NodeDefs.getLabelOrName(nodeDef, context.lang))
 
 export const inputLine = (text: string): TextRun => new TextRun({ text, underline: {} })
@@ -87,7 +87,7 @@ export const getTaxonFieldCommonProps = (): IParagraphOptions => ({
 
 // ─── Convenience helpers still used only in docx renderers ────────────────────
 
-export const getHeadingText = (nodeDef: ArenaNodeDef<NodeDefType>, context: RenderContext): string =>
+export const getHeadingText = (nodeDef: ArenaAnyNodeDef, context: RenderContext): string =>
   NodeDefs.getLabelOrName(nodeDef, context.lang)
 
 export const isEntityInDifferentPage =
