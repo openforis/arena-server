@@ -321,7 +321,7 @@ const handleMobileToken = async (req: Request, res: Response): Promise<void> => 
   if (await isTwoFactorRequired(provider, userUuid)) {
     if (!twoFactorToken) {
       // shown by the app, so that it is clear that the code is the one of the Arena account
-      const user = (await getUserService().get({ userUuid })) as User
+      const user = (await getUserService().get({ userUuid })) as ArenaUser
       res.json({ twoFactorRequired: true, email: user.email })
       return
     }
