@@ -1,4 +1,4 @@
-import { Message } from '@openforis/arena-core'
+import { ArenaMessage } from '@openforis/arena-core'
 
 import { BaseProtocol, DB, SqlUpdateBuilder } from '../../db'
 import { TableMessage } from '../../db/table/schemaPublic/message'
@@ -13,9 +13,9 @@ import { transformCallback } from './utils'
  */
 export const update = (
   uuid: string,
-  message: Partial<Omit<Message, 'uuid' | 'createdByUserUuid' | 'dateCreated' | 'dateModified'>>,
+  message: Partial<Omit<ArenaMessage, 'uuid' | 'createdByUserUuid' | 'dateCreated' | 'dateModified'>>,
   client: BaseProtocol = DB
-): Promise<Message> => {
+): Promise<ArenaMessage> => {
   const table = new TableMessage()
   const { status, props } = message
 
@@ -35,5 +35,5 @@ export const update = (
     .returning(table.uuid, table.status, table.props, table.createdByUserUuid, table.dateCreated, table.dateModified)
     .build()
 
-  return client.one<Message>(sql, { status, props, uuid }, transformCallback)
+  return client.one<ArenaMessage>(sql, { status, props, uuid }, transformCallback)
 }

@@ -2,14 +2,14 @@ import jwt from 'jsonwebtoken'
 import pgPromise from 'pg-promise'
 
 import {
-  AuthToken,
-  DownloadAuthTokenPayload,
-  UserAuthRefreshToken,
-  UserAuthRefreshTokenPayload,
-  UserAuthRefreshTokenProps,
-  UserAuthTokenPayload,
-  UserAuthTokenService,
-  UserTokenPayload,
+  ArenaAuthToken,
+  ArenaDownloadAuthTokenPayload,
+  ArenaUserAuthRefreshToken,
+  ArenaUserAuthRefreshTokenPayload,
+  ArenaUserAuthRefreshTokenProps,
+  ArenaUserAuthTokenPayload,
+  ArenaUserAuthTokenService,
+  ArenaUserTokenPayload,
   UUIDs,
 } from '@openforis/arena-core'
 
@@ -37,7 +37,7 @@ const logger = new Logger('UserAuthTokenService')
  * @param expiresInSeconds - The expiration time in seconds.
  * @returns The signed JWT token.
  */
-const signToken = (payload: UserTokenPayload, expiresInSeconds: number): string =>
+const signToken = (payload: ArenaUserTokenPayload, expiresInSeconds: number): string =>
   jwt.sign(payload, ProcessEnv.userAuthTokenSecret, { expiresIn: expiresInSeconds, algorithm: jwtAlgorithm })
 
 /**
@@ -46,7 +46,7 @@ const signToken = (payload: UserTokenPayload, expiresInSeconds: number): string 
  */
 export const isAccessTokenPayload = (payload: object): boolean => !('uuid' in payload) && !('fileName' in payload)
 
-const createUserAuthTokenPayload = ({ userUuid }: { userUuid: string }): UserAuthTokenPayload => ({ userUuid })
+const createUserAuthTokenPayload = ({ userUuid }: { userUuid: string }): ArenaUserAuthTokenPayload => ({ userUuid })
 
 const createDownloadAuthTokenPayload = ({
   userUuid,
@@ -54,12 +54,12 @@ const createDownloadAuthTokenPayload = ({
 }: {
   userUuid: string
   fileName: string
-}): DownloadAuthTokenPayload => ({
+}): ArenaDownloadAuthTokenPayload => ({
   userUuid,
   fileName,
 })
 
-const createAuthTokenFromPayload = (payload: UserTokenPayload, expiresMs: number): AuthToken => {
+const createAuthTokenFromPayload = (payload: ArenaUserTokenPayload, expiresMs: number): ArenaAuthToken => {
   const now = new Date()
   const expiresAt = new Date(now.getTime() + expiresMs)
   const token = signToken(payload, expiresMs / 1000)
@@ -78,22 +78,22 @@ const createUserAuthToken = ({
 }: {
   userUuid: string
 }): { token: string; dateCreated: Date; expiresAt: Date } => {
-  const payload: UserAuthTokenPayload = createUserAuthTokenPayload({ userUuid })
+  const payload: ArenaUserAuthTokenPayload = createUserAuthTokenPayload({ userUuid })
   return createAuthTokenFromPayload(payload, jwtExpiresMs)
 }
 
-const getRefreshTokenExpireMs = (props: UserAuthRefreshTokenProps): number =>
+const getRefreshTokenExpireMs = (props: ArenaUserAuthRefreshTokenProps): number =>
   props?.appInfo?.appId === arenaMobileAppId ? jwtRefreshTokenMobileExpireMs : jwtRefreshTokenExpireMs
 
 const createAndStoreRefreshToken = (
-  { userUuid, props }: { userUuid: string; props: UserAuthRefreshTokenProps },
+  { userUuid, props }: { userUuid: string; props: ArenaUserAuthRefreshTokenProps },
   client: pgPromise.IBaseProtocol<any> = DB
-): Promise<UserAuthRefreshToken> => {
+): Promise<ArenaUserAuthRefreshToken> => {
   const uuid = UUIDs.v4()
   const now = new Date()
   const expireMs = getRefreshTokenExpireMs(props)
   const expiresAt = new Date(now.getTime() + expireMs)
-  const payload: UserAuthRefreshTokenPayload = { ...createUserAuthTokenPayload({ userUuid }), uuid }
+  const payload: ArenaUserAuthRefreshTokenPayload = { ...createUserAuthTokenPayload({ userUuid }), uuid }
   const token = signToken(payload, expireMs / 1000)
   const refreshToken = { uuid, userUuid, token, dateCreated: now, expiresAt, props }
   return UserRefreshTokenRepository.insert(refreshToken, client)
@@ -105,11 +105,11 @@ const verifyAndFetchRefreshTokenRecord = async ({
   t,
 }: {
   refreshToken: string
-  userAuthTokenService: UserAuthTokenService
+  userAuthTokenService: ArenaUserAuthTokenService
   t: pgPromise.IBaseProtocol<any>
-}): Promise<UserAuthRefreshToken | null> => {
+}): Promise<ArenaUserAuthRefreshToken | null> => {
   try {
-    const decodedPayload = userAuthTokenService.verifyAuthToken(refreshToken) as UserAuthRefreshTokenPayload
+    const decodedPayload = userAuthTokenService.verifyAuthToken(refreshToken) as ArenaUserAuthRefreshTokenPayload
     const { uuid } = decodedPayload
 
     const tokenRecord = await UserRefreshTokenRepository.getByUuid(uuid, { includeRevoked: false }, t)
@@ -125,21 +125,21 @@ const verifyAndFetchRefreshTokenRecord = async ({
   }
 }
 
-export const UserAuthTokenServiceServer: UserAuthTokenService = {
+export const UserAuthTokenServiceServer: ArenaUserAuthTokenService = {
   async createUserAuthTokens(
-    options: { userUuid: string; props: UserAuthRefreshTokenProps },
+    options: { userUuid: string; props: ArenaUserAuthRefreshTokenProps },
     dbClient?: any
-  ): Promise<{ authToken: AuthToken; refreshToken: UserAuthRefreshToken }> {
+  ): Promise<{ authToken: ArenaAuthToken; refreshToken: ArenaUserAuthRefreshToken }> {
     const { userUuid, props } = options
     const authToken = createUserAuthToken({ userUuid })
     const refreshToken = await createAndStoreRefreshToken({ userUuid, props }, dbClient)
     return { authToken, refreshToken }
   },
-  createDownloadAuthToken({ userUuid, fileName }: { userUuid: string; fileName: string }): AuthToken {
+  createDownloadAuthToken({ userUuid, fileName }: { userUuid: string; fileName: string }): ArenaAuthToken {
     const payload = createDownloadAuthTokenPayload({ userUuid, fileName })
     return createAuthTokenFromPayload(payload, jwtDownloadTokenExpireMs)
   },
-  async getByUuid(tokenUuid: string): Promise<UserAuthRefreshToken | null> {
+  async getByUuid(tokenUuid: string): Promise<ArenaUserAuthRefreshToken | null> {
     return UserRefreshTokenRepository.getByUuid(tokenUuid)
   },
   async revoke(options: { tokenUuid: string }): Promise<void> {
@@ -153,10 +153,10 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
   rotateTokens(
     options: {
       refreshToken: string
-      refreshTokenProps: UserAuthRefreshTokenProps
+      refreshTokenProps: ArenaUserAuthRefreshTokenProps
     },
     dbClient: any = DB
-  ): Promise<{ authToken: AuthToken; refreshToken: UserAuthRefreshToken } | null> {
+  ): Promise<{ authToken: ArenaAuthToken; refreshToken: ArenaUserAuthRefreshToken } | null> {
     const { refreshToken, refreshTokenProps } = options
     if (!refreshToken) {
       return Promise.resolve(null)
@@ -180,7 +180,7 @@ export const UserAuthTokenServiceServer: UserAuthTokenService = {
   async deleteExpired(): Promise<number> {
     return UserRefreshTokenRepository.deleteExpired()
   },
-  verifyAuthToken<P extends UserTokenPayload>(token: string): P {
+  verifyAuthToken<P extends ArenaUserTokenPayload>(token: string): P {
     return jwt.verify(token, ProcessEnv.userAuthTokenSecret, { algorithms: jwtAlgorithms }) as P
   },
 }

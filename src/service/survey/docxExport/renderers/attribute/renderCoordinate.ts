@@ -1,6 +1,6 @@
 import { Paragraph, TextRun } from 'docx'
 
-import type { NodeDefCoordinate } from '@openforis/arena-core'
+import type { ArenaNodeDefCoordinate } from '@openforis/arena-core'
 
 import {
   EMPTY_SHORT,
@@ -15,7 +15,7 @@ import {
 import type { AttributeRenderer } from './types'
 
 export const renderCoordinate: AttributeRenderer = ({ nodeDef, context, node }) => {
-  const coordinateDef = nodeDef as NodeDefCoordinate
+  const coordinateDef = nodeDef as ArenaNodeDefCoordinate
   const lbl = label(coordinateDef, context.lang)
   const hasValue = isNodeFilled(node)
   const val = hasValue ? (node.value ?? {}) : null

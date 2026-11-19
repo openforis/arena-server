@@ -1,4 +1,4 @@
-import { Survey } from '@openforis/arena-core'
+import { ArenaSurvey } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableSurvey } from '../../db'
 
 /**
@@ -14,7 +14,7 @@ export const get = (
     backup?: boolean
   },
   client: BaseProtocol = DB
-): Promise<Survey> => {
+): Promise<ArenaSurvey> => {
   const table = new TableSurvey()
   const sql = new SqlSelectBuilder()
     .select(
@@ -34,7 +34,7 @@ export const get = (
 
   const { draft, backup } = options
 
-  return client.one<Survey>(sql, [options.surveyId], (row) =>
+  return client.one<ArenaSurvey>(sql, [options.surveyId], (row) =>
     DBs.transformCallback({ row, assocPublishedDraft: false, draft, backup })
   )
 }

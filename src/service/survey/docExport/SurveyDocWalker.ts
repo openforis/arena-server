@@ -1,10 +1,10 @@
 import type {
   ArenaRecord,
   ArenaRecordNode as ArenaNode,
-  NodeDefEntity,
-  NodeDefEntityChildPosition,
+  ArenaNodeDefEntity,
+  ArenaNodeDefEntityChildPosition,
 } from '@openforis/arena-core'
-import { NodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
+import { ArenaNodeDef, NodeDefType, NodeDefs, Records, Surveys } from '@openforis/arena-core'
 
 import { formatNodeValue, getIsTableLayout, label } from './common'
 import { DEFAULT_PRINT_ORIENTATION, resolvePrintOrientation } from './printOrientation'
@@ -71,11 +71,11 @@ const isNodeRelevantAndVisible = (record: ArenaRecord, node: ArenaNode): boolean
 
 // ─── Grid Helpers (shared with docx) ────────────────────────────────────────
 
-type GridCell = { item: NodeDefEntityChildPosition; nodeDef: NodeDef<NodeDefType> | undefined }
+type GridCell = { item: ArenaNodeDefEntityChildPosition; nodeDef: ArenaNodeDef<NodeDefType> | undefined }
 
 const buildGrid = (
-  layoutChildren: NodeDefEntityChildPosition[],
-  childDefByUuid: Record<string, NodeDef<NodeDefType>>,
+  layoutChildren: ArenaNodeDefEntityChildPosition[],
+  childDefByUuid: Record<string, ArenaNodeDef<NodeDefType>>,
   maxX: number,
   maxY: number
 ): Array<Array<GridCell | null>> => {
@@ -98,7 +98,7 @@ const markSpannedCells = (skip: boolean[][], x: number, y: number, w: number, h:
 
 // ─── Grid Walker ─────────────────────────────────────────────────────────────
 
-const computeGridDimensions = (layoutChildren: NodeDefEntityChildPosition[]): { maxX: number; maxY: number } => {
+const computeGridDimensions = (layoutChildren: ArenaNodeDefEntityChildPosition[]): { maxX: number; maxY: number } => {
   let maxX = 0
   let maxY = 0
   for (const item of layoutChildren) {
@@ -110,8 +110,8 @@ const computeGridDimensions = (layoutChildren: NodeDefEntityChildPosition[]): { 
 
 const renderGridCellContent = async <T>(params: {
   renderer: SurveyDocRenderer<T>
-  nodeDef: NodeDef<NodeDefType>
-  item: NodeDefEntityChildPosition
+  nodeDef: ArenaNodeDef<NodeDefType>
+  item: ArenaNodeDefEntityChildPosition
   context: RenderContext
   depth: number
   parentEntityNode: ArenaNode | undefined
@@ -122,7 +122,7 @@ const renderGridCellContent = async <T>(params: {
   if (NodeDefs.isEntity(nodeDef)) {
     return walkEntityDef(
       renderer,
-      nodeDef as NodeDefEntity,
+      nodeDef as ArenaNodeDefEntity,
       context,
       depth + 1,
       parentEntityNode,
@@ -134,23 +134,21 @@ const renderGridCellContent = async <T>(params: {
   const { record } = context
   const limits = renderer.getGridCellLimits?.(maxX, item.w ?? 1)
   const childNode =
-    record && parentEntityNode
-      ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0]
-      : undefined
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, nodeDef.uuid)(record)[0] : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef, context, depth, node: childNode, limits })
 }
 
 const walkEntityChildrenGrid = async <T>(
   renderer: SurveyDocRenderer<T>,
-  entityDef: NodeDefEntity,
+  entityDef: ArenaNodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode,
   walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { survey, cycle } = context
-  const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef) as NodeDefEntityChildPosition[]
+  const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef) as ArenaNodeDefEntityChildPosition[]
 
   const childDefByUuid = Object.fromEntries(
     Surveys.getNodeDefChildrenSorted({
@@ -215,8 +213,8 @@ const walkEntityChildrenGrid = async <T>(
 
 const isChildEntityOnOwnPage = (
   cycle: string,
-  parentEntityDef: NodeDefEntity,
-  childEntityDef: NodeDefEntity
+  parentEntityDef: ArenaNodeDefEntity,
+  childEntityDef: ArenaNodeDefEntity
 ): boolean => {
   const parentPageUuid = NodeDefs.getPageUuid(cycle)(parentEntityDef)
   const childPageUuid = NodeDefs.getPageUuid(cycle)(childEntityDef)
@@ -225,14 +223,14 @@ const isChildEntityOnOwnPage = (
 
 const walkEntityChildrenDefault = async <T>(
   renderer: SurveyDocRenderer<T>,
-  entityDef: NodeDef<NodeDefType>,
+  entityDef: ArenaNodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode,
   walkOptions?: WalkOptions<T>
 ): Promise<T[]> => {
   const { survey, cycle } = context
-  const parentEntity = entityDef as NodeDefEntity
+  const parentEntity = entityDef as ArenaNodeDefEntity
   const children = Surveys.getNodeDefChildrenSorted({
     survey,
     nodeDef: entityDef,
@@ -240,7 +238,7 @@ const walkEntityChildrenDefault = async <T>(
     includeAnalysis: false,
     includeLayoutElements: true,
   })
-  const walkChild = (child: NodeDef<NodeDefType>) =>
+  const walkChild = (child: ArenaNodeDef<NodeDefType>) =>
     walkDefaultChild(renderer, parentEntity, child, context, depth, parentEntityNode, walkOptions)
   const result: T[] = []
   for (const child of children) {
@@ -253,8 +251,8 @@ const walkEntityChildrenDefault = async <T>(
 
 const walkDefaultChild = async <T>(
   renderer: SurveyDocRenderer<T>,
-  parentEntity: NodeDefEntity,
-  child: NodeDef<NodeDefType>,
+  parentEntity: ArenaNodeDefEntity,
+  child: ArenaNodeDef<NodeDefType>,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode,
@@ -262,14 +260,20 @@ const walkDefaultChild = async <T>(
 ): Promise<T[]> => {
   const { cycle, record } = context
   if (NodeDefs.isEntity(child)) {
-    if (isChildEntityOnOwnPage(cycle, parentEntity, child as NodeDefEntity)) return []
-    return walkEntityDef(renderer, child as NodeDefEntity, context, depth + 1, parentEntityNode, undefined, walkOptions)
+    if (isChildEntityOnOwnPage(cycle, parentEntity, child as ArenaNodeDefEntity)) return []
+    return walkEntityDef(
+      renderer,
+      child as ArenaNodeDefEntity,
+      context,
+      depth + 1,
+      parentEntityNode,
+      undefined,
+      walkOptions
+    )
   }
   if (NodeDefs.isHidden(child)) return []
   const childNode =
-    record && parentEntityNode
-      ? Records.getChildren(parentEntityNode, child.uuid)(record)[0]
-      : undefined
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, child.uuid)(record)[0] : undefined
   if (record && childNode && !isNodeRelevantAndVisible(record, childNode)) return []
   return renderer.renderAttribute({ nodeDef: child, context, depth, node: childNode })
 }
@@ -278,7 +282,7 @@ const walkDefaultChild = async <T>(
 
 const walkEntityAsTable = <T>(
   renderer: SurveyDocRenderer<T>,
-  entityDef: NodeDefEntity,
+  entityDef: ArenaNodeDefEntity,
   context: RenderContext,
   parentEntityNode?: ArenaNode
 ): T[] => {
@@ -295,9 +299,10 @@ const walkEntityAsTable = <T>(
 
   let rows: string[][] = []
   if (record && parentEntityNode) {
-    const entityNodes = Records.getChildren(parentEntityNode, entityDef.uuid)(
-      record
-    ).filter((node) => isNodeRelevantAndVisible(record, node))
+    const entityNodes = Records.getChildren(
+      parentEntityNode,
+      entityDef.uuid
+    )(record).filter((node) => isNodeRelevantAndVisible(record, node))
     if (entityNodes.length > 0) {
       rows = entityNodes.map((entityNode) =>
         attrDefs.map((attrDef) => {
@@ -315,7 +320,7 @@ const walkEntityAsTable = <T>(
 
 export const walkEntityChildren = async <T>(
   renderer: SurveyDocRenderer<T>,
-  entityDef: NodeDefEntity,
+  entityDef: ArenaNodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode,
@@ -331,8 +336,8 @@ export const walkEntityChildren = async <T>(
   })
   const currentPageUuid = NodeDefs.getPageUuid(cycle)(entityDef)
   const entityDefsInOwnPage = childDefs.filter(
-    (def) => NodeDefs.isEntity(def) && NodeDefs.getPageUuid(cycle)(def as NodeDefEntity) !== currentPageUuid
-  ) as NodeDefEntity[]
+    (def) => NodeDefs.isEntity(def) && NodeDefs.getPageUuid(cycle)(def as ArenaNodeDefEntity) !== currentPageUuid
+  ) as ArenaNodeDefEntity[]
 
   const layoutChildren = NodeDefs.getLayoutChildren(cycle)(entityDef)
   const result =
@@ -348,7 +353,7 @@ export const walkEntityChildren = async <T>(
   if (walkOptions?.sectionBuilder) {
     walkOptions.sectionBuilder.push(...result)
   }
-  const walkChildEntityDef = (childEntityDef: NodeDefEntity) =>
+  const walkChildEntityDef = (childEntityDef: ArenaNodeDefEntity) =>
     walkEntityDef(renderer, childEntityDef, context, depth + 1, parentEntityNode, true, walkOptions)
   for (const childEntityDef of entityDefsInOwnPage) {
     const childOrientation = resolvePrintOrientation(childEntityDef, documentDefault)
@@ -372,7 +377,7 @@ export const walkEntityChildren = async <T>(
 const walkEntityNodes = async <T>(
   renderer: SurveyDocRenderer<T>,
   entityNodes: ArenaNode[],
-  entityDef: NodeDefEntity,
+  entityDef: ArenaNodeDefEntity,
   context: RenderContext,
   depth: number,
   walkOptions?: WalkOptions<T>
@@ -402,7 +407,7 @@ const walkEntityNodes = async <T>(
 
 export const walkEntityDef = async <T>(
   renderer: SurveyDocRenderer<T>,
-  entityDef: NodeDefEntity,
+  entityDef: ArenaNodeDefEntity,
   context: RenderContext,
   depth: number,
   parentEntityNode?: ArenaNode,
@@ -415,9 +420,7 @@ export const walkEntityDef = async <T>(
   const isTableLayout = getIsTableLayout(entityDef, context.cycle)
 
   const entityNodes: ArenaNode[] =
-    record && parentEntityNode
-      ? Records.getChildren(parentEntityNode, entityDef.uuid)(record)
-      : []
+    record && parentEntityNode ? Records.getChildren(parentEntityNode, entityDef.uuid)(record) : []
 
   if (!isRoot && record && entityNodes.length > 0 && !isMultiple && !isNodeRelevantAndVisible(record, entityNodes[0])) {
     return []
@@ -451,7 +454,7 @@ export const walkEntityDef = async <T>(
 const resolveCurrentPageEntity = (
   options: SurveyDocOptions,
   context: RenderContext
-): { entityDef: NodeDefEntity; entityNode: ArenaNode } => {
+): { entityDef: ArenaNodeDefEntity; entityNode: ArenaNode } => {
   const { entityDefUuid, entityNodeUuid } = options
   if (!entityDefUuid || !entityNodeUuid) {
     throw new Error('Missing entityDefUuid and entityNodeUuid for current-page export')
@@ -468,7 +471,7 @@ const resolveCurrentPageEntity = (
   if (entityNode.nodeDefUuid !== entityDefUuid) {
     throw new Error('Entity node does not belong to the specified entity definition')
   }
-  return { entityDef: entityDef as NodeDefEntity, entityNode }
+  return { entityDef: entityDef as ArenaNodeDefEntity, entityNode }
 }
 
 export const walkSurvey = async <T>(

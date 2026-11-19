@@ -1,21 +1,21 @@
 import type {
   ArenaRecord,
-  I18n,
+  ArenaI18n,
   LanguageCode,
   ArenaRecordNode as ArenaNode,
-  NodeDef,
+  ArenaNodeDef,
   NodeDefType,
-  Survey,
+  ArenaSurvey,
 } from '@openforis/arena-core'
 
 export type PrintOrientation = 'portrait' | 'landscape'
 export type SurveyDocExportScope = 'full' | 'currentPage'
 
 export interface SurveyDocOptions {
-  survey: Survey
+  survey: ArenaSurvey
   cycle?: string
   lang?: LanguageCode
-  i18n: I18n
+  i18n: ArenaI18n
   record?: ArenaRecord
   fileProvider?: (fileUuid: string) => Promise<Buffer>
   headerImageFileUuid?: string
@@ -45,10 +45,10 @@ export interface SurveyDocSection<T> {
 }
 
 export interface RenderContext {
-  survey: Survey
+  survey: ArenaSurvey
   lang: LanguageCode
   cycle: string
-  i18n: I18n
+  i18n: ArenaI18n
   record?: ArenaRecord
   fileProvider?: (fileUuid: string) => Promise<Buffer>
 }
@@ -59,7 +59,7 @@ export interface RenderLimits {
 }
 
 export interface AttributeRendererArgs {
-  nodeDef: NodeDef<NodeDefType>
+  nodeDef: ArenaNodeDef<NodeDefType>
   context: RenderContext
   depth: number
   node?: ArenaNode

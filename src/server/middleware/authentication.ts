@@ -7,9 +7,9 @@ import {
   FieldValidators,
   ServiceRegistry,
   ServiceType,
-  User,
-  UserAuthTokenPayload,
-  UserService,
+  ArenaUser,
+  ArenaUserAuthTokenPayload,
+  ArenaUserService,
   UserStatus,
   Validator,
   ValidatorErrorKeys,
@@ -83,7 +83,7 @@ const _verifyCallback: VerifyFunctionWithRequest = async (_, email, password, do
   }
 
   try {
-    const service = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+    const service = ServiceRegistry.getInstance().getService(ServiceType.user) as ArenaUserService
     const user = await service.get({ email, password })
 
     if (!user) {
@@ -119,13 +119,13 @@ const jwtStrategy = new JWTStrategy(
     passReqToCallback: true,
     algorithms: jwtAlgorithms,
   },
-  (req: Request, jwtPayload: UserAuthTokenPayload, done) => {
+  (req: Request, jwtPayload: ArenaUserAuthTokenPayload, done) => {
     if (!isAccessTokenPayload(jwtPayload)) {
       done(null, false)
       return
     }
     const { userUuid } = jwtPayload
-    const service: UserService = ServiceRegistry.getInstance().getService(ServiceType.user)
+    const service: ArenaUserService = ServiceRegistry.getInstance().getService(ServiceType.user)
     service
       .get({ userUuid })
       .then((user) => {
@@ -149,7 +149,7 @@ const isAuthorizedMiddleware: RequestHandler = (req: Request, res, next) => {
   if (pathsAllowedWithoutAuthentication.some((allowedPath) => allowedPath.test(req.path))) {
     next()
   } else {
-    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: User) => {
+    passport.authenticate(jwtStrategyName, { session: false }, (err: any, user: ArenaUser) => {
       if (user) {
         // user is authenticated
         next()

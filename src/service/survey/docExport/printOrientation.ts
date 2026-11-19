@@ -1,4 +1,4 @@
-import type { NodeDefEntity } from '@openforis/arena-core'
+import type { ArenaNodeDefEntity } from '@openforis/arena-core'
 
 import type { PrintOrientation } from './types'
 
@@ -17,7 +17,7 @@ export const DEFAULT_PRINT_ORIENTATION: PrintOrientation = 'portrait'
  * @returns Resolved print orientation.
  */
 export const resolvePrintOrientation = (
-  entityDef: NodeDefEntity | undefined,
+  entityDef: ArenaNodeDefEntity | undefined,
   documentDefault: PrintOrientation
 ): PrintOrientation => {
   const props = entityDef?.props as EntityPropsWithPrintOrientation | undefined

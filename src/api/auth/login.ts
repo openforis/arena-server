@@ -6,11 +6,11 @@ import {
   Objects,
   ServiceRegistry,
   ServiceType,
-  Survey,
-  SurveyService,
-  User,
-  UserAuthTokenService,
-  UserService,
+  ArenaSurvey,
+  ArenaSurveyService,
+  ArenaUser,
+  ArenaUserAuthTokenService,
+  ArenaUserService,
   UserStatus,
   UUIDs,
 } from '@openforis/arena-core'
@@ -27,10 +27,10 @@ import { WebSocketEvent, WebSocketServer } from '../../webSocket'
 
 const logger = new Logger('AuthAPI')
 
-export const deletePrefSurvey = (user: User): User => {
+export const deletePrefSurvey = (user: ArenaUser): ArenaUser => {
   const surveyId = user.prefs?.surveys?.current
   if (!surveyId) return user
-  const _user: User = { ...user }
+  const _user: ArenaUser = { ...user }
   delete _user.prefs?.surveys?.[surveyId]
   return _user
 }
@@ -43,9 +43,9 @@ const isSurveyDataMigrationPending = async (surveyId: number): Promise<boolean> 
 }
 
 // survey of the current survey pref, or null if not found or the user cannot view it
-const fetchCurrentSurvey = async (options: { user: User; surveyId: number }): Promise<Survey | null> => {
+const fetchCurrentSurvey = async (options: { user: ArenaUser; surveyId: number }): Promise<ArenaSurvey | null> => {
   const { user, surveyId } = options
-  const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as SurveyService
+  const surveyService = ServiceRegistry.getInstance().getService(ServiceType.survey) as ArenaSurveyService
   try {
     const survey = await surveyService.get({ surveyId, draft: false, validate: false })
     // the current survey pref can point to any survey: a survey the user cannot view is handled as not found
@@ -59,7 +59,7 @@ const fetchCurrentSurvey = async (options: { user: User; surveyId: number }): Pr
   }
 }
 
-const sendUserSurvey = async (options: { res: Response; user: User; authToken: string }) => {
+const sendUserSurvey = async (options: { res: Response; user: ArenaUser; authToken: string }) => {
   const { res, user, authToken } = options
   const surveyId = user.prefs?.surveys?.current
   if (!surveyId) {
@@ -78,12 +78,12 @@ const sendUserSurvey = async (options: { res: Response; user: User; authToken: s
   }
   // survey not found or not viewable by the user: remove the survey pref
   const userToUpdate = deletePrefSurvey(user)
-  const userService = ServiceRegistry.getInstance().getService(ServiceType.user) as UserService
+  const userService = ServiceRegistry.getInstance().getService(ServiceType.user) as ArenaUserService
   const userUpdated = await userService.updateUserPrefs({ userToUpdate })
   res.json({ user: userUpdated, authToken })
 }
 
-export const sendUser = async (options: { res: Response; req: Request; user: User; authToken: string }) => {
+export const sendUser = async (options: { res: Response; req: Request; user: ArenaUser; authToken: string }) => {
   const { res, req, user, authToken } = options
   const { includeSurvey } = Requests.getParams(req)
   if (includeSurvey) {
@@ -105,7 +105,9 @@ export const createSessionTokens = async ({
   res: Response
   userUuid: string
 }): Promise<string> => {
-  const userAuthTokenService: UserAuthTokenService = ServiceRegistry.getInstance().getService(ServiceType.userAuthToken)
+  const userAuthTokenService: ArenaUserAuthTokenService = ServiceRegistry.getInstance().getService(
+    ServiceType.userAuthToken
+  )
   const { authToken, refreshToken } = await userAuthTokenService.createUserAuthTokens({
     userUuid,
     props: extractRefreshTokenProps({ req }),
@@ -124,7 +126,7 @@ const authenticationSuccessful = ({
   req: Request
   res: Response
   next: NextFunction
-  user: User
+  user: ArenaUser
   callback?: () => void
 }) =>
   req.logIn(user, { session: false }, async (err) => {
@@ -181,7 +183,7 @@ export const AuthLogin: ExpressInitializer = {
   init: (express: Express): void => {
     const loginRateLimiters = ProcessEnv.loginRateLimitEnabled ? createLoginRateLimiters() : []
     express.post(ApiEndpoint.auth.login(), ...loginRateLimiters, (req: Request, res: Response, next) => {
-      passport.authenticate('local', { session: false }, async (err: any, user: User, info: any) => {
+      passport.authenticate('local', { session: false }, async (err: any, user: ArenaUser, info: any) => {
         if (err) {
           return next(err)
         }
@@ -223,7 +225,7 @@ export const AuthLogin: ExpressInitializer = {
           return
         }
         const { userUuid } = tempAuthTokenFound
-        const userService = serviceRegistry.getService(ServiceType.user) as UserService
+        const userService = serviceRegistry.getService(ServiceType.user) as ArenaUserService
         const user = await userService.get({ userUuid })
         if (!user || user.status !== UserStatus.ACCEPTED) {
           res.status(401).json({ message: 'User not found or not accepted for the provided temporary auth token' })

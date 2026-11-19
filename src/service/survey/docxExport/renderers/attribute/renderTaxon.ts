@@ -1,6 +1,6 @@
 import { Paragraph, TextRun } from 'docx'
 
-import { NodeDefs, NodeValues, Taxa } from '@openforis/arena-core'
+import { NodeDefs, RecordNodeValues, Taxa } from '@openforis/arena-core'
 
 import {
   EMPTY_FIELD,
@@ -20,8 +20,8 @@ export const renderTaxon: AttributeRenderer = ({ nodeDef, context, node }) => {
   const taxon = hasValue ? node.refData?.taxon : undefined
   const taxonCode = taxon ? (Taxa.getCode(taxon) ?? '') : EMPTY_SHORT
   const sciName = taxon ? Taxa.getScientificName(taxon) : EMPTY_FIELD
-  const vernacularNameVisible = NodeDefs.isFieldVisible(NodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
-  const vernacularNameUuid = node ? NodeValues.getVernacularNameUuid(node) : undefined
+  const vernacularNameVisible = NodeDefs.isFieldVisible(RecordNodeValues.ValuePropsTaxon.vernacularName)(nodeDef)
+  const vernacularNameUuid = node ? RecordNodeValues.getVernacularNameUuid(node) : undefined
   const { vernacularName } = vernacularNameUuid && taxon ? Taxa.getVernacularNameAndLang(vernacularNameUuid)(taxon) : {}
 
   const fieldCommonProps = getTaxonFieldCommonProps()

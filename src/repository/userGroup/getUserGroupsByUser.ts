@@ -1,10 +1,10 @@
-import { Objects, UserGroup } from '@openforis/arena-core'
+import { Objects, ArenaUserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, SqlJoinBuilder, SqlSelectBuilder, TableUserGroup, TableUserGroupUser } from '../../db'
 
 export const getManyByUser = (
   options: { userUuid: string; surveyUuid?: string },
   client: BaseProtocol = DB
-): Promise<UserGroup[]> => {
+): Promise<ArenaUserGroup[]> => {
   const { userUuid, surveyUuid } = options
   if (!userUuid) throw new Error(`missingParams, ${JSON.stringify(options)}`)
 
@@ -36,5 +36,5 @@ export const getManyByUser = (
 
   const sql = selectBuilder.build()
 
-  return client.map<UserGroup>(sql, params, (row) => Objects.camelize(row, { limitToLevel: 1 }))
+  return client.map<ArenaUserGroup>(sql, params, (row) => Objects.camelize(row, { limitToLevel: 1 }))
 }

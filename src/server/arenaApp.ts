@@ -1,5 +1,5 @@
 import { Express } from 'express'
-import { User as ArenaUser, ServiceRegistry } from '@openforis/arena-core'
+import { ArenaUser, ServiceRegistry } from '@openforis/arena-core'
 
 /**
  * Express app wrapper.
@@ -13,7 +13,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     // Express.User is defined as {}
-    // We extend it globally to be arena-core/User
+    // We extend it globally to be the arena-core ArenaUser
     // @ts-ignore
     type User = ArenaUser
     export interface Request {

@@ -1,10 +1,10 @@
-import { UserGroup } from '@openforis/arena-core'
+import { ArenaUserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlInsertBuilder, TableUserGroup } from '../../db'
 
 export const insert = (
-  params: { surveyUuid: string; item: Partial<UserGroup> },
+  params: { surveyUuid: string; item: Partial<ArenaUserGroup> },
   client: BaseProtocol = DB
-): Promise<UserGroup> => {
+): Promise<ArenaUserGroup> => {
   const { surveyUuid, item } = params
   if (!surveyUuid) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
@@ -20,5 +20,5 @@ export const insert = (
     .returning(...table.summaryColumns)
     .build()
 
-  return client.one<UserGroup>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.one<ArenaUserGroup>(sql, values, (row) => DBs.transformCallback({ row }))
 }

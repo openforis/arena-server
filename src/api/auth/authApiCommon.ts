@@ -1,6 +1,6 @@
 import { CookieOptions, Request, Response } from 'express'
 
-import { UserAuthRefreshToken, UserAuthRefreshTokenProps } from '@openforis/arena-core'
+import { ArenaUserAuthRefreshToken, ArenaUserAuthRefreshTokenProps } from '@openforis/arena-core'
 
 import { ApiEndpoint } from '../endpoint'
 import { NodeEnv, ProcessEnv } from '../../processEnv'
@@ -9,7 +9,7 @@ import { Requests } from '../../utils'
 export const jwtRefreshTokenCookieName = 'refreshToken'
 export const jwtDownloadTokenParamName = 'downloadToken'
 
-export const extractRefreshTokenProps = ({ req }: { req: Request }): UserAuthRefreshTokenProps => {
+export const extractRefreshTokenProps = ({ req }: { req: Request }): ArenaUserAuthRefreshTokenProps => {
   const { appInfo } = Requests.getParams(req)
   return {
     appInfo,
@@ -17,7 +17,13 @@ export const extractRefreshTokenProps = ({ req }: { req: Request }): UserAuthRef
   }
 }
 
-export const setRefreshTokenCookie = ({ res, refreshToken }: { res: Response; refreshToken: UserAuthRefreshToken }) => {
+export const setRefreshTokenCookie = ({
+  res,
+  refreshToken,
+}: {
+  res: Response
+  refreshToken: ArenaUserAuthRefreshToken
+}) => {
   const secure = ProcessEnv.nodeEnv === NodeEnv.production || ProcessEnv.useHttps
   // Use 'lax' for localhost, 'strict' for production
   const sameSite = ProcessEnv.nodeEnv === NodeEnv.production ? 'strict' : 'lax'

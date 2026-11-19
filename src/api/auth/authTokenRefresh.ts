@@ -1,4 +1,4 @@
-import { ServiceRegistry, ServiceType, UserAuthTokenService } from '@openforis/arena-core'
+import { ServiceRegistry, ServiceType, ArenaUserAuthTokenService } from '@openforis/arena-core'
 
 import { ExpressInitializer } from '../../server'
 import { ApiEndpoint } from '../endpoint'
@@ -11,7 +11,7 @@ export const AuthTokenRefresh: ExpressInitializer = {
         const refreshToken = req.cookies?.[jwtRefreshTokenCookieName]
 
         const serviceRegistry = ServiceRegistry.getInstance()
-        const userRefreshTokenService: UserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
+        const userRefreshTokenService: ArenaUserAuthTokenService = serviceRegistry.getService(ServiceType.userAuthToken)
 
         const authTokenRotationResult = await userRefreshTokenService.rotateTokens({
           refreshToken,

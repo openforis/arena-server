@@ -1,4 +1,4 @@
-import { UserGroup } from '@openforis/arena-core'
+import { ArenaUserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlSelectBuilder, TableUserGroup } from '../../db'
 import { SqlSelectCountBuilder } from '../../db/sql'
 
@@ -10,7 +10,7 @@ export const count = (params: { surveyUuid: string }, client: BaseProtocol = DB)
   return client.one(sql, whereValues, DBs.transformCallbackCount)
 }
 
-export const getAll = (params: { surveyUuid: string }, client: BaseProtocol = DB): Promise<UserGroup[]> => {
+export const getAll = (params: { surveyUuid: string }, client: BaseProtocol = DB): Promise<ArenaUserGroup[]> => {
   const { surveyUuid } = params
   if (!surveyUuid) throw new Error(`missingParams, ${JSON.stringify(params)}`)
 
@@ -21,10 +21,10 @@ export const getAll = (params: { surveyUuid: string }, client: BaseProtocol = DB
     .where(`${table.surveyUuid} = $1`)
     .build()
 
-  return client.map<UserGroup>(sql, [surveyUuid], (row) => DBs.transformCallback({ row }))
+  return client.map<ArenaUserGroup>(sql, [surveyUuid], (row) => DBs.transformCallback({ row }))
 }
 
-export const getByUuid = (params: { uuid: string }, client: BaseProtocol = DB): Promise<UserGroup | null> => {
+export const getByUuid = (params: { uuid: string }, client: BaseProtocol = DB): Promise<ArenaUserGroup | null> => {
   const { uuid } = params
   const table = new TableUserGroup()
   const sql = new SqlSelectBuilder()
@@ -33,5 +33,5 @@ export const getByUuid = (params: { uuid: string }, client: BaseProtocol = DB): 
     .where(`${table.uuid} = $1`)
     .build()
 
-  return client.oneOrNone<UserGroup>(sql, [uuid], (row) => DBs.transformCallback({ row }))
+  return client.oneOrNone<ArenaUserGroup>(sql, [uuid], (row) => DBs.transformCallback({ row }))
 }

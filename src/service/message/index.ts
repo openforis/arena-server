@@ -1,4 +1,4 @@
-import { ArenaService, Message, MessageNotificationType, Messages, User } from '@openforis/arena-core'
+import { ArenaService, ArenaMessage, MessageNotificationType, Messages, ArenaUser } from '@openforis/arena-core'
 
 import { BaseProtocol } from '../../db'
 import { MessageRepository } from '../../repository/message'
@@ -6,28 +6,28 @@ import { MessageRepository } from '../../repository/message'
 const { create, count, deleteByUuid, getAll, getAllSent, getByUuid, update } = MessageRepository
 
 export interface MessageService extends ArenaService {
-  create(message: Partial<Message>, client?: BaseProtocol): Promise<Message>
+  create(message: Partial<ArenaMessage>, client?: BaseProtocol): Promise<ArenaMessage>
 
-  deleteByUuid(uuid: string, client?: BaseProtocol): Promise<Message | null>
+  deleteByUuid(uuid: string, client?: BaseProtocol): Promise<ArenaMessage | null>
 
   count(): Promise<number>
 
-  getAll(client?: BaseProtocol): Promise<Message[]>
+  getAll(client?: BaseProtocol): Promise<ArenaMessage[]>
 
-  getAllSent(client?: BaseProtocol): Promise<Message[]>
+  getAllSent(client?: BaseProtocol): Promise<ArenaMessage[]>
 
-  getNotifiedToUser(user: User, client?: BaseProtocol): Promise<Message[]>
+  getNotifiedToUser(user: ArenaUser, client?: BaseProtocol): Promise<ArenaMessage[]>
 
-  getByUuid(uuid: string, client?: BaseProtocol): Promise<Message | null>
+  getByUuid(uuid: string, client?: BaseProtocol): Promise<ArenaMessage | null>
 
   update(
     uuid: string,
-    message: Partial<Omit<Message, 'uuid' | 'createdByUserUuid' | 'dateCreated' | 'dateModified'>>,
+    message: Partial<Omit<ArenaMessage, 'uuid' | 'createdByUserUuid' | 'dateCreated' | 'dateModified'>>,
     client?: BaseProtocol
-  ): Promise<Message>
+  ): Promise<ArenaMessage>
 }
 
-const getNotifiedToUser = async (user: User, client?: BaseProtocol): Promise<Message[]> => {
+const getNotifiedToUser = async (user: ArenaUser, client?: BaseProtocol): Promise<ArenaMessage[]> => {
   const messages = await MessageRepository.getAllSent(client)
   const filteredMessages = messages.filter(
     (message) =>

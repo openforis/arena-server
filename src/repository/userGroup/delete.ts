@@ -1,7 +1,7 @@
-import { UserGroup } from '@openforis/arena-core'
+import { ArenaUserGroup } from '@openforis/arena-core'
 import { BaseProtocol, DB, DBs, SqlDeleteBuilder, TableUserGroup } from '../../db'
 
-export const deleteItem = (params: { uuid: string }, client: BaseProtocol = DB): Promise<UserGroup | null> => {
+export const deleteItem = (params: { uuid: string }, client: BaseProtocol = DB): Promise<ArenaUserGroup | null> => {
   const { uuid } = params
   const table = new TableUserGroup()
   const values = { [table.uuid.columnName]: uuid }
@@ -12,5 +12,5 @@ export const deleteItem = (params: { uuid: string }, client: BaseProtocol = DB):
     .returning(...table.summaryColumns)
     .build()
 
-  return client.oneOrNone<UserGroup>(sql, values, (row) => DBs.transformCallback({ row }))
+  return client.oneOrNone<ArenaUserGroup>(sql, values, (row) => DBs.transformCallback({ row }))
 }
