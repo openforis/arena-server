@@ -306,7 +306,8 @@ const externalLoginTests = (): void =>
           .expect(401)
         const { body: mobileBody } = await globalThis.api
           .post(ApiEndpoint.auth.externalLoginMobileToken())
-          .send({ code, codeVerifier: mobileCodeVerifier, twoFactorToken: generateSync({ secret: device.secret }) })
+          // the TOTP code of this time step was used above: it cannot be used twice
+          .send({ code, codeVerifier: mobileCodeVerifier, twoFactorToken: device.backupCodes[0] })
           .expect(200)
         expect(mobileBody.authToken).toBeDefined()
       } finally {
