@@ -299,7 +299,7 @@ const externalLoginTests = (): void =>
           .post(ApiEndpoint.auth.externalLoginMobileToken())
           .send({ code, codeVerifier: mobileCodeVerifier })
           .expect(200)
-        expect(twoFactorBody).toEqual({ twoFactorRequired: true })
+        expect(twoFactorBody).toEqual({ twoFactorRequired: true, email: mockUser.email })
         await globalThis.api
           .post(ApiEndpoint.auth.externalLoginMobileToken())
           .send({ code, codeVerifier: mobileCodeVerifier, twoFactorToken: '000000' })
