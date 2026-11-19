@@ -1,9 +1,8 @@
 import {
-  ArenaRecordNode as ArenaNode,
+  ArenaRecordNode,
   ArenaCategoryItem,
   CategoryItems,
   LanguageCode,
-  ArenaNodeDef,
   ArenaNodeDefBoolean,
   ArenaNodeDefCoordinate,
   ArenaNodeDefEntity,
@@ -16,6 +15,7 @@ import {
   Objects,
   Strings,
   Taxa,
+  ArenaAnyNodeDef,
 } from '@openforis/arena-core'
 
 import type { RenderContext } from './types'
@@ -23,8 +23,7 @@ import type { RenderContext } from './types'
 export const EMPTY_FIELD = '________________________________'
 export const EMPTY_SHORT = '___________'
 
-export const label = (nodeDef: ArenaNodeDef<NodeDefType>, lang: LanguageCode): string =>
-  NodeDefs.getLabelOrName(nodeDef, lang)
+export const label = (nodeDef: ArenaAnyNodeDef, lang: LanguageCode): string => NodeDefs.getLabelOrName(nodeDef, lang)
 
 export const getCategoryItemLabel = (item: ArenaCategoryItem, lang: LanguageCode): string => {
   const itemLabel = CategoryItems.getLabel(item, lang)
@@ -44,11 +43,7 @@ export const getBooleanValueLabel = (context: RenderContext, nodeDef: ArenaNodeD
   return value ? getCommonLabel(context, 'yes', 'Yes') : getCommonLabel(context, 'no', 'No')
 }
 
-export const formatNodeValue = (
-  nodeDef: ArenaNodeDef<NodeDefType>,
-  context: RenderContext,
-  node: ArenaNode
-): string => {
+export const formatNodeValue = (nodeDef: ArenaAnyNodeDef, context: RenderContext, node: ArenaRecordNode): string => {
   if (RecordNodes.isValueBlank(node)) return ''
   const { survey, lang, cycle } = context
   switch (nodeDef.type) {
@@ -117,9 +112,9 @@ export const getCoordinateLabelByField = (
   return labelByField
 }
 
-export const isNodeBlank = (node?: ArenaNode): boolean => !node || RecordNodes.isValueBlank(node)
+export const isNodeBlank = (node?: ArenaRecordNode): boolean => !node || RecordNodes.isValueBlank(node)
 
-export const isNodeFilled = (node?: ArenaNode): node is ArenaNode => !isNodeBlank(node)
+export const isNodeFilled = (node?: ArenaRecordNode): node is ArenaRecordNode => !isNodeBlank(node)
 
 export const getIsTableLayout = (entityDef: ArenaNodeDefEntity, cycle: string): boolean =>
   NodeDefs.getLayoutRenderType(cycle)(entityDef) === NodeDefEntityRenderType.table
