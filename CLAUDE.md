@@ -137,8 +137,9 @@ docker container restart arena-db
 
 ## Commits and Pull Requests
 
-Commits and PRs are made as the repository owner: never mention Claude in commit messages or PR descriptions — no `Co-Authored-By: Claude ...` trailer and no "Generated with Claude Code" line.
+Commits and PRs are made as the repository owner.
 
-## Commits and Pull Requests
-
-- No Claude attribution: never add a `Co-Authored-By: Claude` trailer, a "Generated with Claude Code" line or a session link to commits and pull requests.
+- Branch names: give new branches a short, meaningful name describing the change.
+- No Claude attribution: never add a `Co-Authored-By: Claude` trailer, a "Generated with Claude Code" line, a `Claude-Session` line or a session link to commits, pull requests, PR/issue comments, reviews or code comments.
+- Assign every PR you open to `SteRiccio`.
+- Watch every PR you open (subscribe to its activity) and fix CI failures and review findings until it is green.
