@@ -26,6 +26,8 @@ export interface ExternalLoginFlow extends ExternalLoginFlowChecks {
   userUuid?: string
   // invitation mode: name typed on the accept invitation page
   name?: string
+  // login started by Arena Mobile: PKCE challenge (S256) of the code exchanged by the app for the session tokens
+  mobileCodeChallenge?: string
 }
 
 /**
@@ -34,6 +36,15 @@ export interface ExternalLoginFlow extends ExternalLoginFlowChecks {
 export interface PendingTwoFactorLogin {
   userUuid: string
   providerId: string
+}
+
+/**
+ * Login completed at the provider, to be exchanged by Arena Mobile for the session tokens (with the PKCE verifier).
+ */
+export interface MobileLoginCode {
+  userUuid: string
+  providerId: string
+  codeChallenge: string
 }
 
 /**
@@ -50,6 +61,7 @@ enum TokenPurpose {
   pendingTwoFactor = 'externalLoginPending2FA',
   ticket = 'externalLoginTicket',
   testResult = 'externalLoginTestResult',
+  mobileLoginCode = 'externalLoginMobileCode',
 }
 
 const expiresInSecondsByPurpose: Record<TokenPurpose, number> = {
@@ -57,6 +69,8 @@ const expiresInSecondsByPurpose: Record<TokenPurpose, number> = {
   [TokenPurpose.pendingTwoFactor]: 5 * 60,
   [TokenPurpose.ticket]: 2 * 60,
   [TokenPurpose.testResult]: 5 * 60,
+  // includes the time to type the 2FA code
+  [TokenPurpose.mobileLoginCode]: 5 * 60,
 }
 
 // one key per purpose, so that a token cannot be used for another purpose
@@ -93,4 +107,6 @@ export const ExternalLoginTokens = {
   verifyTicket: (token?: string) => verify<ExternalLoginTicket>(TokenPurpose.ticket, token),
   signTestResult: (result: object): string => sign(TokenPurpose.testResult, result),
   verifyTestResult: (token?: string) => verify<object>(TokenPurpose.testResult, token),
+  signMobileLoginCode: (code: MobileLoginCode): string => sign(TokenPurpose.mobileLoginCode, code),
+  verifyMobileLoginCode: (token?: string) => verify<MobileLoginCode>(TokenPurpose.mobileLoginCode, token),
 }

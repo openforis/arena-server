@@ -61,6 +61,8 @@ export interface AuthProviderForLogin {
   type: AuthProviderType
   label: string
   iconKind: AuthProviderIconKind
+  // sign-in available in Arena Mobile (not sent by servers released before the mobile flow)
+  mobileLogin?: boolean
 }
 
 /**

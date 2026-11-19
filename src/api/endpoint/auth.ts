@@ -15,4 +15,5 @@ export const auth = {
   // ids start with a letter or digit, so these cannot clash with a provider id
   externalLoginTwoFactor: (): string => getPath('auth', 'oidc', '_2fa'),
   externalLoginTestResult: (): string => getPath('auth', 'oidc', '_test-result'),
+  externalLoginMobileToken: (): string => getPath('auth', 'oidc', '_mobile-token'),
 }

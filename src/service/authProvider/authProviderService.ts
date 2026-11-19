@@ -110,7 +110,7 @@ const get = async (id: string): Promise<AuthProvider | null> => {
 const getForLogin = async (): Promise<AuthProviderForLogin[]> =>
   (await loadAll())
     .filter((provider) => provider.enabled && provider.showOnLoginPage && Boolean(provider.clientSecret))
-    .map(({ id, type, label, iconKind }) => ({ id, type, label, iconKind }))
+    .map(({ id, type, label, iconKind }) => ({ id, type, label, iconKind, mobileLogin: true }))
 
 const getRedirectUri = (id: string, baseUrl: string = ProcessEnv.arenaPublicUrl): string =>
   `${baseUrl}/auth/oidc/${id}/callback`

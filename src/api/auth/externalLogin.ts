@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto'
 import { CookieOptions, Express, Request, Response } from 'express'
 
 import { ServiceRegistry, ServiceType, User, UserService, Users } from '@openforis/arena-core'
@@ -16,6 +17,7 @@ import {
   ExternalLoginTokens,
   ExternalLoginUserResolver,
   getAdapter,
+  MobileLoginCode,
   randomFlowChecks,
 } from '../../service/externalLogin'
 import { Requests } from '../../utils'
@@ -35,6 +37,11 @@ const paths = {
   login: '/guest/login/',
   invitation: (invitationUuid: string) => `/guest/resetPassword/${invitationUuid}/`,
 }
+
+// fixed (never taken from the request), to avoid open redirects; registered by Arena Mobile as its URL scheme
+const mobileRedirectUri = 'org.openforis.arena-mobile://external-login'
+// PKCE S256 challenge: base64url of a SHA-256 hash
+const codeChallengeRegExp = /^[\w-]{43}$/
 
 // only relative app paths, to avoid open redirects
 const returnToRegExp = /^\/app\/[\w/-]{0,200}$/
@@ -74,6 +81,7 @@ const getUsableProvider = async (
 
 const getErrorRedirect = (flow: Partial<ExternalLoginFlow> | null, errorKey: string): string => {
   const query = { externalLoginError: errorKey }
+  if (flow?.mobileCodeChallenge) return withQuery(mobileRedirectUri, query)
   if (flow?.returnTo) return withQuery(flow.returnTo, query)
   if (flow?.invitationUuid) return withQuery(paths.invitation(flow.invitationUuid), query)
   return withQuery(paths.login, query)
@@ -103,12 +111,22 @@ const getReturnTo = (req: Request, mode: ExternalLoginMode): string | undefined 
   return isUserFlow && typeof returnTo === 'string' && returnToRegExp.test(returnTo) ? returnTo : undefined
 }
 
+const getMobileCodeChallenge = (req: Request, mode?: ExternalLoginMode): string | undefined => {
+  const { mobileCodeChallenge } = Requests.getParams(req)
+  return mode === ExternalLoginMode.login &&
+    typeof mobileCodeChallenge === 'string' &&
+    codeChallengeRegExp.test(mobileCodeChallenge)
+    ? mobileCodeChallenge
+    : undefined
+}
+
 const handleStart = async (req: Request, res: Response): Promise<void> => {
   const { providerId } = req.params as { providerId: string }
   const startMode = getStartMode(req, providerId)
+  const mobileCodeChallenge = getMobileCodeChallenge(req, startMode?.mode)
   const provider = startMode ? await getUsableProvider(providerId, startMode.mode) : null
   if (!provider || !startMode) {
-    res.redirect(getErrorRedirect(null, ExternalLoginErrorKeys.providerNotAvailable))
+    res.redirect(getErrorRedirect({ mobileCodeChallenge }, ExternalLoginErrorKeys.providerNotAvailable))
     return
   }
   const { name } = Requests.getParams(req)
@@ -119,6 +137,7 @@ const handleStart = async (req: Request, res: Response): Promise<void> => {
     redirectUri: getAuthProviderService().getRedirectUri(providerId, getBaseUrl(req)),
     returnTo: getReturnTo(req, startMode.mode),
     name: typeof name === 'string' ? name.trim().substring(0, 100) || undefined : undefined,
+    mobileCodeChallenge,
   }
   try {
     const url = await getAdapter(provider).buildAuthorizationUrl({
@@ -189,9 +208,20 @@ const isTwoFactorRequired = async (provider: AuthProviderWithSecret, userUuid: s
 const completeLogin = async (
   req: Request,
   res: Response,
+  flow: ExternalLoginFlow,
   provider: AuthProviderWithSecret,
   userUuid: string
 ): Promise<void> => {
+  if (flow.mobileCodeChallenge) {
+    // the app gets the session tokens (and is asked for the 2FA code, if required) when exchanging the code
+    const code = ExternalLoginTokens.signMobileLoginCode({
+      userUuid,
+      providerId: provider.id,
+      codeChallenge: flow.mobileCodeChallenge,
+    })
+    res.redirect(withQuery(mobileRedirectUri, { code }))
+    return
+  }
   if (await isTwoFactorRequired(provider, userUuid)) {
     const pending = ExternalLoginTokens.signPendingTwoFactor({ userUuid, providerId: provider.id })
     res.cookie(pendingTwoFactorCookieName, pending, cookieOptions(ExternalLoginTokens.maxAgeMsByKind.pendingTwoFactor))
@@ -226,7 +256,7 @@ const handleCallbackWithFlow = async (req: Request, res: Response, flow: Externa
   } else if (flow.mode === ExternalLoginMode.link) {
     res.redirect(withQuery(flow.returnTo ?? '/app/home/', { externalLoginLinked: provider.id }))
   } else {
-    await completeLogin(req, res, provider, resolution.userUuid)
+    await completeLogin(req, res, flow, provider, resolution.userUuid)
   }
 }
 
@@ -257,6 +287,45 @@ const handleTwoFactor = async (req: Request, res: Response): Promise<void> => {
     return
   }
   res.clearCookie(pendingTwoFactorCookieName, { path: cookiePath })
+  const user = (await getUserService().get({ userUuid })) as User
+  const authToken = await createSessionTokens({ req, res, userUuid })
+  await sendUser({ req, res, user, authToken })
+}
+
+const toCodeChallenge = (codeVerifier: string): string =>
+  crypto.createHash('sha256').update(codeVerifier).digest('base64url')
+
+const isCodeVerifierValid = (mobileCode: MobileLoginCode, codeVerifier: unknown): boolean => {
+  if (typeof codeVerifier !== 'string') return false
+  const expected = Buffer.from(mobileCode.codeChallenge)
+  const actual = Buffer.from(toCodeChallenge(codeVerifier))
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual)
+}
+
+// Arena Mobile: exchanges the code received on the app redirect URI for the session tokens (same response as /auth/login)
+const handleMobileToken = async (req: Request, res: Response): Promise<void> => {
+  const { code, codeVerifier, twoFactorToken } = Requests.getParams(req)
+  const mobileCode = ExternalLoginTokens.verifyMobileLoginCode(code)
+  if (!mobileCode || !isCodeVerifierValid(mobileCode, codeVerifier)) {
+    res.status(401).json({ message: ExternalLoginErrorKeys.flowInvalid })
+    return
+  }
+  const provider = await getUsableProvider(mobileCode.providerId)
+  if (!provider) {
+    res.status(401).json({ message: ExternalLoginErrorKeys.providerNotAvailable })
+    return
+  }
+  const { userUuid } = mobileCode
+  if (await isTwoFactorRequired(provider, userUuid)) {
+    if (!twoFactorToken) {
+      res.json({ twoFactorRequired: true })
+      return
+    }
+    if (!(await getUser2FAService().verifyLogin({ userUuid, token: twoFactorToken }))) {
+      res.status(401).json({ message: ExternalLoginErrorKeys.invalidTwoFactorCode })
+      return
+    }
+  }
   const user = (await getUserService().get({ userUuid })) as User
   const authToken = await createSessionTokens({ req, res, userUuid })
   await sendUser({ req, res, user, authToken })
@@ -325,6 +394,7 @@ export const ExternalLoginApi: ExpressInitializer = {
     express.get(ApiEndpoint.auth.externalLoginProviderIcon(':providerId'), asyncHandler(handleProviderIcon))
     // fixed paths first: they would otherwise match the provider id parameter
     express.post(ApiEndpoint.auth.externalLoginTwoFactor(), ...loginRateLimiters, asyncHandler(handleTwoFactor))
+    express.post(ApiEndpoint.auth.externalLoginMobileToken(), ...loginRateLimiters, asyncHandler(handleMobileToken))
     express.get(
       ApiEndpoint.auth.externalLoginTestResult(),
       ApiAuthMiddleware.requireAdminPermission,
