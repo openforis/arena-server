@@ -8,7 +8,7 @@ jobs:
 
     services:
       postgres:
-        image: postgis/postgis:17-3.5
+        image: postgis/postgis:17-3.7
         env:
           POSTGRES_USER: arena
           POSTGRES_PASSWORD: arena
